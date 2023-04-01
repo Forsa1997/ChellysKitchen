@@ -204,11 +204,17 @@ const Navbar = () => {
                                 open={Boolean(anchorElUser)}
                                 onClose={handleCloseUserMenu}
                             >
-                                <MenuItem onClick={handleCloseUserMenu}>
+                                <MenuItem onClick={() => {
+                                    navigate("/signIn")
+                                    handleCloseUserMenu()
+                                }}>
                                     <Typography textAlign="center" onClick={() => navigate("/signIn")}>Sign In</Typography>
                                 </MenuItem>
-                                <MenuItem onClick={handleCloseUserMenu}>
-                                    <Typography textAlign="center" onClick={() => navigate("/signUp")}>Sign Up</Typography>
+                                <MenuItem onClick={() => {
+                                    navigate("/signUp")
+                                    handleCloseUserMenu()
+                                }}>
+                                    <Typography textAlign="center">Sign Up</Typography>
                                 </MenuItem>
                             </Menu>
                         </Box>

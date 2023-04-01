@@ -8,6 +8,7 @@ import { Routes, Route } from 'react-router-dom';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import ForgotPassword from './pages/ForgotPassword';
+import CreateRecipe from './pages/CreateRecipe';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/terms" element={<Privacy />} />
         <Route path="/privacy" element={<Terms />} />
         <Route path="/forgotPassword" element={<ForgotPassword />} />
+        <Route path="/recipe/create" element={<CreateRecipe />} />
       </Routes>
       <Footer />
     </>
