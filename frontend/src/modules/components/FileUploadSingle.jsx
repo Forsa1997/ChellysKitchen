@@ -41,7 +41,7 @@ function FileUploadSingle() {
                     style={{ display: 'none' }} />
                 <Button component="span" variant="outlined">
                     <FileUpload />
-                    Select File
+                    Select Cover
                 </Button>
                 <div>{file && `${file.name} - ${file.type}`}</div>
             </label>

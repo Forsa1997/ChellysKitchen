@@ -12,7 +12,13 @@ export default function PaymentForm() {
             </Typography>
             <Grid container spacing={3}>
                 <Grid sx={{ display: "flex", flexDirection: "column" }} item xs={12} md={6}>
+                    <Typography variant="h6" gutterBottom>
+                        Cover
+                    </Typography>
                     <FileUploadSingle />
+                    <Typography variant="h6" sx={{ marginTop: "16px" }}>
+                        Images
+                    </Typography>
                     <FileUploadMultiple />
                 </Grid>
             </Grid>
