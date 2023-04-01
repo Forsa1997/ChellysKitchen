@@ -110,7 +110,13 @@ function SignIn() {
                     )}
                 </Form>
                 <Typography align="center">
-                    <Link underline="always" href="/premium-themes/onepirate/forgot-password/">
+                    <Link underline="always" sx={{
+                        cursor: 'default',
+                        '&:hover': {
+                            cursor: 'pointer',
+                        },
+                    }}
+                        onClick={() => navigate("/forgotPassword")}>
                         Forgot password?
                     </Link>
                 </Typography>

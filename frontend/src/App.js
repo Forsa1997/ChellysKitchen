@@ -7,6 +7,7 @@ import SignUp from './pages/SignUp';
 import { Routes, Route } from 'react-router-dom';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/signUp" element={<SignUp />} />
         <Route path="/terms" element={<Privacy />} />
         <Route path="/privacy" element={<Terms />} />
+        <Route path="/forgotPassword" element={<ForgotPassword />} />
       </Routes>
       <Footer />
     </>
