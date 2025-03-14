@@ -16,7 +16,9 @@ import { styled } from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
 import AppTheme from '../AppTheme';
 import ColorModeSelect from '../ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from './CustomIcons';
+import { GoogleIcon, FacebookIcon } from './CustomIcons';
+import SitemarkIcon from "./SitemarkIcon.tsx";
+
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex',

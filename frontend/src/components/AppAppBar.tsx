@@ -13,6 +13,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ColorModeIconDropdown from '../ColorModeIconDropdown';
 import Sitemark from './SitemarkIcon';
+import {useNavigate} from "react-router";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
     display: 'flex',
@@ -37,6 +38,16 @@ export default function AppAppBar() {
         setOpen(newOpen);
     };
 
+    const navigate = useNavigate();
+
+    const handleSignInClick = () => {
+        navigate('/signin');
+    }
+
+    const handleSignUpClick = () => {
+        navigate('/signup');
+    }
+
     return (
         <AppBar
             position="fixed"
@@ -51,7 +62,7 @@ export default function AppAppBar() {
             <Container maxWidth="lg">
                 <StyledToolbar variant="dense" disableGutters>
                     <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
-                        <Sitemark />
+                        <Sitemark/>
                         <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                             <Button variant="text" color="info" size="small">
                                 Features
@@ -80,10 +91,10 @@ export default function AppAppBar() {
                             alignItems: 'center',
                         }}
                     >
-                        <Button color="primary" variant="text" size="small">
+                        <Button color="primary" variant="text" size="small" onClick={handleSignInClick}>
                             Sign in
                         </Button>
-                        <Button color="primary" variant="contained" size="small">
+                        <Button color="primary" variant="contained" size="small"  onClick={handleSignUpClick}>
                             Sign up
                         </Button>
                         <ColorModeIconDropdown />
@@ -124,12 +135,12 @@ export default function AppAppBar() {
                                 <MenuItem>Blog</MenuItem>
                                 <Divider sx={{ my: 3 }} />
                                 <MenuItem>
-                                    <Button color="primary" variant="contained" fullWidth>
+                                    <Button color="primary" variant="contained" fullWidth onClick={handleSignUpClick}>
                                         Sign up
                                     </Button>
                                 </MenuItem>
                                 <MenuItem>
-                                    <Button color="primary" variant="outlined" fullWidth>
+                                    <Button color="primary" variant="outlined" fullWidth onClick={handleSignInClick}>
                                         Sign in
                                     </Button>
                                 </MenuItem>
