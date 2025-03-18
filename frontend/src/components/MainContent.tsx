@@ -187,7 +187,7 @@ export default function MainContent() {
         null,
     );
     const [filteredChips, setFilteredChips] = useState(cardData)
-    const [checkedCategory, setCheckedCategory] = React.useState<Category>(Category.ALLCATEGORIES);
+    const [, setCheckedCategory] = React.useState<Category>(Category.ALLCATEGORIES);
 
     const handleFocus = (index: number) => {
         setFocusedCardIndex(index);
