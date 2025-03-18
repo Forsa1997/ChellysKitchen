@@ -92,10 +92,10 @@ export default function AppAppBar() {
                         }}
                     >
                         <Button color="primary" variant="text" size="small" onClick={handleSignInClick}>
-                            Sign in
+                            Registrieren
                         </Button>
                         <Button color="primary" variant="contained" size="small"  onClick={handleSignUpClick}>
-                            Sign up
+                            Einloggen
                         </Button>
                         <ColorModeIconDropdown />
                     </Box>
@@ -136,12 +136,12 @@ export default function AppAppBar() {
                                 <Divider sx={{ my: 3 }} />
                                 <MenuItem>
                                     <Button color="primary" variant="contained" fullWidth onClick={handleSignUpClick}>
-                                        Sign up
+                                        Registrieren
                                     </Button>
                                 </MenuItem>
                                 <MenuItem>
                                     <Button color="primary" variant="outlined" fullWidth onClick={handleSignInClick}>
-                                        Sign in
+                                        Einloggen
                                     </Button>
                                 </MenuItem>
                             </Box>
