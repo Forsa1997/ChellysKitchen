@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {useState} from 'react';
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import Box from '@mui/material/Box';
@@ -7,16 +8,12 @@ import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid2';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import InputAdornment from '@mui/material/InputAdornment';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import { styled } from '@mui/material/styles';
+import {styled} from '@mui/material/styles';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import RssFeedRoundedIcon from '@mui/icons-material/RssFeedRounded';
-import type {} from '@mui/material/themeCssVarsAugmentation';
-import {useState} from "react";
 
 
 enum Category {
@@ -29,65 +26,88 @@ enum Category {
 const cardData = [
     {
         img: 'https://picsum.photos/800/450?random=1',
-        tag: 'Engineering',
-        title: 'Revolutionizing software development with cutting-edge tools',
+        tag: 'Kochen',
+        title: 'Lorem ipsum dolor sit amet',
         description:
-            'Our latest engineering tools are designed to streamline workflows and boost productivity. Discover how these innovations are transforming the software development landscape.',
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
+            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
+            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
+            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
         authors: [
-            { name: 'Remy Sharp', avatar: '/static/images/avatar/1.jpg' },
-            { name: 'Travis Howard', avatar: '/static/images/avatar/2.jpg' },
+            { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },
+            { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' },
         ],
         category: Category.COOKING,
+        creationDate: new Date("2022-08-09"),
     },
     {
         img: 'https://picsum.photos/800/450?random=2',
-        tag: 'Product',
-        title: 'Innovative product features that drive success',
+        tag: 'Kochen',
+        title: 'Lorem ipsum dolor sit amet',
         description:
-            'Explore the key features of our latest product release that are helping businesses achieve their goals. From user-friendly interfaces to robust functionality, learn why our product stands out.',
-        authors: [{ name: 'Erica Johns', avatar: '/static/images/avatar/6.jpg' }],
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
+            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
+            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
+            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+        authors: [       { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },],
         category: Category.COOKING,
+        creationDate: new Date("2022-08-09"),
     },
     {
         img: 'https://picsum.photos/800/450?random=3',
-        tag: 'Design',
-        title: 'Designing for the future: trends and insights',
+        tag: 'Backen',
+        title: 'Lorem ipsum dolor sit amet',
         description:
-            'Stay ahead of the curve with the latest design trends and insights. Our design team shares their expertise on creating intuitive and visually stunning user experiences.',
-        authors: [{ name: 'Kate Morrison', avatar: '/static/images/avatar/7.jpg' }],
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
+            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
+            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
+            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+        authors: [       { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },],
         category: Category.BAKING,
+        creationDate: new Date("2022-08-09"),
     },
 
     {
         img: 'https://picsum.photos/800/450?random=4',
-        tag: 'Company',
-        title: "Our company's journey: milestones and achievements",
+        tag: 'Grillen',
+        title: 'Lorem ipsum dolor sit amet',
         description:
-            "Take a look at our company's journey and the milestones we've achieved along the way. From humble beginnings to industry leader, discover our story of growth and success.",
-        authors: [{ name: 'Cindy Baker', avatar: '/static/images/avatar/3.jpg' }],
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
+            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
+            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
+            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+        authors: [      { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' },],
         category: Category.BARBEQUE,
+        creationDate: new Date("2022-08-09"),
     },
 
     {
         img: 'https://picsum.photos/800/450?random=45',
-        tag: 'Engineering',
-        title: 'Pioneering sustainable engineering solutions',
+        tag: 'Backen',
+        title: 'Lorem ipsum dolor sit amet',
         description:
-            "Learn about our commitment to sustainability and the innovative engineering solutions we're implementing to create a greener future. Discover the impact of our eco-friendly initiatives.",
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
+            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
+            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
+            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
         authors: [
-            { name: 'Agnes Walker', avatar: '/static/images/avatar/4.jpg' },
-            { name: 'Trevor Henderson', avatar: '/static/images/avatar/5.jpg' },
+            { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },
         ],
         category: Category.BAKING,
+        creationDate: new Date("2022-08-09"),
     },
     {
         img: 'https://picsum.photos/800/450?random=6',
-        tag: 'Product',
-        title: 'Maximizing efficiency with our latest product updates',
+        tag: 'Grillen',
+        title: 'Lorem ipsum dolor sit amet',
         description:
-            'Our recent product updates are designed to help you maximize efficiency and achieve more. Get a detailed overview of the new features and improvements that can elevate your workflow.',
-        authors: [{ name: 'Travis Howard', avatar: '/static/images/avatar/2.jpg' }],
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
+            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
+            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
+            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+        authors: [      { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' },],
         category: Category.BARBEQUE,
+        creationDate: new Date("2022-08-09"),
     },
 ];
 
@@ -127,7 +147,7 @@ const StyledTypography = styled(Typography)({
     textOverflow: 'ellipsis',
 });
 
-function Author({ authors }: { authors: { name: string; avatar: string }[] }) {
+function Author({ authors, creationDate }: { authors: { name: string; avatar: string }[], creationDate: Date }) {
     return (
         <Box
             sx={{
@@ -156,7 +176,7 @@ function Author({ authors }: { authors: { name: string; avatar: string }[] }) {
                     {authors.map((author) => author.name).join(', ')}
                 </Typography>
             </Box>
-            <Typography variant="caption">July 14, 2021</Typography>
+            <Typography variant="caption">{`${creationDate.getDate()}.${creationDate.getMonth()}.${creationDate.getFullYear()}`}</Typography>
         </Box>
     );
 }
@@ -187,7 +207,7 @@ export default function MainContent() {
         null,
     );
     const [filteredChips, setFilteredChips] = useState(cardData)
-    const [, setCheckedCategory] = React.useState<Category>(Category.ALLCATEGORIES);
+    const [checkedCategory, setCheckedCategory] = React.useState<Category>(Category.ALLCATEGORIES);
 
     const handleFocus = (index: number) => {
         setFocusedCardIndex(index);
@@ -225,9 +245,6 @@ export default function MainContent() {
                 }}
             >
                 <Search />
-                <IconButton size="small" aria-label="RSS feed">
-                    <RssFeedRoundedIcon />
-                </IconButton>
             </Box>
             <Box
                 sx={{
@@ -249,14 +266,18 @@ export default function MainContent() {
                     }}
                 >
                     <Chip onClick={resetCards} size="medium" label="Alle Kategorien"
+                          sx={{
+                              backgroundColor: checkedCategory === Category.ALLCATEGORIES ? 'hsl(220, 30%, 6%)' : 'transparent',
+                              border:  checkedCategory === Category.ALLCATEGORIES ?  'solid 1px': 'none',
+                          }}
                     />
                     <Chip
                         onClick={() => handleClick(Category.BAKING)}
                         size="medium"
                         label="Backen"
                         sx={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
+                            backgroundColor: checkedCategory === Category.BAKING ? 'hsl(220, 30%, 6%)' : 'transparent',
+                            border:  checkedCategory === Category.BAKING ?  'solid 1px': 'none',
                         }}
                     />
                     <Chip
@@ -264,8 +285,8 @@ export default function MainContent() {
                         size="medium"
                         label="Grillen"
                         sx={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
+                            backgroundColor: checkedCategory === Category.BARBEQUE ? 'hsl(220, 30%, 6%)' : 'transparent',
+                            border:  checkedCategory === Category.BARBEQUE ?  'solid 1px': 'none',
                         }}
                     />
                     <Chip
@@ -273,8 +294,8 @@ export default function MainContent() {
                         size="medium"
                         label="Kochen"
                         sx={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
+                            backgroundColor: checkedCategory === Category.COOKING ? 'hsl(220, 30%, 6%)' : 'transparent',
+                            border:  checkedCategory === Category.COOKING ?  'solid 1px': 'none',
                         }}
                     />
                 </Box>
@@ -321,7 +342,7 @@ export default function MainContent() {
                                     {card.description}
                                 </StyledTypography>
                             </SyledCardContent>
-                            <Author authors={card.authors} />
+                            <Author authors={card.authors} creationDate={card.creationDate} />
                         </SyledCard>
                     </Grid>
                 ))}
