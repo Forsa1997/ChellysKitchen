@@ -23,11 +23,26 @@ enum Category {
     ALLCATEGORIES = "Allcategories",
 }
 
-const cardData = [
+interface Author {
+    name: string;
+    avatar: string;
+}
+
+interface Card {
+    img: string;
+    tag: string;
+    title: string;
+    description: string;
+    authors: Author[];
+    category: Category;
+    creationDate: Date;
+}
+
+const cardData: Card[] = [
     {
         img: 'https://picsum.photos/800/450?random=1',
         tag: 'Kochen',
-        title: 'Lorem ipsum dolor sit amet',
+        title: 'Das ist ein Titel',
         description:
             'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
             'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
@@ -111,7 +126,7 @@ const cardData = [
     },
 ];
 
-const SyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Card)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     padding: 0,
@@ -128,7 +143,7 @@ const SyledCard = styled(Card)(({ theme }) => ({
     },
 }));
 
-const SyledCardContent = styled(CardContent)({
+const StyledCardContent = styled(CardContent)({
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
@@ -181,7 +196,11 @@ function Author({ authors, creationDate }: { authors: { name: string; avatar: st
     );
 }
 
-export function Search() {
+const onSearch = (event: React.ChangeEvent<HTMLInputElement  | HTMLTextAreaElement>, chips: Card[], setFilteredChips: (value: Card[] | ((prevState: Card[]) => Card[])) => void) => {
+    setFilteredChips(chips.filter((chip) => chip.title.toLowerCase().includes(event.target.value.toLowerCase())));
+}
+
+export function Search(chips: Card[], setFilteredChips: (value: Card[] | ((prevState: Card[]) => Card[])) => void) {
     return (
         <FormControl sx={{ width: { xs: '100%', md: '25ch' } }} variant="outlined">
             <OutlinedInput
@@ -197,6 +216,7 @@ export function Search() {
                 inputProps={{
                     'aria-label': 'search',
                 }}
+                onChange={(event) => onSearch(event, chips, setFilteredChips)}
             />
         </FormControl>
     );
@@ -206,7 +226,9 @@ export default function MainContent() {
     const [focusedCardIndex, setFocusedCardIndex] = React.useState<number | null>(
         null,
     );
-    const [filteredChips, setFilteredChips] = useState(cardData)
+    // TODO Filter in Kombination mit Suchfeld funktioniert noch nicht komplett
+    const [categorizedChips, setCategorizedChips] = useState<Card[]>(cardData)
+    const [filteredChips, setFilteredChips] = useState<Card[]>(categorizedChips)
     const [checkedCategory, setCheckedCategory] = React.useState<Category>(Category.ALLCATEGORIES);
 
     const handleFocus = (index: number) => {
@@ -218,11 +240,13 @@ export default function MainContent() {
     };
 
     const handleClick = (category: Category) => {
+        setCategorizedChips(cardData.filter((card => card.category === category)))
         setFilteredChips(cardData.filter((card => card.category === category)))
         setCheckedCategory(category)
     };
 
     const resetCards = () => {
+        setCategorizedChips(cardData)
         setFilteredChips(cardData)
         setCheckedCategory(Category.ALLCATEGORIES)
     };
@@ -244,7 +268,7 @@ export default function MainContent() {
                     overflow: 'auto',
                 }}
             >
-                <Search />
+                {Search(categorizedChips, setFilteredChips)}
             </Box>
             <Box
                 sx={{
@@ -308,18 +332,19 @@ export default function MainContent() {
                         overflow: 'auto',
                     }}
                 >
-                    <Search />
+                    {Search(categorizedChips, setFilteredChips)}
                 </Box>
             </Box>
             <Grid container spacing={2} columns={12}>
                 {filteredChips.map((card, index) => (
                     <Grid size={{ xs: 12, md: 6 }} key={"card" + index}>
-                        <SyledCard
+                        <StyledCard
                             variant="outlined"
-                            onFocus={() => handleFocus(0)}
+                            onFocus={() => handleFocus(index)}
                             onBlur={handleBlur}
                             tabIndex={0}
-                            className={focusedCardIndex === 0 ? 'Mui-focused' : ''}
+                            className={focusedCardIndex === index ? 'Mui-focused' : ''}
+                            onClick={() => alert(focusedCardIndex)}
                         >
                             <CardMedia
                                 component="img"
@@ -331,7 +356,7 @@ export default function MainContent() {
                                     borderColor: 'divider',
                                 }}
                             />
-                            <SyledCardContent>
+                            <StyledCardContent>
                                 <Typography gutterBottom variant="caption" component="div">
                                     {card.tag}
                                 </Typography>
@@ -341,9 +366,9 @@ export default function MainContent() {
                                 <StyledTypography variant="body2" color="text.secondary" gutterBottom>
                                     {card.description}
                                 </StyledTypography>
-                            </SyledCardContent>
+                            </StyledCardContent>
                             <Author authors={card.authors} creationDate={card.creationDate} />
-                        </SyledCard>
+                        </StyledCard>
                     </Grid>
                 ))}
             </Grid>
