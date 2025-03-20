@@ -12,12 +12,12 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
-import { styled } from '@mui/material/styles';
+import {styled} from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
 import AppTheme from '../AppTheme';
-import ColorModeSelect from '../ColorModeSelect';
-import { GoogleIcon, FacebookIcon } from './CustomIcons';
+import {FacebookIcon, GoogleIcon} from './CustomIcons';
 import SitemarkIcon from "./SitemarkIcon.tsx";
+import {useNavigate} from "react-router";
 
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -68,6 +68,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const [passwordError, setPasswordError] = React.useState(false);
     const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
     const [open, setOpen] = React.useState(false);
+    const navigate = useNavigate();
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -120,7 +121,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         <AppTheme {...props}>
             <CssBaseline enableColorScheme />
             <SignInContainer direction="column" justifyContent="space-between">
-                <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
                 <Card variant="outlined">
                     <SitemarkIcon />
                     <Typography
@@ -219,7 +219,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                         <Typography sx={{ textAlign: 'center' }}>
                             Don&apos;t have an account?{' '}
                             <Link
-                                href="/material-ui/getting-started/templates/sign-in/"
+                                onClick={() => navigate("/signup")}
                                 variant="body2"
                                 sx={{ alignSelf: 'center' }}
                             >
