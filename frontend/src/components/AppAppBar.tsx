@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { alpha, styled } from '@mui/material/styles';
+import {alpha, styled} from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -63,26 +63,6 @@ export default function AppAppBar() {
                 <StyledToolbar variant="dense" disableGutters>
                     <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
                         <Sitemark/>
-                        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                            <Button variant="text" color="info" size="small">
-                                Features
-                            </Button>
-                            <Button variant="text" color="info" size="small">
-                                Testimonials
-                            </Button>
-                            <Button variant="text" color="info" size="small">
-                                Highlights
-                            </Button>
-                            <Button variant="text" color="info" size="small">
-                                Pricing
-                            </Button>
-                            <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                                FAQ
-                            </Button>
-                            <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                                Blog
-                            </Button>
-                        </Box>
                     </Box>
                     <Box
                         sx={{
@@ -127,13 +107,7 @@ export default function AppAppBar() {
                                         <CloseRoundedIcon />
                                     </IconButton>
                                 </Box>
-                                <MenuItem>Features</MenuItem>
-                                <MenuItem>Testimonials</MenuItem>
-                                <MenuItem>Highlights</MenuItem>
-                                <MenuItem>Pricing</MenuItem>
-                                <MenuItem>FAQ</MenuItem>
-                                <MenuItem>Blog</MenuItem>
-                                <Divider sx={{ my: 3 }} />
+                                <Divider sx={{ my: 2 }} />
                                 <MenuItem>
                                     <Button color="primary" variant="contained" fullWidth onClick={handleSignUpClick}>
                                         Registrieren
