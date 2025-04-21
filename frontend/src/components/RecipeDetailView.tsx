@@ -9,12 +9,8 @@ interface RecipeDetailViewProps {
 }
 
 export function RecipeDetailView({ recipe, onClose }: RecipeDetailViewProps) {
-    // Verwaltet das Scrolling-Verhalten des Body
     useEffect(() => {
-        // Deaktiviert Scrolling auf dem Body wenn das Modal geöffnet ist
         document.body.style.overflow = 'hidden';
-
-        // Cleanup: Aktiviert Scrolling wieder wenn Modal geschlossen wird
         return () => {
             document.body.style.overflow = 'unset';
         };
@@ -78,41 +74,97 @@ export function RecipeDetailView({ recipe, onClose }: RecipeDetailViewProps) {
                 </IconButton>
 
                 <Box sx={{ p: 4 }}>
-                    <img
-                        src={recipe.img}
-                        alt={recipe.title}
-                        style={{
-                            width: '100%',
-                            height: 'auto',
-                            borderRadius: '8px',
-                            marginBottom: '24px'
-                        }}
-                    />
+                    {/* Header Bereich */}
+                    <img src={recipe.img} alt={recipe.title}   style={{
+                        width: '100%',
+                        height: 'auto',
+                        borderRadius: '8px',
+                        marginBottom: '24px'
+                    }} />
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                        <Typography variant="h4" component="h1">
-                            {recipe.title}
-                        </Typography>
-                        <Typography
-                            variant="subtitle1"
-                            sx={{
-                                backgroundColor: 'primary.main',
-                                color: 'white',
-                                px: 2,
-                                py: 0.5,
-                                borderRadius: '16px'
-                            }}
-                        >
+                        <Typography variant="h4" component="h1">{recipe.title}</Typography>
+                        <Typography variant="subtitle1">
                             {recipe.tag}
                         </Typography>
                     </Box>
 
-                    <Box sx={{ mb: 4 }}>
-                        <Typography variant="body1">
-                            {recipe.description}
-                        </Typography>
+                    {/* Rezept-Info */}
+                    <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: 'wrap' }}>
+                        <Box>
+                            <Typography variant="subtitle2" color="text.secondary">Zubereitungszeit</Typography>
+                            <Typography>{recipe.preparationTime + recipe.cookingTime} Min.</Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="subtitle2" color="text.secondary">Schwierigkeit</Typography>
+                            <Typography>{recipe.difficulty}</Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="subtitle2" color="text.secondary">Portionen</Typography>
+                            <Typography>{recipe.servings}</Typography>
+                        </Box>
                     </Box>
 
+                    {/* Kurzbeschreibung */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="body1">{recipe.shortDescription}</Typography>
+                    </Box>
+
+                    {/* Zutaten */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>Zutaten</Typography>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 2 }}>
+                            {recipe.ingredients.map((ingredient, index) => (
+                                <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Typography>{ingredient.name}</Typography>
+                                    <Typography>{`${ingredient.amount} ${ingredient.unit}`}</Typography>
+                                </Box>
+                            ))}
+                        </Box>
+                    </Box>
+
+                    {/* Zubereitungsschritte */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>Zubereitung</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            {recipe.steps.map((step) => (
+                                <Box key={step.stepNumber}>
+                                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                                        Schritt {step.stepNumber}
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mb: 1 }}>
+                                        {step.instruction}
+                                    </Typography>
+                                    {step.tip && (
+                                        <Typography 
+                                            variant="body2" 
+                                            sx={{ 
+                                                color: 'info.main',
+                                                bgcolor: 'info.lighter',
+                                                p: 1,
+                                                borderRadius: 1
+                                            }}
+                                        >
+                                            Tipp: {step.tip}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            ))}
+                        </Box>
+                    </Box>
+
+                    {/* Nährwerte */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>Nährwerte pro Portion</Typography>
+                        <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            <Typography>Kalorien: {recipe.nutritionalValues.calories} kcal</Typography>
+                            <Typography>Protein: {recipe.nutritionalValues.protein}g</Typography>
+                            <Typography>Kohlenhydrate: {recipe.nutritionalValues.carbohydrates}g</Typography>
+                            <Typography>Fett: {recipe.nutritionalValues.fat}g</Typography>
+                        </Box>
+                    </Box>
+
+                    {/* Autor-Info (bleibt unverändert) */}
                     <Box sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -140,9 +192,6 @@ export function RecipeDetailView({ recipe, onClose }: RecipeDetailViewProps) {
                                 </Typography>
                             </Box>
                         </Box>
-                        <Typography variant="subtitle2" color="primary">
-                            {recipe.category}
-                        </Typography>
                     </Box>
                 </Box>
             </Paper>

@@ -24,16 +24,43 @@ enum Category {
     ALLCATEGORIES = "Allcategories",
 }
 
+// Neue Interfaces für das Rezept
+interface Ingredient {
+    name: string;
+    amount: number;
+    unit: string;
+}
+
+interface NutritionalValue {
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+}
+
 interface Author {
     name: string;
     avatar: string;
+}
+
+interface RecipeStep {
+    stepNumber: number;
+    instruction: string;
+    tip?: string;
 }
 
 export interface Card {
     img: string;
     tag: string;
     title: string;
-    description: string;
+    shortDescription: string;  // Für die Kartenansicht
+    preparationTime: number;   // in Minuten
+    cookingTime: number;       // in Minuten
+    difficulty: 'Einfach' | 'Mittel' | 'Schwer';
+    servings: number;
+    ingredients: Ingredient[];
+    steps: RecipeStep[];
+    nutritionalValues: NutritionalValue;
     authors: Author[];
     category: Category;
     creationDate: Date;
@@ -43,88 +70,324 @@ const cardData: Card[] = [
     {
         img: 'https://picsum.photos/800/450?random=1',
         tag: 'Kochen',
-        title: 'Das ist ein Titel',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
-            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
-            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
-            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+        title: 'Cremige Pasta mit Spinat und Lachs',
+        shortDescription: 'Cremige Pasta mit frischem Spinat und zartem Lachs in einer leichten Weißweinsauce',
+        preparationTime: 15,
+        cookingTime: 20,
+        difficulty: 'Mittel',
+        servings: 4,
+        ingredients: [
+            { name: 'Tagliatelle', amount: 500, unit: 'g' },
+            { name: 'Lachs', amount: 400, unit: 'g' },
+            { name: 'Spinat', amount: 200, unit: 'g' },
+            { name: 'Sahne', amount: 200, unit: 'ml' },
+            { name: 'Weißwein', amount: 100, unit: 'ml' },
+            { name: 'Knoblauch', amount: 2, unit: 'Zehen' },
+            { name: 'Parmesan', amount: 50, unit: 'g' }
+        ],
+        steps: [
+            {
+                stepNumber: 1,
+                instruction: 'Pasta in Salzwasser nach Packungsanweisung kochen.',
+                tip: 'Wasser gut salzen - es sollte wie Meerwasser schmecken'
+            },
+            {
+                stepNumber: 2,
+                instruction: 'Lachs in Würfel schneiden und in Olivenöl anbraten.'
+            },
+            {
+                stepNumber: 3,
+                instruction: 'Knoblauch fein hacken und zum Lachs geben, mit Weißwein ablöschen.'
+            },
+            {
+                stepNumber: 4,
+                instruction: 'Sahne dazugeben und kurz einköcheln lassen, dann Spinat unterheben.'
+            },
+            {
+                stepNumber: 5,
+                instruction: 'Pasta unterheben, mit geriebenem Parmesan servieren.'
+            }
+        ],
+        nutritionalValues: {
+            calories: 650,
+            protein: 35,
+            carbohydrates: 70,
+            fat: 25
+        },
         authors: [
             { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },
-            { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' },
+            { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' }
         ],
         category: Category.COOKING,
-        creationDate: new Date("2022-08-09"),
+        creationDate: new Date("2024-03-15")
     },
     {
         img: 'https://picsum.photos/800/450?random=2',
         tag: 'Kochen',
-        title: 'Lorem ipsum dolor sit amet',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
-            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
-            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
-            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-        authors: [       { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },],
+        title: 'Mediterrane Quinoa-Bowl',
+        shortDescription: 'Gesunde Bowl mit Quinoa, gegrilltem Gemüse und hausgemachtem Hummus',
+        preparationTime: 20,
+        cookingTime: 25,
+        difficulty: 'Einfach',
+        servings: 3,
+        ingredients: [
+            { name: 'Quinoa', amount: 200, unit: 'g' },
+            { name: 'Zucchini', amount: 1, unit: 'Stück' },
+            { name: 'Aubergine', amount: 1, unit: 'Stück' },
+            { name: 'Kirschtomaten', amount: 200, unit: 'g' },
+            { name: 'Hummus', amount: 150, unit: 'g' },
+            { name: 'Feta', amount: 100, unit: 'g' },
+            { name: 'Pinienkerne', amount: 30, unit: 'g' }
+        ],
+        steps: [
+            {
+                stepNumber: 1,
+                instruction: 'Quinoa nach Packungsanweisung kochen.'
+            },
+            {
+                stepNumber: 2,
+                instruction: 'Gemüse in Scheiben schneiden und mit Olivenöl und Kräutern marinieren.',
+                tip: 'Mediterranen Kräutermix verwenden für extra Geschmack'
+            },
+            {
+                stepNumber: 3,
+                instruction: 'Gemüse auf dem Grill oder in einer Grillpfanne grillen.'
+            },
+            {
+                stepNumber: 4,
+                instruction: 'Pinienkerne rösten bis sie goldbraun sind.'
+            },
+            {
+                stepNumber: 5,
+                instruction: 'Bowl anrichten: Quinoa als Basis, darauf das gegrillte Gemüse, Hummus, zerbröselten Feta und Pinienkerne.'
+            }
+        ],
+        nutritionalValues: {
+            calories: 450,
+            protein: 18,
+            carbohydrates: 55,
+            fat: 20
+        },
+        authors: [
+            { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' }
+        ],
         category: Category.COOKING,
-        creationDate: new Date("2022-08-09"),
+        creationDate: new Date("2024-03-10")
     },
     {
         img: 'https://picsum.photos/800/450?random=3',
         tag: 'Backen',
-        title: 'Lorem ipsum dolor sit amet',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
-            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
-            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
-            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-        authors: [       { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },],
+        title: 'Saftige Karottentorte',
+        shortDescription: 'Klassische Karottentorte mit cremigem Frischkäse-Frosting',
+        preparationTime: 30,
+        cookingTime: 45,
+        difficulty: 'Mittel',
+        servings: 12,
+        ingredients: [
+            { name: 'Karotten', amount: 300, unit: 'g' },
+            { name: 'Mehl', amount: 250, unit: 'g' },
+            { name: 'Zucker', amount: 200, unit: 'g' },
+            { name: 'Öl', amount: 200, unit: 'ml' },
+            { name: 'Eier', amount: 4, unit: 'Stück' },
+            { name: 'Frischkäse', amount: 300, unit: 'g' },
+            { name: 'Puderzucker', amount: 100, unit: 'g' },
+            { name: 'Walnüsse', amount: 100, unit: 'g' }
+        ],
+        steps: [
+            {
+                stepNumber: 1,
+                instruction: 'Karotten reiben und Walnüsse hacken.'
+            },
+            {
+                stepNumber: 2,
+                instruction: 'Eier mit Zucker schaumig schlagen, Öl unterrühren.',
+                tip: 'Raumtemperierte Zutaten verwenden'
+            },
+            {
+                stepNumber: 3,
+                instruction: 'Mehl und Gewürze unterheben, dann Karotten und Nüsse untermischen.'
+            },
+            {
+                stepNumber: 4,
+                instruction: 'Bei 180°C für 45 Minuten backen.',
+                tip: 'Stäbchenprobe nicht vergessen'
+            },
+            {
+                stepNumber: 5,
+                instruction: 'Für das Frosting Frischkäse mit Puderzucker verrühren und auf dem ausgekühlten Kuchen verteilen.'
+            }
+        ],
+        nutritionalValues: {
+            calories: 385,
+            protein: 6,
+            carbohydrates: 45,
+            fat: 22
+        },
+        authors: [
+            { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' }
+        ],
         category: Category.BAKING,
-        creationDate: new Date("2022-08-09"),
+        creationDate: new Date("2024-03-08")
     },
-
     {
         img: 'https://picsum.photos/800/450?random=4',
         tag: 'Grillen',
-        title: 'Lorem ipsum dolor sit amet',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
-            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
-            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
-            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-        authors: [      { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' },],
-        category: Category.BARBEQUE,
-        creationDate: new Date("2022-08-09"),
-    },
-
-    {
-        img: 'https://picsum.photos/800/450?random=45',
-        tag: 'Backen',
-        title: 'Lorem ipsum dolor sit amet',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
-            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
-            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
-            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+        title: 'BBQ Rippchen mit Honig-Glasur',
+        shortDescription: 'Zarte Rippchen mit süß-würziger Honig-BBQ-Glasur',
+        preparationTime: 30,
+        cookingTime: 180,
+        difficulty: 'Schwer',
+        servings: 4,
+        ingredients: [
+            { name: 'Spareribs', amount: 2, unit: 'kg' },
+            { name: 'BBQ Sauce', amount: 400, unit: 'ml' },
+            { name: 'Honig', amount: 100, unit: 'ml' },
+            { name: 'Knoblauch', amount: 4, unit: 'Zehen' },
+            { name: 'BBQ Rub', amount: 4, unit: 'EL' }
+        ],
+        steps: [
+            {
+                stepNumber: 1,
+                instruction: 'Silberhaut von den Rippchen entfernen und mit BBQ Rub einreiben.',
+                tip: 'Am besten über Nacht marinieren'
+            },
+            {
+                stepNumber: 2,
+                instruction: 'Grill auf 110°C indirekte Hitze vorbereiten.'
+            },
+            {
+                stepNumber: 3,
+                instruction: 'Rippchen für 3 Stunden räuchern.',
+                tip: 'Kirschholz gibt ein besonders gutes Aroma'
+            },
+            {
+                stepNumber: 4,
+                instruction: 'Honig-BBQ-Sauce mischen und Rippchen damit alle 30 Minuten bestreichen.'
+            },
+            {
+                stepNumber: 5,
+                instruction: 'In der letzten halben Stunde die Temperatur erhöhen und karamellisieren lassen.'
+            }
+        ],
+        nutritionalValues: {
+            calories: 850,
+            protein: 45,
+            carbohydrates: 35,
+            fat: 60
+        },
         authors: [
-            { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' },
+            { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' }
+        ],
+        category: Category.BARBEQUE,
+        creationDate: new Date("2024-03-05")
+    },
+    {
+        img: 'https://picsum.photos/800/450?random=5',
+        tag: 'Backen',
+        title: 'Französische Macarons',
+        shortDescription: 'Klassische französische Macarons mit Vanille-Ganache',
+        preparationTime: 45,
+        cookingTime: 15,
+        difficulty: 'Schwer',
+        servings: 24,
+        ingredients: [
+            { name: 'Mandelnmehl', amount: 200, unit: 'g' },
+            { name: 'Puderzucker', amount: 200, unit: 'g' },
+            { name: 'Eiweiß', amount: 3, unit: 'Stück' },
+            { name: 'Zucker', amount: 50, unit: 'g' },
+            { name: 'Sahne', amount: 200, unit: 'ml' },
+            { name: 'Weiße Schokolade', amount: 200, unit: 'g' },
+            { name: 'Vanilleschote', amount: 1, unit: 'Stück' }
+        ],
+        steps: [
+            {
+                stepNumber: 1,
+                instruction: 'Mandelnmehl und Puderzucker sieben und mischen.',
+                tip: 'Zweimal sieben für extra feine Macarons'
+            },
+            {
+                stepNumber: 2,
+                instruction: 'Eiweiß steif schlagen, nach und nach Zucker einrieseln lassen.'
+            },
+            {
+                stepNumber: 3,
+                instruction: 'Mandel-Zucker-Mischung vorsichtig unterheben.',
+                tip: 'Nicht mehr als 50 Mal rühren'
+            },
+            {
+                stepNumber: 4,
+                instruction: 'Masse in Spritzbeutel füllen und kleine Kreise spritzen.'
+            },
+            {
+                stepNumber: 5,
+                instruction: 'Bei 150°C für 15 Minuten backen, mit Vanille-Ganache füllen.'
+            }
+        ],
+        nutritionalValues: {
+            calories: 180,
+            protein: 4,
+            carbohydrates: 25,
+            fat: 8
+        },
+        authors: [
+            { name: 'Michelle Zboron', avatar: '/static/images/avatar/1.jpg' }
         ],
         category: Category.BAKING,
-        creationDate: new Date("2022-08-09"),
+        creationDate: new Date("2024-03-01")
     },
     {
         img: 'https://picsum.photos/800/450?random=6',
         tag: 'Grillen',
-        title: 'Lorem ipsum dolor sit amet',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ' +
-            'At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, ' +
-            'consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ' +
-            'Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-        authors: [      { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' },],
+        title: 'Gegrillter Gemüse-Halloumi Spieß',
+        shortDescription: 'Bunte Gemüsespieße mit würzigem Halloumi-Käse',
+        preparationTime: 20,
+        cookingTime: 10,
+        difficulty: 'Einfach',
+        servings: 4,
+        ingredients: [
+            { name: 'Halloumi', amount: 400, unit: 'g' },
+            { name: 'Zucchini', amount: 2, unit: 'Stück' },
+            { name: 'Paprika', amount: 2, unit: 'Stück' },
+            { name: 'Champignons', amount: 250, unit: 'g' },
+            { name: 'Olivenöl', amount: 4, unit: 'EL' },
+            { name: 'Oregano', amount: 2, unit: 'TL' },
+            { name: 'Holzspieße', amount: 8, unit: 'Stück' }
+        ],
+        steps: [
+            {
+                stepNumber: 1,
+                instruction: 'Holzspieße in Wasser einweichen.',
+                tip: 'Mindestens 30 Minuten einweichen damit sie nicht verbrennen'
+            },
+            {
+                stepNumber: 2,
+                instruction: 'Gemüse und Halloumi in gleichmäßige Stücke schneiden.'
+            },
+            {
+                stepNumber: 3,
+                instruction: 'Marinade aus Olivenöl und Kräutern zubereiten.'
+            },
+            {
+                stepNumber: 4,
+                instruction: 'Gemüse und Käse abwechselnd aufspießen und mit Marinade bestreichen.'
+            },
+            {
+                stepNumber: 5,
+                instruction: 'Spieße bei mittlerer Hitze von allen Seiten grillen bis das Gemüse gar ist.'
+            }
+        ],
+        nutritionalValues: {
+            calories: 320,
+            protein: 18,
+            carbohydrates: 8,
+            fat: 25
+        },
+        authors: [
+            { name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' }
+        ],
         category: Category.BARBEQUE,
-        creationDate: new Date("2022-08-09"),
-    },
+        creationDate: new Date("2024-02-28")
+    }
 ];
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -372,7 +635,7 @@ export default function MainContent() {
                                     {card.title}
                                 </Typography>
                                 <StyledTypography variant="body2" color="text.secondary" gutterBottom>
-                                    {card.description}
+                                    {card.shortDescription}
                                 </StyledTypography>
                             </StyledCardContent>
                             <Author authors={card.authors} creationDate={card.creationDate} />
