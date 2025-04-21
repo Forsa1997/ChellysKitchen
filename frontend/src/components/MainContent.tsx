@@ -14,6 +14,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import {styled} from '@mui/material/styles';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import {RecipeDetailView} from "./RecipeDetailView.tsx";
 
 
 enum Category {
@@ -28,7 +29,7 @@ interface Author {
     avatar: string;
 }
 
-interface Card {
+export interface Card {
     img: string;
     tag: string;
     title: string;
@@ -251,6 +252,13 @@ export default function MainContent() {
         setCheckedCategory(Category.ALLCATEGORIES)
     };
 
+    const [selectedRecipe, setSelectedRecipe] = useState<Card | null>(null);
+
+    const showRecipeDetails = (index: number) => {
+        setSelectedRecipe(filteredChips[index]);
+    };
+
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div>
@@ -344,7 +352,7 @@ export default function MainContent() {
                             onBlur={handleBlur}
                             tabIndex={0}
                             className={focusedCardIndex === index ? 'Mui-focused' : ''}
-                            onClick={() => alert(focusedCardIndex)}
+                            onClick={() => showRecipeDetails(index)}
                         >
                             <CardMedia
                                 component="img"
@@ -371,7 +379,13 @@ export default function MainContent() {
                         </StyledCard>
                     </Grid>
                 ))}
-            </Grid>
+            </Grid>{selectedRecipe && (
+            <RecipeDetailView
+                recipe={selectedRecipe}
+                onClose={() => setSelectedRecipe(null)}
+            />
+        )}
+
         </Box>
     );
 }
