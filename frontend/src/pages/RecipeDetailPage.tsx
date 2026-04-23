@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { fetchRecipeById } from '../api/client';
 import type { Recipe } from '../types/domain';
+import { getIngredientText, getStepText, getTotalDurationText } from '../utils/recipeFilters';
 
 export function RecipeDetailPage() {
   const { id } = useParams();
@@ -52,7 +53,7 @@ export function RecipeDetailPage() {
           <Typography variant="h4" gutterBottom>{recipe.title}</Typography>
           <Typography color="text.secondary">{recipe.shortDescription}</Typography>
           <Typography variant="caption" color="text.secondary">
-            {recipe.preparationTime + recipe.cookingTime} Minuten • {recipe.servings} Portionen
+            {getTotalDurationText(recipe)}
           </Typography>
         </CardContent>
       </Card>
@@ -63,7 +64,7 @@ export function RecipeDetailPage() {
           <List dense>
             {recipe.ingredients.map((ingredient) => (
               <ListItem key={`${ingredient.name}-${ingredient.unit}`} disableGutters>
-                <ListItemText primary={`${ingredient.amount} ${ingredient.unit} ${ingredient.name}`} />
+                <ListItemText primary={getIngredientText(ingredient.amount, ingredient.unit, ingredient.name)} />
               </ListItem>
             ))}
           </List>
@@ -76,7 +77,7 @@ export function RecipeDetailPage() {
           <List>
             {recipe.steps.map((step) => (
               <ListItem key={step.stepNumber} disableGutters>
-                <ListItemText primary={`${step.stepNumber}. ${step.instruction}`} />
+                <ListItemText primary={getStepText(step.stepNumber, step.instruction)} />
               </ListItem>
             ))}
           </List>
