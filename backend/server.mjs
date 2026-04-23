@@ -2,9 +2,10 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer } from 'node:http';
 import { recipes } from './data/recipes.mjs';
 import { queryRecipes } from './src/queryRecipes.mjs';
+import { resolveCorsOrigin } from './src/cors.mjs';
 
 const port = Number(process.env.PORT ?? 4000);
-const allowedOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
+const allowedOrigin = process.env.CORS_ORIGIN;
 
 const users = new Map();
 const sessions = new Map();
@@ -17,7 +18,7 @@ function jsonResponse(res, statusCode, payload) {
 
 function withCors(req, res) {
   const requestOrigin = req.headers.origin;
-  const origin = requestOrigin === allowedOrigin ? allowedOrigin : 'null';
+  const origin = resolveCorsOrigin({ requestOrigin, allowedOrigin });
 
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
