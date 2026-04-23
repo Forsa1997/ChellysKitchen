@@ -44,9 +44,12 @@ Für den Start ist das die einfachste und sicherste Variante:
 1. Render Dashboard → **New +** → **Blueprint**
 2. Repo auswählen
 3. Render liest `render.yaml` und erstellt:
+   - `chellys-kitchen-db` (PostgreSQL, Free Plan)
    - `chellys-kitchen-api` (Web Service, `backend/`, `npm ci`, `npm run start`)
    - `chellys-kitchen-web` (Static Site, `frontend/`, `npm ci && npm run build`, `dist`)
-4. Beide Services auf Plan **Free** deployen
+4. Alle Services auf Plan **Free** deployen
+
+Die API bekommt dabei `DATABASE_URL` automatisch aus der Blueprint-DB (`fromDatabase.connectionString`).
 
 Datei: `render.yaml`
 
@@ -110,12 +113,20 @@ Dann Frontend neu deployen.
 
 ## 5) Datenbank (Render Free) anbinden
 
-Wenn du in Render eine Free Postgres DB erstellt hast:
+### Wenn du den Blueprint aus `render.yaml` nutzt (empfohlen)
 
-1. In Render DB-Verbindungsstring kopieren (Internal/External URL)
-2. Im Backend-Service als Environment Variable setzen, z. B.:
+Du musst **keine** `DATABASE_URL` manuell setzen. Die Zuordnung passiert im Blueprint über:
+
+- Service `chellys-kitchen-db` (PostgreSQL)
+- API-EnvVar `DATABASE_URL` mit `fromDatabase.connectionString`
+
+### Wenn du manuell statt Blueprint erstellst
+
+1. In Render eine Free Postgres DB anlegen
+2. In Render DB-Verbindungsstring kopieren (Internal/External URL)
+3. Im Backend-Service als Environment Variable setzen, z. B.:
    - `DATABASE_URL=postgres://...`
-3. Backend-Code auf DB umstellen (aktuell nutzt dieses Repo noch lokale Daten in `backend/data/recipes.mjs`)
+4. Backend-Code auf DB umstellen (aktuell nutzt dieses Repo noch lokale Daten in `backend/data/recipes.mjs`)
 
 ---
 
