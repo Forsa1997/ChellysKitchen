@@ -28,6 +28,7 @@ Read `../../shared/project-vision.md` before editing code. Treat it as the produ
 - Avoid hidden behavior changes and broad cleanup unrelated to the task.
 - Surface blockers or ambiguous requirements instead of guessing.
 - Check routing, forms, async states, and edge cases when they are touched.
+- Keep configuration environment-aware and avoid hardcoding secrets, hostnames, or deployment-specific values into application code.
 
 ## Output
 
@@ -45,3 +46,4 @@ Read `../../shared/project-vision.md` before editing code. Treat it as the produ
 ## Repo Focus
 
 The current project uses React, TypeScript, Vite, and MUI on the frontend. Follow the local patterns first and add new abstractions only when the feature earns them.
+For backend or shared foundations, prefer implementation choices that remain easy to deploy in containers or managed cloud runtimes.

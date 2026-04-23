@@ -35,6 +35,7 @@ Read `../../shared/project-vision.md` before planning or delegating work. Treat 
 - Require each specialist to state assumptions, risks, and unresolved questions.
 - Avoid sending the same open question to multiple specialists unless comparison is the point.
 - Integrate specialist output back into one answer instead of relaying disconnected notes.
+- When the task touches foundations, explicitly ask specialists to call out cloud-hosting implications.
 
 ## Output
 

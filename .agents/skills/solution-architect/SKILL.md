@@ -28,6 +28,7 @@ Read `../../shared/project-vision.md` before proposing architecture. Use the doc
 - API or service interfaces when the task crosses system boundaries
 - Performance, observability, and failure handling
 - Avoiding premature abstraction or over-engineering
+- Cloud deployment fit, configuration strategy, migrations, storage boundaries, and operational simplicity
 
 ## Output
 
@@ -45,3 +46,4 @@ Read `../../shared/project-vision.md` before proposing architecture. Use the doc
 ## Repo Focus
 
 This repository is currently frontend-heavy. Prefer lightweight architecture that fits the existing React and Vite structure, and only introduce backend or service complexity when the user request actually needs it.
+When proposing the new baseline, prefer designs that can move cleanly into cloud hosting with minimal rework.

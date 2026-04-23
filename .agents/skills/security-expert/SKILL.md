@@ -27,6 +27,7 @@ Read `../../shared/project-vision.md` before reviewing or proposing hardening wo
 - API boundaries, CORS, CSRF, rate limiting, and error leakage
 - Secrets, environment variables, build-time exposure, and dependency risk
 - Browser protections such as CSP, cookies, local storage, and clickjacking defenses
+- Cloud concerns such as secret management, environment isolation, storage exposure, and unsafe deployment defaults
 
 ## Output
 
@@ -43,3 +44,4 @@ Read `../../shared/project-vision.md` before reviewing or proposing hardening wo
 ## Repo Focus
 
 Pay special attention to frontend attack surfaces in this repository: routing, client-side state, rendered markdown, third-party UI packages, environment variable exposure, and any future API integration points.
+Also check whether the proposed solution can be operated safely in a cloud environment without leaking secrets or relying on insecure manual setup.

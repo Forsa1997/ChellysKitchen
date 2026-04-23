@@ -35,6 +35,7 @@ Chellys Kitchen should become a real web application where recipes are stored pe
 - Use role-based permissions so different users can perform different actions.
 - Prefer a clean rebuild over trying to evolve the current prototype into production architecture.
 - Preserve visual continuity with the prototype where it adds product value.
+- Keep the system deployable to a cloud provider without major redesign.
 
 ## Default Functional Scope
 
@@ -85,6 +86,17 @@ Use these as the initial RBAC baseline unless the user defines a different model
 - Authentication: email/password as the baseline
 - Authorization: RBAC enforced in the backend first and reflected in the frontend
 - API and database become the source of truth; the frontend must not own durable recipe state
+- Deployment target: cloud-hosted environment
+
+## Cloud Hosting Direction
+
+- The application should be designed so it can be deployed cleanly to a cloud provider later.
+- Prefer stateless application services where possible.
+- Store persistent data in managed infrastructure such as a hosted relational database and object storage when needed.
+- Keep environment-specific configuration outside source code.
+- Assume separate environments such as local development, staging, and production.
+- Avoid solutions that depend on manual server tweaking or machine-local state.
+- Treat observability, deployment repeatability, and secret management as first-class concerns rather than afterthoughts.
 
 ## Working Technical Assumptions
 
@@ -94,6 +106,8 @@ Use these only as defaults until the user makes explicit choices:
 - Node.js backend is the default assumption
 - PostgreSQL is the default database assumption
 - Social login can be deferred until after core email/password auth works
+- Container-friendly deployment is preferred
+- Managed cloud services are preferred over self-operated infrastructure where that reduces operational complexity
 
 ## Architecture Guidance For Future Stories
 
@@ -102,6 +116,7 @@ Use these only as defaults until the user makes explicit choices:
 - Extract domain types, API contracts, and permission logic into dedicated modules instead of page components.
 - Enforce sensitive behavior in the backend, not only in the UI.
 - Keep stories incremental, but ensure the resulting architecture still points toward the target product.
+- Keep deployment concerns in mind early: configuration, secrets, migrations, health checks, and environment separation should fit a cloud deployment model.
 
 ## Multi-Agent Working Agreement
 
@@ -111,6 +126,7 @@ Use these only as defaults until the user makes explicit choices:
 - `$ui-designer` should use it to preserve the desired visual identity while improving UX quality.
 - `$security-expert` should use it to enforce backend-first auth and authorization thinking.
 - `$feature-developer` should use it to keep implementation aligned with the intended product, not just the current mock UI.
+- All specialists should prefer decisions that remain easy to deploy, operate, and secure in a cloud environment.
 
 ## Open Product Questions
 
@@ -122,3 +138,4 @@ These are not blockers for documenting the vision, but they should be clarified 
 - Should users be able to upload their own recipe images?
 - Which exact backend framework and deployment target do you prefer?
 - Do you want only RBAC, or also ownership rules such as "members can edit only their own recipes"?
+- Which cloud provider do you expect to use later?
