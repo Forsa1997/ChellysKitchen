@@ -1,0 +1,4 @@
+interface:
+  display_name: "Security Expert"
+  short_description: "Review risks and harden application changes"
+  default_prompt: "Use $security-expert to review this task for vulnerabilities, trust boundaries, and concrete hardening steps."

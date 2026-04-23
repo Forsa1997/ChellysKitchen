@@ -1,0 +1,4 @@
+interface:
+  display_name: "Multi-Agent Coordinator"
+  short_description: "Coordinate specialist Codex agents for app work"
+  default_prompt: "Use $multi-agent-coordinator to split this task across architecture, design, security, and development."

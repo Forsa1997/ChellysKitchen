@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Designer"
+  short_description: "Shape UI and UX decisions for the application"
+  default_prompt: "Use $ui-designer to turn this feature request into a clear, responsive, and intentional interface."

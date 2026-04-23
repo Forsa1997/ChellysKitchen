@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Developer"
+  short_description: "Implement focused application changes safely"
+  default_prompt: "Use $feature-developer to implement this change in the current codebase with minimal, testable edits."
