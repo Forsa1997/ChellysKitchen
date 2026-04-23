@@ -7,6 +7,7 @@ const allowedOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
 
 const users = new Map();
 const sessions = new Map();
+const recipeStore = [...recipes];
 
 function jsonResponse(res, statusCode, payload) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
@@ -41,6 +42,12 @@ function sanitizeUser(user) {
   };
 }
 
+function sanitizeRecipe(recipe) {
+  return {
+    ...recipe,
+  };
+}
+
 async function parseJsonBody(req) {
   let body = '';
 
@@ -72,6 +79,36 @@ function getBearerToken(req) {
   return header.slice('Bearer '.length).trim();
 }
 
+function findUserById(userId) {
+  return Array.from(users.values()).find((entry) => entry.id === userId) ?? null;
+}
+
+function authenticateRequest(req) {
+  const token = getBearerToken(req);
+
+  if (!token || !sessions.has(token)) {
+    return null;
+  }
+
+  const userId = sessions.get(token);
+  return findUserById(userId);
+}
+
+function seedDemoUser() {
+  const normalizedEmail = 'demo@chellys-kitchen.local';
+  const salt = randomBytes(16).toString('hex');
+  users.set(normalizedEmail, {
+    id: `user_${randomBytes(8).toString('hex')}`,
+    name: 'Demo User',
+    email: normalizedEmail,
+    role: 'member',
+    passwordHash: hashPassword('demo1234', salt),
+    salt,
+  });
+}
+
+seedDemoUser();
+
 const server = createServer(async (req, res) => {
   withCors(req, res);
 
@@ -87,7 +124,20 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/api/recipes') {
-    jsonResponse(res, 200, { data: recipes });
+    jsonResponse(res, 200, { data: recipeStore.map((recipe) => sanitizeRecipe(recipe)) });
+    return;
+  }
+
+  if (req.method === 'GET' && req.url?.startsWith('/api/recipes/')) {
+    const recipeId = req.url.replace('/api/recipes/', '');
+    const recipe = recipeStore.find((entry) => entry.id === recipeId);
+
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    jsonResponse(res, 200, { data: sanitizeRecipe(recipe) });
     return;
   }
 
@@ -149,23 +199,70 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/api/auth/me') {
-    const token = getBearerToken(req);
-
-    if (!token || !sessions.has(token)) {
-      jsonResponse(res, 401, { error: 'Nicht authentifiziert.' });
-      return;
-    }
-
-    const userId = sessions.get(token);
-    const user = Array.from(users.values()).find((entry) => entry.id === userId);
+    const user = authenticateRequest(req);
 
     if (!user) {
-      jsonResponse(res, 401, { error: 'Session abgelaufen.' });
+      jsonResponse(res, 401, { error: 'Nicht authentifiziert.' });
       return;
     }
 
     jsonResponse(res, 200, { user: sanitizeUser(user) });
     return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/recipes') {
+    const user = authenticateRequest(req);
+
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+
+    try {
+      const payload = await parseJsonBody(req);
+      const {
+        title,
+        shortDescription,
+        category,
+        tag,
+        difficulty,
+        servings,
+        preparationTime,
+        cookingTime,
+        ingredients,
+        steps,
+        img,
+      } = payload;
+
+      if (!title || !shortDescription || !category) {
+        jsonResponse(res, 400, { error: 'Titel, Beschreibung und Kategorie sind erforderlich.' });
+        return;
+      }
+
+      const newRecipe = {
+        id: `r_${randomBytes(8).toString('hex')}`,
+        title: String(title).trim(),
+        shortDescription: String(shortDescription).trim(),
+        category: String(category).trim(),
+        tag: String(tag ?? 'Neu').trim() || 'Neu',
+        difficulty: String(difficulty ?? 'Einfach').trim() || 'Einfach',
+        servings: Number(servings ?? 2),
+        preparationTime: Number(preparationTime ?? 10),
+        cookingTime: Number(cookingTime ?? 20),
+        img: String(img ?? 'https://picsum.photos/800/450?random=50'),
+        ingredients: Array.isArray(ingredients) ? ingredients : [],
+        steps: Array.isArray(steps) ? steps : [],
+        authors: [{ name: user.name, avatar: '/static/images/avatar/1.jpg' }],
+        creationDate: new Date().toISOString(),
+      };
+
+      recipeStore.unshift(newRecipe);
+      jsonResponse(res, 201, { data: sanitizeRecipe(newRecipe) });
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
   }
 
   jsonResponse(res, 404, { error: 'Not Found' });

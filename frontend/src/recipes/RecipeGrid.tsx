@@ -1,4 +1,5 @@
 import { Card, CardContent, CardMedia, Chip, Grid2, Stack, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router';
 import type { Recipe } from '../types/domain';
 
 interface RecipeGridProps {
@@ -10,7 +11,11 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
     <Grid2 container spacing={2}>
       {recipes.map((recipe) => (
         <Grid2 key={recipe.id} size={{ xs: 12, md: 6, lg: 4 }}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
+          <Card
+            component={RouterLink}
+            to={`/recipes/${recipe.id}`}
+            sx={{ height: '100%', borderRadius: 3, textDecoration: 'none' }}
+          >
             <CardMedia image={recipe.img} component="img" height="180" alt={recipe.title} />
             <CardContent>
               <Stack direction="row" spacing={1} mb={1}>

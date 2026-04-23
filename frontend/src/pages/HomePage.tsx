@@ -1,9 +1,11 @@
 import { Alert, CircularProgress, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
 
 export function HomePage() {
+  const { user } = useAuth();
   const { recipes, loading, error } = useQueryRecipes();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
@@ -37,6 +39,11 @@ export function HomePage() {
       <Stack spacing={1}>
         <Typography variant="h3">Rezepte entdecken</Typography>
         <Typography color="text.secondary">Modernisierte Rezeptübersicht mit API-Daten, Suche und Kategorien.</Typography>
+        {!user && (
+          <Alert severity="info">
+            Melde dich an, um eigene Rezepte zu erstellen. Demo-Zugang: demo@chellys-kitchen.local / demo1234
+          </Alert>
+        )}
       </Stack>
 
       <TextField

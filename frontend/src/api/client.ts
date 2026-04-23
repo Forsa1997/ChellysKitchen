@@ -20,6 +20,17 @@ interface RegisterPayload extends Credentials {
   name: string;
 }
 
+interface CreateRecipePayload {
+  title: string;
+  shortDescription: string;
+  category: string;
+  tag?: string;
+  difficulty?: string;
+  servings?: number;
+  preparationTime?: number;
+  cookingTime?: number;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -39,6 +50,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export async function fetchRecipes(): Promise<Recipe[]> {
   const result = await request<ApiResponse<Recipe[]>>('/api/recipes');
+  return result.data;
+}
+
+export async function fetchRecipeById(id: string): Promise<Recipe> {
+  const result = await request<ApiResponse<Recipe>>(`/api/recipes/${id}`);
   return result.data;
 }
 
@@ -62,4 +78,15 @@ export function me(token: string): Promise<{ user: User }> {
       Authorization: `Bearer ${token}`,
     },
   });
+}
+
+export async function createRecipe(payload: CreateRecipePayload, token: string): Promise<Recipe> {
+  const result = await request<ApiResponse<Recipe>>('/api/recipes', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  return result.data;
 }

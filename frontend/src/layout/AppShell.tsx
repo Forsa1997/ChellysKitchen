@@ -17,6 +17,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <Stack direction="row" spacing={1} alignItems="center">
               {user ? (
                 <>
+                  <Button component={RouterLink} to="/recipes/new" variant="contained">Rezept erstellen</Button>
                   <Typography variant="body2">Hallo, {user.name}</Typography>
                   <Button variant="outlined" onClick={logout}>Abmelden</Button>
                 </>
