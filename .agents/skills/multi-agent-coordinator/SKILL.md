@@ -27,6 +27,7 @@ Read `../../shared/project-vision.md` before planning or delegating work. Treat 
 - Use `$solution-architect` for system boundaries, interfaces, sequencing, and tradeoffs.
 - Use `$ui-designer` for UX flows, layout, hierarchy, component behavior, and responsive design.
 - Use `$security-expert` for trust boundaries, auth, validation, dependency risk, browser security, and exploit analysis.
+- Use `$testing-agent` for test-first plans, TDD sequencing, and implementation quality gates.
 - Use `$feature-developer` for implementation once the requirements and constraints are clear enough to code.
 
 ## Delegation Rules
