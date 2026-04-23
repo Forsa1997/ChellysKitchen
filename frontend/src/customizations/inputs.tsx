@@ -278,15 +278,17 @@ export const inputsCustomizations: Components<Theme> = {
         styleOverrides: {
             root: ({ theme }) => ({
                 borderRadius: '10px',
-                boxShadow: `0 4px 16px ${alpha(gray[400], 0.2)}`,
+                backgroundColor: alpha(gray[100], 0.6),
+                border: `1px solid ${alpha(gray[300], 0.5)}`,
                 [`& .${toggleButtonGroupClasses.selected}`]: {
                     color: brand[500],
                 },
                 ...theme.applyStyles('dark', {
                     [`& .${toggleButtonGroupClasses.selected}`]: {
-                        color: '#fff',
+                        color: brand[200],
                     },
-                    boxShadow: `0 4px 16px ${alpha(brand[700], 0.5)}`,
+                    backgroundColor: alpha(gray[900], 0.8),
+                    border: `1px solid ${alpha(gray[700], 0.8)}`,
                 }),
             }),
         },
@@ -300,9 +302,11 @@ export const inputsCustomizations: Components<Theme> = {
                 fontWeight: 500,
                 ...theme.applyStyles('dark', {
                     color: gray[400],
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
+                    borderColor: alpha(gray[700], 0.8),
+                    backgroundColor: 'transparent',
                     [`&.${toggleButtonClasses.selected}`]: {
                         color: brand[300],
+                        backgroundColor: alpha(gray[700], 0.45),
                     },
                 }),
             }),

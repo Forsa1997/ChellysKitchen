@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
+import { filterRecipes, formatCategoryLabel } from './homePageViewModel';
 
 export function HomePage() {
   const { user } = useAuth();
@@ -17,13 +18,7 @@ export function HomePage() {
   }, [recipes]);
 
   const filtered = useMemo(() => {
-    return recipes.filter((recipe) => {
-      const matchesQuery =
-        recipe.title.toLowerCase().includes(query.toLowerCase()) ||
-        recipe.shortDescription.toLowerCase().includes(query.toLowerCase());
-      const matchesCategory = category === 'all' || recipe.category === category;
-      return matchesQuery && matchesCategory;
-    });
+    return filterRecipes(recipes, query, category);
   }, [recipes, query, category]);
 
   if (loading) {
@@ -63,7 +58,7 @@ export function HomePage() {
       >
         {categories.map((entry) => (
           <ToggleButton key={entry} value={entry} sx={{ borderRadius: 6, px: 2 }}>
-            {entry}
+            {formatCategoryLabel(entry)}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>

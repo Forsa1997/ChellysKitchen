@@ -1,6 +1,7 @@
 import { Card, CardContent, CardMedia, Chip, Grid2, Stack, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router';
 import type { Recipe } from '../types/domain';
+import { totalRecipeMinutes } from './recipeCardViewModel';
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -14,10 +15,10 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
           <Card
             component={RouterLink}
             to={`/recipes/${recipe.id}`}
-            sx={{ height: '100%', borderRadius: 3, textDecoration: 'none' }}
+            sx={{ height: '100%', borderRadius: 3, textDecoration: 'none', overflow: 'hidden' }}
           >
             <CardMedia image={recipe.img} component="img" height="180" alt={recipe.title} />
-            <CardContent>
+            <CardContent sx={{ p: 2 }}>
               <Stack direction="row" spacing={1} mb={1}>
                 <Chip label={recipe.tag} size="small" color="secondary" />
                 <Chip label={recipe.difficulty} size="small" variant="outlined" />
@@ -27,7 +28,7 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
                 {recipe.shortDescription}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {recipe.preparationTime + recipe.cookingTime} Minuten • {recipe.servings} Portionen
+                {totalRecipeMinutes(recipe.preparationTime, recipe.cookingTime)} Minuten • {recipe.servings} Portionen
               </Typography>
             </CardContent>
           </Card>
