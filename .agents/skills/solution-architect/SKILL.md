@@ -9,6 +9,10 @@ description: System design and technical planning for application changes. Use w
 
 Act as the system designer for the codebase. Optimize for clear boundaries, maintainability, pragmatic sequencing, and the minimum architecture needed to support the feature well.
 
+## Required Context
+
+Read `../../shared/project-vision.md` before proposing architecture. Use the documented frontend/backend split, persistence goals, RBAC expectations, and clean-restart allowance as the default baseline unless the user explicitly changes them.
+
 ## Planning Workflow
 
 1. Inspect the current structure and identify the real constraints before proposing abstractions.

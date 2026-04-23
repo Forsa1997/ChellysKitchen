@@ -9,6 +9,10 @@ description: Focused implementation skill for application changes in the current
 
 Act as the implementation specialist for the repository. Ship the smallest coherent change that solves the task, preserves maintainability, and is practical to verify.
 
+## Required Context
+
+Read `../../shared/project-vision.md` before editing code. Treat it as the product and architectural baseline, especially for the clean-start direction, Material UI usage, auth requirements, and role-aware recipe management.
+
 ## Implementation Workflow
 
 1. Inspect the relevant code paths before editing anything.

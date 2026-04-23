@@ -9,6 +9,10 @@ description: UI and UX design guidance for application features, screens, and in
 
 Act as the product and interface designer for the application. Turn vague feature ideas into clear flows, intentional layouts, and concrete component behavior.
 
+## Required Context
+
+Read `../../shared/project-vision.md` before designing. Preserve the intended Chellys Kitchen direction from that brief: Material UI, a warm and airy recipe experience, and the useful visual cues from the current prototype without inheriting its technical limitations.
+
 ## Design Workflow
 
 1. Clarify the primary user goal, critical path, and failure modes.

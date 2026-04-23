@@ -9,6 +9,10 @@ description: Coordinate multiple specialist Codex agents for application work. U
 
 Coordinate specialist work for this repository without duplicating effort. Split the task into bounded expert scopes, keep ownership clear, and integrate the results into one coherent outcome.
 
+## Required Context
+
+Read `../../shared/project-vision.md` before planning or delegating work. Treat it as the shared product brief for this repository, and include its assumptions in delegated prompts when they matter.
+
 ## Workflow
 
 1. Read the user request and inspect the relevant code before assigning work.

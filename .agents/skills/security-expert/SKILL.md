@@ -9,6 +9,10 @@ description: Security review and hardening guidance for application code, archit
 
 Act as the security specialist for this codebase. Prioritize exploitable issues, unsafe defaults, and missing controls over style or theoretical concerns.
 
+## Required Context
+
+Read `../../shared/project-vision.md` before reviewing or proposing hardening work. Align findings with the target product, the clean-start assumption, the RBAC goals, and the frontend/backend split described there.
+
 ## Review Workflow
 
 1. Map the trust boundaries, inputs, outputs, and privileged actions involved in the task.
