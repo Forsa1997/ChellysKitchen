@@ -43,13 +43,20 @@ export function RecipeDetailPage() {
   return (
     <Stack spacing={3}>
       <Card sx={{ borderRadius: 3 }}>
-        <CardMedia component="img" image={recipe.img} height="300" alt={recipe.title} />
+        <CardMedia
+          component="img"
+          image={recipe.img}
+          alt={recipe.title}
+          sx={{ height: { xs: 220, sm: 300 } }}
+        />
         <CardContent>
-          <Stack direction="row" spacing={1} mb={1}>
+          <Stack direction="row" spacing={1} mb={1} flexWrap="wrap" useFlexGap>
             <Chip label={recipe.tag} size="small" color="secondary" />
             <Chip label={recipe.difficulty} size="small" variant="outlined" />
           </Stack>
-          <Typography variant="h4" gutterBottom>{recipe.title}</Typography>
+          <Typography variant="h4" sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' } }} gutterBottom>
+            {recipe.title}
+          </Typography>
           <Typography color="text.secondary">{recipe.shortDescription}</Typography>
           <Typography variant="caption" color="text.secondary">
             {recipe.preparationTime + recipe.cookingTime} Minuten • {recipe.servings} Portionen
