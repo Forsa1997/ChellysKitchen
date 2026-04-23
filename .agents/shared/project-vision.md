@@ -81,7 +81,7 @@ Use these as the initial RBAC baseline unless the user defines a different model
 ## Technical Direction
 
 - Frontend: React + TypeScript + Vite + Material UI
-- Backend: dedicated API layer
+- Backend: dedicated TypeScript API layer
 - Persistence: relational database
 - Authentication: email/password as the baseline
 - Authorization: RBAC enforced in the backend first and reflected in the frontend
@@ -102,8 +102,9 @@ Use these as the initial RBAC baseline unless the user defines a different model
 
 Use these only as defaults until the user makes explicit choices:
 
-- TypeScript end to end is preferred
-- Node.js backend is the default assumption
+- TypeScript is required in both frontend and backend
+- React is fixed for the frontend
+- Node.js is the default backend runtime assumption
 - PostgreSQL is the default database assumption
 - Social login can be deferred until after core email/password auth works
 - Container-friendly deployment is preferred
