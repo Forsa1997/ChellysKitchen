@@ -2,8 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { login as loginRequest, me, register as registerRequest } from '../api/client';
 import type { User } from '../types/domain';
-
-const TOKEN_KEY = 'chellysKitchenToken';
+import { applyAuthSuccess, clearAuthState, getStoredToken } from '../utils/authSession';
 
 interface AuthContextValue {
   user: User | null;
@@ -18,7 +17,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(() => getStoredToken(localStorage));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,9 +31,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setUser(currentUser);
       })
       .catch(() => {
-        localStorage.removeItem(TOKEN_KEY);
-        setToken(null);
-        setUser(null);
+        const cleared = clearAuthState(localStorage);
+        setToken(cleared.token);
+        setUser(cleared.user);
       })
       .finally(() => setLoading(false));
   }, [token]);
@@ -46,20 +45,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
       loading,
       async login(email: string, password: string) {
         const result = await loginRequest({ email, password });
-        setUser(result.user);
-        setToken(result.token);
-        localStorage.setItem(TOKEN_KEY, result.token);
+        const nextState = applyAuthSuccess(localStorage, result.user, result.token);
+        setUser(nextState.user);
+        setToken(nextState.token);
       },
       async register(name: string, email: string, password: string) {
         const result = await registerRequest({ name, email, password });
-        setUser(result.user);
-        setToken(result.token);
-        localStorage.setItem(TOKEN_KEY, result.token);
+        const nextState = applyAuthSuccess(localStorage, result.user, result.token);
+        setUser(nextState.user);
+        setToken(nextState.token);
       },
       logout() {
-        localStorage.removeItem(TOKEN_KEY);
-        setToken(null);
-        setUser(null);
+        const cleared = clearAuthState(localStorage);
+        setToken(cleared.token);
+        setUser(cleared.user);
       },
     }),
     [loading, token, user],

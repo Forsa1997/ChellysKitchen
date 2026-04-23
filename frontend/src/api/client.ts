@@ -1,6 +1,8 @@
 import type { Recipe, User } from '../types/domain';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000';
+const API_BASE_URL =
+  (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_BASE_URL ??
+  'http://localhost:4000';
 
 interface ApiResponse<T> {
   data: T;
