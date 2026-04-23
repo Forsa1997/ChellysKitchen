@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router';
 import type {} from '@mui/material/themeCssVarsAugmentation';
 import CssBaseline from '@mui/material/CssBaseline';
 import AppTheme from './AppTheme';
@@ -12,11 +12,14 @@ import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
 
 function App() {
+  const routerMode = import.meta.env.VITE_ROUTER_MODE ?? (import.meta.env.PROD ? 'hash' : 'browser');
+  const RouterComponent = routerMode === 'hash' ? HashRouter : BrowserRouter;
+
   return (
     <AppTheme>
       <CssBaseline enableColorScheme />
       <AuthProvider>
-        <BrowserRouter>
+        <RouterComponent>
           <AppShell>
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -34,7 +37,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AppShell>
-        </BrowserRouter>
+        </RouterComponent>
       </AuthProvider>
     </AppTheme>
   );

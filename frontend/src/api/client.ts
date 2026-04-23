@@ -1,6 +1,29 @@
 import type { Recipe, User } from '../types/domain';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000';
+function inferApiBaseUrl() {
+  if (typeof window === 'undefined') {
+    return 'http://localhost:4000';
+  }
+
+  const configuredUrl = import.meta.env.VITE_API_BASE_URL;
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  const { protocol, hostname } = window.location;
+
+  if (hostname.endsWith('onrender.com') && hostname.includes('-web')) {
+    return `${protocol}//${hostname.replace('-web', '-api')}`;
+  }
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:4000';
+  }
+
+  return window.location.origin;
+}
+
+const API_BASE_URL = inferApiBaseUrl();
 
 interface ApiResponse<T> {
   data: T;
