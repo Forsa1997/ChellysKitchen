@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import Box from '@mui/material/Box';
@@ -426,6 +426,13 @@ const StyledTypography = styled(Typography)({
     textOverflow: 'ellipsis',
 });
 
+interface ApiRecipe extends Omit<Card, 'creationDate'> {
+    creationDate: string;
+}
+
+const isCategory = (category: string): category is Category =>
+    Object.values(Category).includes(category as Category);
+
 function Author({ authors, creationDate }: { authors: { name: string; avatar: string }[], creationDate: Date }) {
     return (
         <Box
@@ -455,7 +462,7 @@ function Author({ authors, creationDate }: { authors: { name: string; avatar: st
                     {authors.map((author) => author.name).join(', ')}
                 </Typography>
             </Box>
-            <Typography variant="caption">{`${creationDate.getDate()}.${creationDate.getMonth()}.${creationDate.getFullYear()}`}</Typography>
+            <Typography variant="caption">{`${creationDate.getDate()}.${creationDate.getMonth() + 1}.${creationDate.getFullYear()}`}</Typography>
         </Box>
     );
 }
@@ -490,10 +497,63 @@ export default function MainContent() {
     const [focusedCardIndex, setFocusedCardIndex] = React.useState<number | null>(
         null,
     );
-    // TODO Filter in Kombination mit Suchfeld funktioniert noch nicht komplett
-    const [categorizedChips, setCategorizedChips] = useState<Card[]>(cardData)
-    const [filteredChips, setFilteredChips] = useState<Card[]>(categorizedChips)
+    const [recipes, setRecipes] = useState<Card[]>(cardData);
+    const [categorizedChips, setCategorizedChips] = useState<Card[]>(recipes);
+    const [filteredChips, setFilteredChips] = useState<Card[]>(recipes);
     const [checkedCategory, setCheckedCategory] = React.useState<Category>(Category.ALLCATEGORIES);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setCategorizedChips(recipes);
+        setFilteredChips(recipes);
+        setCheckedCategory(Category.ALLCATEGORIES);
+    }, [recipes]);
+
+    useEffect(() => {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000';
+        const controller = new AbortController();
+
+        const loadRecipes = async () => {
+            try {
+                setIsLoading(true);
+                setLoadError(null);
+
+                const response = await fetch(`${apiBaseUrl}/api/recipes`, {
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const payload: { data: ApiRecipe[] } = await response.json();
+                const mappedRecipes: Card[] = payload.data
+                    .filter((recipe) => isCategory(recipe.category))
+                    .map((recipe) => ({
+                        ...recipe,
+                        creationDate: new Date(recipe.creationDate),
+                    }));
+
+                if (mappedRecipes.length > 0) {
+                    setRecipes(mappedRecipes);
+                }
+            } catch (error) {
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                    return;
+                }
+                setLoadError('API nicht erreichbar – lokale Rezeptdaten werden verwendet.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadRecipes();
+
+        return () => {
+            controller.abort();
+        };
+    }, []);
 
     const handleFocus = (index: number) => {
         setFocusedCardIndex(index);
@@ -504,14 +564,14 @@ export default function MainContent() {
     };
 
     const handleClick = (category: Category) => {
-        setCategorizedChips(cardData.filter((card => card.category === category)))
-        setFilteredChips(cardData.filter((card => card.category === category)))
+        setCategorizedChips(recipes.filter((card => card.category === category)))
+        setFilteredChips(recipes.filter((card => card.category === category)))
         setCheckedCategory(category)
     };
 
     const resetCards = () => {
-        setCategorizedChips(cardData)
-        setFilteredChips(cardData)
+        setCategorizedChips(recipes)
+        setFilteredChips(recipes)
         setCheckedCategory(Category.ALLCATEGORIES)
     };
 
@@ -528,7 +588,9 @@ export default function MainContent() {
                 <Typography variant="h1" gutterBottom>
                     Rezepte
                 </Typography>
-                <Typography>Hier gibt es bald richtig viele Rezepte</Typography>
+                <Typography>Erster lauffähiger Prototyp: Rezepte kommen bevorzugt aus der API.</Typography>
+                {isLoading && <Typography variant="body2">Lade Rezepte…</Typography>}
+                {loadError && <Typography variant="body2" color="warning.main">{loadError}</Typography>}
             </div>
             <Box
                 sx={{
