@@ -1,5 +1,25 @@
 import type { Recipe, User } from '../types/domain';
 
+export type RecipeSort = 'newest' | 'oldest' | 'title_asc' | 'title_desc';
+
+export interface RecipeListParams {
+  q?: string;
+  category?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: RecipeSort;
+}
+
+export interface RecipeListMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  q: string;
+  category: string;
+  sort: RecipeSort;
+}
+
 function inferApiBaseUrl() {
   if (typeof window === 'undefined') {
     return 'http://localhost:4000';
@@ -27,6 +47,10 @@ const API_BASE_URL = inferApiBaseUrl();
 
 interface ApiResponse<T> {
   data: T;
+}
+
+interface RecipeListResponse extends ApiResponse<Recipe[]> {
+  meta: RecipeListMeta;
 }
 
 interface AuthPayload {
@@ -71,9 +95,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchRecipes(): Promise<Recipe[]> {
-  const result = await request<ApiResponse<Recipe[]>>('/api/recipes');
-  return result.data;
+export async function fetchRecipes(params: RecipeListParams = {}): Promise<{ data: Recipe[]; meta: RecipeListMeta }> {
+  const queryParams = new URLSearchParams();
+
+  if (params.q) queryParams.set('q', params.q);
+  if (params.category) queryParams.set('category', params.category);
+  if (params.page) queryParams.set('page', String(params.page));
+  if (params.pageSize) queryParams.set('pageSize', String(params.pageSize));
+  if (params.sort) queryParams.set('sort', params.sort);
+
+  const suffix = queryParams.toString();
+  const result = await request<RecipeListResponse>(`/api/recipes${suffix ? `?${suffix}` : ''}`);
+  return { data: result.data, meta: result.meta };
 }
 
 export async function fetchRecipeById(id: string): Promise<Recipe> {

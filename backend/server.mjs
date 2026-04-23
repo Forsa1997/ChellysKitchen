@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer } from 'node:http';
 import { recipes } from './data/recipes.mjs';
+import { queryRecipes } from './src/queryRecipes.mjs';
 
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
@@ -123,13 +124,20 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === 'GET' && req.url === '/api/recipes') {
-    jsonResponse(res, 200, { data: recipeStore.map((recipe) => sanitizeRecipe(recipe)) });
-    return;
+  if (req.method === 'GET' && req.url?.startsWith('/api/recipes')) {
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+
+    if (requestUrl.pathname === '/api/recipes') {
+      const query = Object.fromEntries(requestUrl.searchParams.entries());
+      const result = queryRecipes(recipeStore.map((recipe) => sanitizeRecipe(recipe)), query);
+      jsonResponse(res, 200, result);
+      return;
+    }
   }
 
   if (req.method === 'GET' && req.url?.startsWith('/api/recipes/')) {
-    const recipeId = req.url.replace('/api/recipes/', '');
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const recipeId = requestUrl.pathname.replace('/api/recipes/', '');
     const recipe = recipeStore.find((entry) => entry.id === recipeId);
 
     if (!recipe) {
