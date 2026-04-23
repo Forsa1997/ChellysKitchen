@@ -511,15 +511,21 @@ export default function MainContent() {
     }, [recipes]);
 
     useEffect(() => {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000';
+        const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+        const apiBaseUrl = envApiBaseUrl || (import.meta.env.DEV ? 'http://localhost:4000' : '');
         const controller = new AbortController();
 
         const loadRecipes = async () => {
+            if (!apiBaseUrl) {
+                setLoadError('Keine API konfiguriert – lokale Rezeptdaten werden verwendet.');
+                return;
+            }
+
             try {
                 setIsLoading(true);
                 setLoadError(null);
 
-                const response = await fetch(`${apiBaseUrl}/api/recipes`, {
+                const response = await fetch(`${apiBaseUrl.replace(/\/+$/, '')}/api/recipes`, {
                     signal: controller.signal,
                 });
 
