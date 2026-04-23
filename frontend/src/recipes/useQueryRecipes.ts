@@ -11,6 +11,8 @@ const defaultMeta: RecipeListMeta = {
   q: '',
   category: 'all',
   sort: 'newest',
+  difficulty: 'all',
+  maxTotalMinutes: null,
 };
 
 export function useQueryRecipes(params: RecipeListParams) {
@@ -32,7 +34,7 @@ export function useQueryRecipes(params: RecipeListParams) {
         setError(requestError.message);
       })
       .finally(() => setLoading(false));
-  }, [params.q, params.category, params.page, params.pageSize, params.sort]);
+  }, [params.q, params.category, params.page, params.pageSize, params.sort, params.difficulty, params.maxTotalMinutes]);
 
   return { recipes, meta, loading, error };
 }
