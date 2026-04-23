@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -76,7 +77,7 @@ export function HomePage() {
   return (
     <Stack spacing={3}>
       <Stack spacing={1}>
-        <Typography variant="h3">Rezepte entdecken</Typography>
+        <Typography variant="h3" sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>Rezepte entdecken</Typography>
         <Typography color="text.secondary">API-Suche, Filter und Sortierung mit teilbarer URL.</Typography>
         {!user && (
           <Alert severity="info">
@@ -94,21 +95,23 @@ export function HomePage() {
       />
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
-        <ToggleButtonGroup
-          value={listParams.category}
-          exclusive
-          onChange={(_event, value) => handleCategoryChange(value)}
-          size="small"
-          sx={{ flexWrap: 'wrap', gap: 1 }}
-        >
-          {categories.map((entry) => (
-            <ToggleButton key={entry} value={entry} sx={{ borderRadius: 6, px: 2 }}>
-              {formatCategoryLabel(entry)}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
+        <Box sx={{ overflowX: 'auto', width: '100%', pb: 0.5 }}>
+          <ToggleButtonGroup
+            value={listParams.category}
+            exclusive
+            onChange={(_event, value) => handleCategoryChange(value)}
+            size="small"
+            sx={{ flexWrap: { xs: 'nowrap', md: 'wrap' }, gap: 1 }}
+          >
+            {categories.map((entry) => (
+              <ToggleButton key={entry} value={entry} sx={{ borderRadius: 6, px: 2, whiteSpace: 'nowrap' }}>
+                {formatCategoryLabel(entry)}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
 
-        <FormControl size="small" sx={{ minWidth: 200 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 } }}>
           <InputLabel id="sort-label">Sortierung</InputLabel>
           <Select labelId="sort-label" label="Sortierung" value={listParams.sort} onChange={handleSortChange}>
             <MenuItem value="newest">Neueste zuerst</MenuItem>
@@ -125,7 +128,15 @@ export function HomePage() {
         <Typography color="text.secondary">
           {meta.total} Treffer · Seite {meta.page} von {meta.totalPages}
         </Typography>
-        <Pagination count={meta.totalPages} page={meta.page} onChange={handlePageChange} color="primary" />
+        <Pagination
+          count={meta.totalPages}
+          page={meta.page}
+          onChange={handlePageChange}
+          color="primary"
+          size="small"
+          siblingCount={0}
+          boundaryCount={1}
+        />
       </Stack>
     </Stack>
   );
