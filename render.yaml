@@ -1,11 +1,10 @@
-services:
-  - type: pserv
-    name: chellys-kitchen-db
-    env: postgres
+databases:
+  - name: chellys-kitchen-db
     plan: free
     databaseName: chellys_kitchen
     user: chellys_kitchen
 
+services:
   - type: web
     name: chellys-kitchen-api
     runtime: node
