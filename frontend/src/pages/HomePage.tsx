@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
+import { filterRecipes, getRecipeCategories } from '../utils/recipeFilters';
 
 export function HomePage() {
   const { user } = useAuth();
@@ -10,21 +11,9 @@ export function HomePage() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
 
-  const categories = useMemo(() => {
-    const result = new Set<string>();
-    recipes.forEach((recipe) => result.add(recipe.category));
-    return ['all', ...Array.from(result)];
-  }, [recipes]);
+  const categories = useMemo(() => getRecipeCategories(recipes), [recipes]);
 
-  const filtered = useMemo(() => {
-    return recipes.filter((recipe) => {
-      const matchesQuery =
-        recipe.title.toLowerCase().includes(query.toLowerCase()) ||
-        recipe.shortDescription.toLowerCase().includes(query.toLowerCase());
-      const matchesCategory = category === 'all' || recipe.category === category;
-      return matchesQuery && matchesCategory;
-    });
-  }, [recipes, query, category]);
+  const filtered = useMemo(() => filterRecipes(recipes, query, category), [recipes, query, category]);
 
   if (loading) {
     return <CircularProgress />;

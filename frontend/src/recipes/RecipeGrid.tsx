@@ -1,6 +1,7 @@
 import { Card, CardContent, CardMedia, Chip, Grid2, Stack, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router';
 import type { Recipe } from '../types/domain';
+import { getTotalDurationText } from '../utils/recipeFilters';
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -27,7 +28,7 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
                 {recipe.shortDescription}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {recipe.preparationTime + recipe.cookingTime} Minuten • {recipe.servings} Portionen
+                {getTotalDurationText(recipe)}
               </Typography>
             </CardContent>
           </Card>
