@@ -2,12 +2,13 @@ import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } f
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
+import { getSignInTargetPath } from '../utils/authRouting';
 
 export function SignInPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const targetPath = (location.state as { from?: string } | null)?.from ?? '/';
+  const targetPath = getSignInTargetPath(location.state);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

@@ -7,6 +7,24 @@ npm install
 npm run dev
 ```
 
+## Testing (verbindlich)
+
+```bash
+npm run test:unit
+npm run test:integration
+# alternativ inkl. Start/Stop Dev-Server:
+npm run test:integration:local
+```
+
+- Alle neu implementierten Features müssen **zuerst** mit Tests beschrieben werden (Red-Green-Refactor).
+- Bei Änderungen an bestehendem Verhalten müssen vorhandene Tests erweitert oder neue Regressionstests ergänzt werden.
+- Frontend-Tests sind zweistufig verpflichtend:
+  - **Unit Tests mit Vitest** (`npm run test:unit`)
+  - **Integration Tests mit Cypress** (`npm run test:integration`)
+- Für lokale E2E-Läufe ohne separates Terminal kann `npm run test:integration:local` genutzt werden.
+- Pull Requests gelten erst als merge-fähig, wenn beide Teststufen lokal/grün sind.
+- PR-Branches müssen vor dem Merge auf den Ziel-Branch rebased werden (keine offenen Konflikte).
+
 Optional API base URL (default is `http://localhost:4000`):
 
 ```bash
