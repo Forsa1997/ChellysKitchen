@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: chellys-kitchen-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm run start
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  - type: static
+    name: chellys-kitchen-web
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    plan: free
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
