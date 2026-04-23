@@ -1,4 +1,5 @@
 const ALLOWED_SORTS = new Set(['newest', 'oldest', 'title_asc', 'title_desc']);
+const ALLOWED_DIFFICULTIES = new Set(['Einfach', 'Mittel', 'Schwer']);
 
 function toPositiveInt(value, fallback) {
   const parsed = Number.parseInt(String(value ?? ''), 10);
@@ -7,6 +8,10 @@ function toPositiveInt(value, fallback) {
 
 function normalizeSort(sort) {
   return ALLOWED_SORTS.has(sort) ? sort : 'newest';
+}
+
+function normalizeDifficulty(difficulty) {
+  return ALLOWED_DIFFICULTIES.has(difficulty) ? difficulty : 'all';
 }
 
 function sortRecipes(recipes, sort) {
@@ -37,6 +42,9 @@ export function queryRecipes(recipes, queryParams = {}) {
   const page = toPositiveInt(queryParams.page, 1);
   const pageSize = Math.min(toPositiveInt(queryParams.pageSize, 6), 24);
   const sort = normalizeSort(String(queryParams.sort ?? 'newest'));
+  const difficulty = normalizeDifficulty(String(queryParams.difficulty ?? 'all').trim());
+  const maxTotalMinutesInput = toPositiveInt(queryParams.maxTotalMinutes, 0);
+  const maxTotalMinutes = maxTotalMinutesInput > 0 ? maxTotalMinutesInput : null;
 
   const filtered = recipes.filter((recipe) => {
     const matchesQuery =
@@ -44,8 +52,11 @@ export function queryRecipes(recipes, queryParams = {}) {
       recipe.title.toLowerCase().includes(q) ||
       recipe.shortDescription.toLowerCase().includes(q);
     const matchesCategory = category === 'all' || recipe.category === category;
+    const matchesDifficulty = difficulty === 'all' || recipe.difficulty === difficulty;
+    const totalMinutes = Number(recipe.preparationTime ?? 0) + Number(recipe.cookingTime ?? 0);
+    const matchesMaxTotalMinutes = maxTotalMinutes == null || totalMinutes <= maxTotalMinutes;
 
-    return matchesQuery && matchesCategory;
+    return matchesQuery && matchesCategory && matchesDifficulty && matchesMaxTotalMinutes;
   });
 
   const sorted = sortRecipes(filtered, sort);
@@ -65,6 +76,8 @@ export function queryRecipes(recipes, queryParams = {}) {
       q,
       category,
       sort,
+      difficulty,
+      maxTotalMinutes,
     },
   };
 }

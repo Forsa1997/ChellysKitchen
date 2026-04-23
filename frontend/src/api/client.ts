@@ -1,6 +1,7 @@
 import type { Recipe, User } from '../types/domain';
 
 export type RecipeSort = 'newest' | 'oldest' | 'title_asc' | 'title_desc';
+export type RecipeDifficulty = 'all' | 'Einfach' | 'Mittel' | 'Schwer';
 
 export interface RecipeListParams {
   q?: string;
@@ -8,6 +9,8 @@ export interface RecipeListParams {
   page?: number;
   pageSize?: number;
   sort?: RecipeSort;
+  difficulty?: RecipeDifficulty;
+  maxTotalMinutes?: number | null;
 }
 
 export interface RecipeListMeta {
@@ -18,6 +21,8 @@ export interface RecipeListMeta {
   q: string;
   category: string;
   sort: RecipeSort;
+  difficulty: RecipeDifficulty;
+  maxTotalMinutes: number | null;
 }
 
 function inferApiBaseUrl() {
@@ -103,6 +108,8 @@ export async function fetchRecipes(params: RecipeListParams = {}): Promise<{ dat
   if (params.page) queryParams.set('page', String(params.page));
   if (params.pageSize) queryParams.set('pageSize', String(params.pageSize));
   if (params.sort) queryParams.set('sort', params.sort);
+  if (params.difficulty && params.difficulty !== 'all') queryParams.set('difficulty', params.difficulty);
+  if (params.maxTotalMinutes) queryParams.set('maxTotalMinutes', String(params.maxTotalMinutes));
 
   const suffix = queryParams.toString();
   const result = await request<RecipeListResponse>(`/api/recipes${suffix ? `?${suffix}` : ''}`);

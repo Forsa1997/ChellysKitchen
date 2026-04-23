@@ -27,6 +27,7 @@ export function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const listParams = normalizeRecipeListParams(searchParams);
   const { recipes, meta, loading, error } = useQueryRecipes(listParams);
+  const difficultyOptions = ['all', 'Einfach', 'Mittel', 'Schwer'] as const;
 
   const categories = useMemo(() => {
     const result = new Set<string>();
@@ -60,6 +61,14 @@ export function HomePage() {
 
   const handleSortChange = (event: SelectChangeEvent<string>) => {
     updateParams({ sort: event.target.value, page: '1' });
+  };
+
+  const handleDifficultyChange = (event: SelectChangeEvent<string>) => {
+    updateParams({ difficulty: event.target.value, page: '1' });
+  };
+
+  const handleMaxTotalMinutesChange = (event: ChangeEvent<HTMLInputElement>) => {
+    updateParams({ maxTotalMinutes: event.target.value, page: '1' });
   };
 
   const handlePageChange = (_event: ChangeEvent<unknown>, page: number) => {
@@ -120,6 +129,32 @@ export function HomePage() {
             <MenuItem value="title_desc">Titel Z–A</MenuItem>
           </Select>
         </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel id="difficulty-label">Schwierigkeit</InputLabel>
+          <Select
+            labelId="difficulty-label"
+            label="Schwierigkeit"
+            value={listParams.difficulty}
+            onChange={handleDifficultyChange}
+          >
+            {difficultyOptions.map((entry) => (
+              <MenuItem key={entry} value={entry}>
+                {entry === 'all' ? 'Alle' : entry}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          size="small"
+          label="Max. Gesamtzeit (Min.)"
+          type="number"
+          inputProps={{ min: 1 }}
+          value={listParams.maxTotalMinutes ?? ''}
+          onChange={handleMaxTotalMinutesChange}
+          sx={{ maxWidth: 220 }}
+        />
       </Stack>
 
       <RecipeGrid recipes={recipes} />
