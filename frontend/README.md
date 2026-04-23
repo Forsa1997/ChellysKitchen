@@ -12,6 +12,8 @@ npm run dev
 ```bash
 npm run test:unit
 npm run test:integration
+# alternativ inkl. Start/Stop Dev-Server:
+npm run test:integration:local
 ```
 
 - Alle neu implementierten Features müssen **zuerst** mit Tests beschrieben werden (Red-Green-Refactor).
@@ -19,6 +21,7 @@ npm run test:integration
 - Frontend-Tests sind zweistufig verpflichtend:
   - **Unit Tests mit Vitest** (`npm run test:unit`)
   - **Integration Tests mit Cypress** (`npm run test:integration`)
+- Für lokale E2E-Läufe ohne separates Terminal kann `npm run test:integration:local` genutzt werden.
 - Pull Requests gelten erst als merge-fähig, wenn beide Teststufen lokal/grün sind.
 
 Optional API base URL (default is `http://localhost:4000`):

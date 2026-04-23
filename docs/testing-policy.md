@@ -25,6 +25,8 @@ Dieses Repository folgt künftig einem **Test-First-Ansatz**:
 cd frontend
 npm run test:unit
 npm run test:integration
+# optional mit automatischem Dev-Server für E2E:
+npm run test:integration:local
 ```
 
 ## Workflow mit testing-agent

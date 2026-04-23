@@ -12,6 +12,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:integration": "cypress run",
+    "test:integration:local": "sh -c 'npm run dev -- --host 127.0.0.1 --port 5173 >/tmp/chellys-dev.log 2>&1 & DEV_PID=$!; cypress run; STATUS=$?; kill $DEV_PID; wait $DEV_PID 2>/dev/null; exit $STATUS'",
     "test:integration:open": "cypress open"
   },
   "dependencies": {
