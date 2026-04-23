@@ -35,3 +35,9 @@ npm run test:integration:local
   - den Behavior Contract zu definieren,
   - Testfälle in Ausführungsreihenfolge festzulegen,
   - und die Merge-Gates (Pflichtbefehle) zu bestätigen.
+
+## PR-Integrationsregel
+
+- Feature-Branches müssen vor dem Merge auf den Ziel-Branch **rebased** werden.
+- Erst danach wird der Branch gemerged.
+- Keine Merge-Freigabe bei offenen Konflikten oder abweichender Test-Dokumentation.
