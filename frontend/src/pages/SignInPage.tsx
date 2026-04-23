@@ -1,11 +1,13 @@
 import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 
 export function SignInPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const targetPath = (location.state as { from?: string } | null)?.from ?? '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +20,7 @@ export function SignInPage() {
 
     try {
       await login(email, password);
-      navigate('/');
+      navigate(targetPath);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Anmeldung fehlgeschlagen');
     } finally {
