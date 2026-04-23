@@ -433,6 +433,13 @@ interface ApiRecipe extends Omit<Card, 'creationDate'> {
 const isCategory = (category: string): category is Category =>
     Object.values(Category).includes(category as Category);
 
+const resolveApiBaseUrl = () => {
+    const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+    return envApiBaseUrl || (import.meta.env.DEV ? 'http://localhost:4000' : '');
+};
+
+const toRecipesEndpoint = (apiBaseUrl: string) => `${apiBaseUrl.replace(/\/+$/, '')}/api/recipes`;
+
 function Author({ authors, creationDate }: { authors: { name: string; avatar: string }[], creationDate: Date }) {
     return (
         <Box
@@ -511,8 +518,7 @@ export default function MainContent() {
     }, [recipes]);
 
     useEffect(() => {
-        const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-        const apiBaseUrl = envApiBaseUrl || (import.meta.env.DEV ? 'http://localhost:4000' : '');
+        const apiBaseUrl = resolveApiBaseUrl();
         const controller = new AbortController();
 
         const loadRecipes = async () => {
@@ -525,7 +531,7 @@ export default function MainContent() {
                 setIsLoading(true);
                 setLoadError(null);
 
-                const response = await fetch(`${apiBaseUrl.replace(/\/+$/, '')}/api/recipes`, {
+                const response = await fetch(toRecipesEndpoint(apiBaseUrl), {
                     signal: controller.signal,
                 });
 

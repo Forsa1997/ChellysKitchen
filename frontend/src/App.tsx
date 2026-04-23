@@ -4,9 +4,12 @@ import {BrowserRouter, HashRouter, Routes, Route} from "react-router";
 import SignIn from "./components/SignIn.tsx";
 import SignUp from "./components/SignUp.tsx";
 
+const resolveRouter = () => (
+  import.meta.env.VITE_ROUTER_MODE === 'hash' ? HashRouter : BrowserRouter
+);
+
 function App() {
-  const useHashRouter = import.meta.env.VITE_ROUTER_MODE === 'hash';
-  const Router = useHashRouter ? HashRouter : BrowserRouter;
+  const Router = resolveRouter();
 
   return (
         <Router>
