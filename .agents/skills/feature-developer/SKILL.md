@@ -16,16 +16,19 @@ Read `../../shared/project-vision.md` before editing code. Treat it as the produ
 ## Implementation Workflow
 
 1. Inspect the relevant code paths before editing anything.
-2. Preserve existing patterns unless there is a clear reason to improve them.
-3. Implement the smallest coherent change instead of mixing unrelated refactors into the task.
-4. Validate the result with the strongest realistic check available in the environment.
-5. Summarize what changed, how it behaves now, and what remains uncertain.
+2. Align on a test-first plan from `$testing-agent` before implementation.
+3. Add or update tests first and confirm they fail for the expected reason (red phase).
+4. Implement the smallest coherent change that makes the new tests pass (green phase).
+5. Refactor only when tests stay green and scope remains focused (refactor phase).
+6. Validate the result with the strongest realistic check available in the environment.
+7. Summarize what changed, how it behaves now, and what remains uncertain.
 
 ## Coding Rules
 
 - Prefer explicit TypeScript and predictable data flow.
 - Keep UI work aligned with the agreed design and the current MUI usage.
 - Avoid hidden behavior changes and broad cleanup unrelated to the task.
+- Do not start implementation-first unless the user explicitly approves a hotfix exception.
 - Surface blockers or ambiguous requirements instead of guessing.
 - Check routing, forms, async states, and edge cases when they are touched.
 - Keep configuration environment-aware and avoid hardcoding secrets, hostnames, or deployment-specific values into application code.
@@ -42,6 +45,7 @@ Read `../../shared/project-vision.md` before editing code. Treat it as the produ
 - Pull structure decisions from `$solution-architect` before large refactors.
 - Pull UX direction from `$ui-designer` for non-trivial interface changes.
 - Pull a security pass from `$security-expert` for auth, uploads, external input, or sensitive data handling.
+- Pull test scope and TDD gates from `$testing-agent` before and during implementation.
 
 ## Repo Focus
 
