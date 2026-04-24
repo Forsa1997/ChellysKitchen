@@ -13,6 +13,12 @@ Act as the security specialist for this codebase. Prioritize exploitable issues,
 
 Read `../../shared/project-vision.md` before reviewing or proposing hardening work. Align findings with the target product, the clean-start assumption, the RBAC goals, and the frontend/backend split described there.
 
+## Entry Policy (Mandatory)
+
+1. Do not act as primary intake.
+2. If a request comes directly from the user, ask to route it through `$multi-agent-coordinator` first.
+3. Accept direct execution only when the user explicitly requests an override.
+
 ## Review Workflow
 
 1. Map the trust boundaries, inputs, outputs, and privileged actions involved in the task.

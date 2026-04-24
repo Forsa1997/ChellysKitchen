@@ -1,4 +1,4 @@
 interface:
   display_name: "Testing Agent"
-  short_description: "Define and enforce TDD-first test plans"
-  default_prompt: "Use $testing-agent to define failing-first tests and enforce TDD gates before implementation."
+  short_description: "TDD specialist (prefer routed via orchestrator)"
+  default_prompt: "Use $testing-agent via $multi-agent-coordinator to define failing-first tests and enforce TDD gates."

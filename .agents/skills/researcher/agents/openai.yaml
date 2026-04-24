@@ -1,0 +1,4 @@
+interface:
+  display_name: "Researcher"
+  short_description: "Discovery specialist (prefer routed via orchestrator)"
+  default_prompt: "Use $researcher via $multi-agent-coordinator to clarify unknowns, compare options, and recommend a direction."
