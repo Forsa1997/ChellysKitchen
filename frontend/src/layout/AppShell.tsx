@@ -39,6 +39,11 @@ export function AppShell({ children }: PropsWithChildren) {
                   <Button component={RouterLink} to="/recipes/new" variant="contained" fullWidth>
                     Rezept erstellen
                   </Button>
+                  {user.role === 'ADMIN' && (
+                    <Button component={RouterLink} to="/admin" variant="outlined" fullWidth>
+                      Admin Dashboard
+                    </Button>
+                  )}
                   <Typography variant="body2" sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                     Hallo, {user.name}
                   </Typography>

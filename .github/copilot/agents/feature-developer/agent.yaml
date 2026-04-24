@@ -1,0 +1,12 @@
+name: Feature Developer
+type: agent
+description: Implementation specialist. Writes minimal, testable, maintainable code following Red→Green→Refactor TDD cycle.
+context:
+  files:
+    - .agents/shared/project-vision.md
+    - .agents/shared/coordinator-feature-backlog.md
+  focus: Code implementation, TDD, maintainability
+display:
+  icon: 
+  color: green
+  order: 2

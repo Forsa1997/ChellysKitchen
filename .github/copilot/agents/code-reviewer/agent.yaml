@@ -1,0 +1,11 @@
+name: Code Reviewer
+type: agent
+description: Final quality gate. Identifies defects, regressions, and security issues before merge.
+context:
+  files:
+    - .agents/shared/project-vision.md
+  focus: Code quality, defects, regressions, security, test coverage
+display:
+  icon: ✅
+  color: green
+  order: 8

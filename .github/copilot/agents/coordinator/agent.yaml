@@ -1,0 +1,12 @@
+name: Product Manager Orchestrator
+type: agent
+description: Single entry point for all feature requests. Plans, delegates, and synthesizes solutions across the specialist team.
+context:
+  files:
+    - .agents/shared/project-vision.md
+    - .agents/shared/coordinator-feature-backlog.md
+  focus: Product planning, specialist coordination, scope control
+display:
+  icon: 
+  color: blue
+  order: 1

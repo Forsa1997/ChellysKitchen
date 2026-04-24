@@ -5,18 +5,86 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b001b670-6771-43ad-90a3-adff5194363a" name="Changes" comment="Add more md context">
+      <change afterPath="$PROJECT_DIR$/.copilot/EXAMPLE_PROMPTS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/INDEX.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/INTEGRATION_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/SETUP.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/code-reviewer.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/coordinator.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/feature-developer.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/researcher.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/security-expert.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/solution-architect.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/testing-agent.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.copilot/agents/ui-designer.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/COMPLETION.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/SETUP.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/INDEX.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/code-reviewer/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/code-reviewer/instructions.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/coordinator/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/coordinator/instructions.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/feature-developer/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/feature-developer/instructions.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/researcher/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/researcher/instructions.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/security-expert/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/security-expert/instructions.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/solution-architect/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/solution-architect/instructions.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/testing-agent/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/testing-agent/instructions.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/ui-designer/agent.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/ui-designer/instructions.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/server.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/backend/server.mjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/auth/AuthContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/auth/AuthContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/CreateRecipePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/CreateRecipePage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/RecipeDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/RecipeDetailPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/recipes/RecipeGrid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/recipes/RecipeGrid.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/types/domain.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/domain.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/Users/Chris/git/ChellysKitchen" value="2tfB7GPAXNY4FM4XKhThcyC68bl" />
+    </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Agent" />
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="agent-panel" value="GPT-5#(OpenAI)" />
+      <entry key="chat-panel" value="GPT-5#(OpenAI)" />
+    </selectedModels>
+  </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="48" />
+    <option name="cachedIndexableFilesCount" value="118" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
+  <component name="FormatOnSaveOptions">
+    <option name="myRunOnSave" value="false" />
+    <option name="myAllFileTypesSelected" value="true" />
+    <option name="mySelectedFileTypes">
+      <set />
+    </option>
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="codex/richte-subagentteam-ein" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="McpProjectServerCommands">
@@ -55,7 +123,7 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "rearrange.code.on.save": "true",
-    "settings.editor.selected.configurable": "ml.llm.LLMThirdPartyAiProvidersConfigurable",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "ts.external.directory.path": "C:\\Users\\Chris\\git\\ChellysKitchen\\frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
@@ -94,6 +162,10 @@
       <workItem from="1776968799619" duration="28000" />
       <workItem from="1776968840346" duration="3507000" />
       <workItem from="1776972752205" duration="3945000" />
+      <workItem from="1777059347011" duration="1594000" />
+      <workItem from="1777061176258" duration="1924000" />
+      <workItem from="1777063116431" duration="2730000" />
+      <workItem from="1777065964140" duration="1340000" />
     </task>
     <task id="LOCAL-00001" summary="Add template files to the project">
       <option name="closed" value="true" />
@@ -210,5 +282,13 @@
     <MESSAGE value="Add cloud to the vision file" />
     <MESSAGE value="Add more md context" />
     <option name="LAST_COMMIT_MESSAGE" value="Add more md context" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
   </component>
 </project>

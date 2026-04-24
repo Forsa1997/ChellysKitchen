@@ -1,39 +1,45 @@
-import { Alert, Card, CardContent, CardMedia, Chip, CircularProgress, List, ListItem, ListItemText, Stack, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Alert, Card, CardContent, CardMedia, Chip, CircularProgress, List, ListItem, ListItemText, Stack, Typography, Box, Button } from '@mui/material';
 import { useParams } from 'react-router';
-import { fetchRecipeById } from '../api/client';
+import { useState } from 'react';
+import { useRecipe } from '../hooks/useRecipes';
+import { useRecipeRatings, useCreateRating, useDeleteRating } from '../hooks/useRatings';
+import { RatingDisplay, InteractiveRating } from '../components/Rating';
+import { useAuth } from '../auth/AuthContext';
 import type { Recipe } from '../types/domain';
 
 export function RecipeDetailPage() {
   const { id } = useParams();
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: recipe, isLoading, error } = useRecipe(id || '');
+  const { user } = useAuth();
+  const { data: ratings } = useRecipeRatings(id || '');
+  const createRating = useCreateRating();
+  const deleteRating = useDeleteRating();
+  const [userRating, setUserRating] = useState<number>(0);
 
-  useEffect(() => {
-    if (!id) {
-      setError('Rezept-ID fehlt.');
-      setLoading(false);
-      return;
+  const handleRatingChange = async (value: number) => {
+    if (!user || !id) return;
+
+    try {
+      if (userRating === value) {
+        // Remove rating if clicking same value
+        await deleteRating.mutateAsync(id);
+        setUserRating(0);
+      } else {
+        // Create or update rating
+        await createRating.mutateAsync({ slug: id, data: { stars: value } });
+        setUserRating(value);
+      }
+    } catch (error) {
+      console.error('Failed to update rating:', error);
     }
+  };
 
-    fetchRecipeById(id)
-      .then((data) => {
-        setRecipe(data);
-        setError(null);
-      })
-      .catch((requestError: Error) => {
-        setError(requestError.message);
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  if (loading) {
+  if (isLoading) {
     return <CircularProgress />;
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return <Alert severity="error">{error instanceof Error ? error.message : 'Fehler beim Laden des Rezepts'}</Alert>;
   }
 
   if (!recipe) {
@@ -51,8 +57,9 @@ export function RecipeDetailPage() {
         />
         <CardContent>
           <Stack direction="row" spacing={1} mb={1} flexWrap="wrap" useFlexGap>
-            <Chip label={recipe.tag} size="small" color="secondary" />
+            {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
             <Chip label={recipe.difficulty} size="small" variant="outlined" />
+            <Chip label={recipe.category} size="small" variant="outlined" />
           </Stack>
           <Typography variant="h4" sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' } }} gutterBottom>
             {recipe.title}
@@ -61,6 +68,21 @@ export function RecipeDetailPage() {
           <Typography variant="caption" color="text.secondary">
             {recipe.preparationTime + recipe.cookingTime} Minuten • {recipe.servings} Portionen
           </Typography>
+          <Box sx={{ mt: 2 }}>
+            <RatingDisplay value={recipe.averageRating || 0} count={recipe.ratings?.length} />
+            {user && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Deine Bewertung:
+                </Typography>
+                <InteractiveRating
+                  value={userRating}
+                  onChange={handleRatingChange}
+                  disabled={createRating.isPending || deleteRating.isPending}
+                />
+              </Box>
+            )}
+          </Box>
         </CardContent>
       </Card>
 

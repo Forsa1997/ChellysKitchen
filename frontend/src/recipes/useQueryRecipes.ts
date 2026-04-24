@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
-import { fetchRecipes } from '../api/client';
-import type { RecipeListMeta, RecipeListParams } from '../api/client';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient, type RecipeListParams } from '../api/client';
 import type { Recipe } from '../types/domain';
 
-const defaultMeta: RecipeListMeta = {
+const defaultMeta = {
   page: 1,
   pageSize: 6,
   total: 0,
@@ -16,25 +15,18 @@ const defaultMeta: RecipeListMeta = {
 };
 
 export function useQueryRecipes(params: RecipeListParams) {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [meta, setMeta] = useState<RecipeListMeta>(defaultMeta);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['recipes', params],
+    queryFn: () => apiClient.getRecipes(params),
+  });
 
-  useEffect(() => {
-    setLoading(true);
+  const recipes = data?.data || [];
+  const meta = data?.meta || defaultMeta;
 
-    fetchRecipes(params)
-      .then((result) => {
-        setRecipes(result.data);
-        setMeta(result.meta);
-        setError(null);
-      })
-      .catch((requestError: Error) => {
-        setError(requestError.message);
-      })
-      .finally(() => setLoading(false));
-  }, [params.q, params.category, params.page, params.pageSize, params.sort, params.difficulty, params.maxTotalMinutes]);
-
-  return { recipes, meta, loading, error };
+  return {
+    recipes,
+    meta,
+    loading: isLoading,
+    error: error instanceof Error ? error.message : null,
+  };
 }

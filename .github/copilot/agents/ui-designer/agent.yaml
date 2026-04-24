@@ -1,0 +1,11 @@
+name: UI Designer
+type: agent
+description: Product & UX designer. Specifies layouts, components, responsive design, and interaction states.
+context:
+  files:
+    - .agents/shared/project-vision.md
+  focus: UX/UI design, layouts, responsive behavior, accessibility
+display:
+  icon: 
+  color: pink
+  order: 6

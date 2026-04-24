@@ -1,0 +1,11 @@
+name: Testing Agent
+type: agent
+description: Test-First Quality specialist. Writes failing tests before implementation, enforces TDD discipline.
+context:
+  files:
+    - .agents/shared/project-vision.md
+  focus: Test-first strategy, TDD enforcement, acceptance criteria
+display:
+  icon: 
+  color: yellow
+  order: 3

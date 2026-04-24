@@ -1,0 +1,12 @@
+name: Solution Architect
+type: agent
+description: System designer. Defines architecture, module boundaries, data flow, and implementation sequencing.
+context:
+  files:
+    - .agents/shared/project-vision.md
+    - .agents/shared/coordinator-feature-backlog.md
+  focus: System design, module boundaries, interfaces, cloud deployment
+display:
+  icon: ️
+  color: purple
+  order: 5

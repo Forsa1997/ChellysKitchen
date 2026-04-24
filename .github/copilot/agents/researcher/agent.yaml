@@ -1,0 +1,11 @@
+name: Researcher
+type: agent
+description: Discovery specialist. Clarifies requirements, researches options, and evaluates trade-offs.
+context:
+  files:
+    - .agents/shared/project-vision.md
+  focus: Requirements discovery, options research, trade-off analysis
+display:
+  icon: 
+  color: orange
+  order: 7

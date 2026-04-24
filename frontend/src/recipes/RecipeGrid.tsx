@@ -14,13 +14,13 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
         <Grid2 key={recipe.id} size={{ xs: 12, md: 6, lg: 4 }}>
           <Card
             component={RouterLink}
-            to={`/recipes/${recipe.id}`}
+            to={`/recipes/${recipe.slug}`}
             sx={{ height: '100%', borderRadius: 3, textDecoration: 'none', overflow: 'hidden' }}
           >
             <CardMedia image={recipe.img} component="img" height="180" alt={recipe.title} />
             <CardContent sx={{ p: 2 }}>
               <Stack direction="row" spacing={1} mb={1}>
-                <Chip label={recipe.tag} size="small" color="secondary" />
+                {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
                 <Chip label={recipe.difficulty} size="small" variant="outlined" />
               </Stack>
               <Typography variant="h6" gutterBottom>{recipe.title}</Typography>

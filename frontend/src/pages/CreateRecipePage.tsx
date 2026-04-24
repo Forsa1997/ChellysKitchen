@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Card, CardContent, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { createRecipe } from '../api/client';
+import { useCreateRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
 
 const DEFAULT_CATEGORIES = ['Cooking', 'Baking', 'Barbeque', 'Dessert'];
@@ -9,6 +9,7 @@ const DEFAULT_CATEGORIES = ['Cooking', 'Baking', 'Barbeque', 'Dessert'];
 export function CreateRecipePage() {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const createRecipe = useCreateRecipe();
   const [title, setTitle] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [category, setCategory] = useState(DEFAULT_CATEGORIES[0]);
@@ -16,7 +17,6 @@ export function CreateRecipePage() {
   const [preparationTime, setPreparationTime] = useState(10);
   const [cookingTime, setCookingTime] = useState(20);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -26,23 +26,23 @@ export function CreateRecipePage() {
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      const recipe = await createRecipe({
+      const recipe = await createRecipe.mutateAsync({
         title,
         shortDescription,
         category,
         servings,
         preparationTime,
         cookingTime,
-      }, token);
-      navigate(`/recipes/${recipe.id}`);
+        difficulty: 'MITTEL',
+        ingredients: [],
+        steps: [],
+      });
+      navigate(`/recipes/${recipe.slug}`);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Rezept konnte nicht erstellt werden.');
-    } finally {
-      setLoading(false);
     }
   };
 
