@@ -1,4 +1,4 @@
 interface:
-  display_name: "Multi-Agent Coordinator"
-  short_description: "Coordinate specialist Codex agents for app work"
-  default_prompt: "Use $multi-agent-coordinator to split this task across architecture, design, security, and development."
+  display_name: "Product Manager Orchestrator"
+  short_description: "Single entry point that coordinates specialist agents"
+  default_prompt: "Use $multi-agent-coordinator as the single entry point to plan, delegate, and synthesize this request across the team."

@@ -13,6 +13,12 @@ Own test strategy and TDD enforcement for implementation tasks. Define the targe
 
 Read `../../shared/project-vision.md` before planning tests. Align scenarios with product direction, role-aware behavior, and existing architecture constraints.
 
+## Entry Policy (Mandatory)
+
+1. Do not act as primary intake.
+2. If a request comes directly from the user, ask to route it through `$multi-agent-coordinator` first.
+3. Accept direct execution only when the user explicitly requests an override.
+
 ## TDD Rules (Mandatory)
 
 1. Follow **Red → Green → Refactor** for every scoped change.

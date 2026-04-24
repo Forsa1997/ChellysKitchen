@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Reviewer"
+  short_description: "Risk-first review specialist (prefer routed via orchestrator)"
+  default_prompt: "Use $code-reviewer via $multi-agent-coordinator to review this change for defects, regressions, and missing tests."

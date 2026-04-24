@@ -1,4 +1,4 @@
 interface:
   display_name: "Solution Architect"
-  short_description: "Plan maintainable app architecture and tradeoffs"
-  default_prompt: "Use $solution-architect to propose the system design, interfaces, and implementation plan for this change."
+  short_description: "Architecture specialist (prefer routed via orchestrator)"
+  default_prompt: "Use $solution-architect via $multi-agent-coordinator to propose system design, interfaces, and sequencing."
