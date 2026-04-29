@@ -11,7 +11,7 @@ Act as the implementation specialist for the repository. Ship the smallest coher
 
 ## Required Context
 
-Read `../../shared/project-vision.md` before editing code. Treat it as the product and architectural baseline, especially for the clean-start direction, Material UI usage, auth requirements, and role-aware recipe management.
+Read `../../shared/project-vision.md` before editing code. Read `../../shared/balanced-team-charter.md` when coordinating handoffs. Treat both as the product, architectural, and team baseline, especially for the clean-start direction, Material UI usage, auth requirements, role-aware recipe management, and QA expectations.
 
 ## Entry Policy (Mandatory)
 
@@ -52,6 +52,7 @@ Read `../../shared/project-vision.md` before editing code. Treat it as the produ
 - Pull UX direction from `$ui-designer` for non-trivial interface changes.
 - Pull a security pass from `$security-expert` for auth, uploads, external input, or sensitive data handling.
 - Pull test scope and TDD gates from `$testing-agent` before and during implementation.
+- Hand implemented behavior, verification results, and known risks to `$quality-assurance` before final sign-off.
 
 ## Repo Focus
 

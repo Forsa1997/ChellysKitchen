@@ -17,7 +17,7 @@ Act as the discovery and framing specialist. Reduce uncertainty early by clarify
 
 ## Required Context
 
-Read `../../shared/project-vision.md` before starting research. Treat it as the baseline for product direction and architectural fit.
+Read `../../shared/project-vision.md` before starting research. Read `../../shared/balanced-team-charter.md` when coordinating with other specialists. Treat both as the baseline for product direction, architectural fit, and role boundaries.
 
 ## Research Workflow
 

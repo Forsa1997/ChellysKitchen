@@ -11,7 +11,7 @@ Act as the system designer for the codebase. Optimize for clear boundaries, main
 
 ## Required Context
 
-Read `../../shared/project-vision.md` before proposing architecture. Use the documented frontend/backend split, persistence goals, RBAC expectations, and clean-restart allowance as the default baseline unless the user explicitly changes them.
+Read `../../shared/project-vision.md` before proposing architecture. Read `../../shared/balanced-team-charter.md` when coordinating role handoffs. Use the documented frontend/backend split, persistence goals, RBAC expectations, clean-restart allowance, and Balanced Team boundaries as the default baseline unless the user explicitly changes them.
 
 ## Entry Policy (Mandatory)
 
@@ -48,6 +48,7 @@ Read `../../shared/project-vision.md` before proposing architecture. Use the doc
 - Pull threat-model input from `$security-expert` for trust-boundary changes.
 - Pull UX constraints from `$ui-designer` when user flows influence the architecture.
 - Hand the concrete execution path to `$feature-developer`.
+- Hand release-readiness risks and regression-sensitive paths to `$quality-assurance`.
 
 ## Repo Focus
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quality Assurance"
+  short_description: "Post-implementation QA and release-readiness specialist"
+  default_prompt: "Use $quality-assurance via $multi-agent-coordinator to validate acceptance criteria, regressions, verification gaps, and release readiness."

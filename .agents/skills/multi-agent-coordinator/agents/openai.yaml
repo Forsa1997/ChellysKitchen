@@ -1,4 +1,4 @@
 interface:
-  display_name: "Product Manager Orchestrator"
-  short_description: "Single entry point that coordinates specialist agents"
-  default_prompt: "Use $multi-agent-coordinator as the single entry point to plan, delegate, and synthesize this request across the team."
+  display_name: "PM Orchestrator"
+  short_description: "Balanced Team lead coordinating PM, Research, Architecture, Test, Dev, Security, QA, and Design"
+  default_prompt: "Use $multi-agent-coordinator as the Balanced Team entry point to plan, delegate, decide tradeoffs, and synthesize this request across specialists."

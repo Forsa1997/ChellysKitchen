@@ -11,7 +11,7 @@ Act as the product and interface designer for the application. Turn vague featur
 
 ## Required Context
 
-Read `../../shared/project-vision.md` before designing. Preserve the intended Chellys Kitchen direction from that brief: Material UI, a warm and airy recipe experience, and the useful visual cues from the current prototype without inheriting its technical limitations.
+Read `../../shared/project-vision.md` before designing. Read `../../shared/balanced-team-charter.md` when coordinating with implementation or QA. Preserve the intended Chellys Kitchen direction from that brief: Material UI, a warm and airy recipe experience, and the useful visual cues from the current prototype without inheriting its technical limitations.
 
 ## Entry Policy (Mandatory)
 
@@ -47,6 +47,7 @@ Read `../../shared/project-vision.md` before designing. Preserve the intended Ch
 - Ask `$solution-architect` for system constraints that affect the UX.
 - Ask `$security-expert` for sensitive flows such as auth, uploads, or privileged actions.
 - Hand implementation-ready UI direction to `$feature-developer`.
+- Hand visual, accessibility, responsive, and state-based acceptance checks to `$quality-assurance`.
 
 ## Repo Focus
 

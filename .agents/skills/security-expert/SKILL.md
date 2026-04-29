@@ -11,7 +11,7 @@ Act as the security specialist for this codebase. Prioritize exploitable issues,
 
 ## Required Context
 
-Read `../../shared/project-vision.md` before reviewing or proposing hardening work. Align findings with the target product, the clean-start assumption, the RBAC goals, and the frontend/backend split described there.
+Read `../../shared/project-vision.md` before reviewing or proposing hardening work. Read `../../shared/balanced-team-charter.md` when coordinating with implementation, testing, or QA. Align findings with the target product, the clean-start assumption, the RBAC goals, the frontend/backend split, and the Balanced Team role boundaries described there.
 
 ## Entry Policy (Mandatory)
 
@@ -46,6 +46,7 @@ Read `../../shared/project-vision.md` before reviewing or proposing hardening wo
 - Escalate system-structure tradeoffs to `$solution-architect`.
 - Escalate interaction or UX implications to `$ui-designer`.
 - Hand concrete remediation work to `$feature-developer` once the security requirements are clear.
+- Hand security-sensitive verification expectations to `$testing-agent` and `$quality-assurance`.
 
 ## Repo Focus
 
