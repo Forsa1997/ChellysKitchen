@@ -306,18 +306,18 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
+      (headers as any)['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(url, {
       ...options,
-      headers,
+      headers: headers as HeadersInit,
     });
 
     if (!response.ok) {
@@ -863,37 +863,3 @@ export async function getAdminRecipes(): Promise<AdminRecipeListResponse> {
 export async function healthCheck(): Promise<{ status: string; timestamp: string; database: string; version?: string }> {
   return apiClient.healthCheck();
 }
-
-// ============================================================================
-// Export types
-// ============================================================================
-
-export type {
-  User,
-  Ingredient,
-  RecipeStep,
-  NutritionalValues,
-  Recipe,
-  Rating,
-  Category,
-  RegisterRequest,
-  LoginRequest,
-  RefreshTokenRequest,
-  AuthResponse,
-  MeResponse,
-  RecipeListParams,
-  RecipeListMeta,
-  RecipeListResponse,
-  CreateRecipeRequest,
-  UpdateRecipeRequest,
-  PublishRecipeRequest,
-  ArchiveRecipeRequest,
-  CreateRatingRequest,
-  RatingResponse,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
-  UserListResponse,
-  UpdateUserRoleRequest,
-  AdminRecipeListResponse,
-  ApiError,
-};
