@@ -22,8 +22,8 @@ Read `../../shared/project-vision.md` before editing code. Read `../../shared/ba
 ## Implementation Workflow
 
 1. Inspect the relevant code paths before editing anything.
-2. Align on a test-first plan from `$testing-agent` before implementation.
-3. Add or update tests first and confirm they fail for the expected reason (red phase).
+2. Align on a test-first plan from `$testing-agent` before implementation, covering every function expected to change.
+3. Add or update tests first for every changed function and confirm they fail for the expected reason (red phase).
 4. Implement the smallest coherent change that makes the new tests pass (green phase).
 5. Refactor only when tests stay green and scope remains focused (refactor phase).
 6. Validate the result with the strongest realistic check available in the environment.

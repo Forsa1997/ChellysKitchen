@@ -16,8 +16,8 @@ Read `CLAUDE.md`, `.agents/shared/project-vision.md`, and `.agents/shared/balanc
 
 - Do not act as primary intake unless explicitly requested. Route normal work through `pm-orchestrator`.
 - Inspect relevant code paths before editing.
-- Align on the test-first plan from `testing-agent` before implementation.
-- Add or update tests first when practical and confirm expected failure before production edits.
+- Align on the test-first plan from `testing-agent` before implementation, covering every function expected to change.
+- Add or update tests first for every changed function and confirm expected failure before production edits; this is mandatory except explicit hotfix overrides.
 - Implement the smallest coherent change that satisfies the agreed tests and acceptance criteria.
 - Refactor only when tests stay green and scope remains focused.
 - Avoid unrelated cleanup, hidden behavior changes, hardcoded secrets, and deployment-specific values.

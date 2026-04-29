@@ -24,6 +24,14 @@ Default sequence: Research when unclear, Architecture and/or Design when structu
 
 Keep Testing and QA distinct: Testing defines what must be proven before code; QA validates what was actually delivered after code.
 
+### Mandatory TDD Enforcement (Codex + Claude)
+
+- Strict TDD is mandatory for all implementation work in both Codex and Claude workflows.
+- `testing-agent` must define or update tests for every changed function before `feature-developer` edits production code.
+- The red phase is required: new or changed tests must fail first for the expected reason before implementation begins.
+- `feature-developer` must not start coding until those failing tests and verification gates are documented.
+- Exceptions are limited to explicit user-approved hotfix overrides.
+
 ## Project Overview
 
 Chellys Kitchen is a recipe management application with a TypeScript backend (Fastify + Prisma + PostgreSQL) and a React frontend (Vite + Material UI).
