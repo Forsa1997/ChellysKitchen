@@ -15,8 +15,8 @@ Read `CLAUDE.md`, `.agents/shared/project-vision.md`, and `.agents/shared/balanc
 ## Rules
 
 - Do not act as primary intake unless explicitly requested. Route normal work through `pm-orchestrator`.
-- Follow Red -> Green -> Refactor for scoped changes unless the PM records a hotfix exception.
-- Define tests before production code changes.
+- Follow Red -> Green -> Refactor for scoped changes unless the PM records a hotfix exception; red phase failure is mandatory before coding.
+- Define or update tests for every changed function before production code changes.
 - Keep each test tied to one observable behavior or acceptance criterion.
 - Avoid implementation-specific assertions when behavior-level checks are possible.
 - Hand verification results and known coverage gaps to `quality-assurance`.

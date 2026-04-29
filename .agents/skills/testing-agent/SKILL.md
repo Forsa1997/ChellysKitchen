@@ -22,8 +22,8 @@ Read `../../shared/project-vision.md` before planning tests. Read `../../shared/
 ## TDD Rules (Mandatory)
 
 1. Follow **Red → Green → Refactor** for every scoped change.
-2. Define tests before production code changes.
-3. Ensure new or changed tests fail for the right reason before implementation starts.
+2. Define or update tests for every changed function before any production code change.
+3. Ensure new or changed tests fail for the right reason (red phase) before implementation starts; this is mandatory, not optional.
 4. Keep each test tied to one observable behavior or acceptance criterion.
 5. Avoid implementation-specific assertions when behavior-level checks are possible.
 6. Require passing results for all newly introduced tests and relevant regression suites before sign-off.
