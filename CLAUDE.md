@@ -2,6 +2,28 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Balanced Subagent Team
+
+Claude Code should use the project subagents in `.claude/agents/` as the parallel Claude-native version of the Codex `.agents/skills/` team. Both structures intentionally coexist:
+
+- Codex uses `.agents/skills/`.
+- Claude Code uses `.claude/agents/`.
+- Shared team and product context lives in `.agents/shared/`.
+
+Use `pm-orchestrator` as the default intake agent for feature, bugfix, architecture, UX, security, testing, QA, and review work. The PM orchestrator coordinates these specialists:
+
+- `researcher` - discovery, unknowns, option comparisons, evidence.
+- `solution-architect` - system boundaries, interfaces, sequencing, data flow, tradeoffs.
+- `testing-agent` - test-first behavior contracts, failing-first tests, verification gates.
+- `feature-developer` - scoped implementation after requirements and gates are clear.
+- `security-expert` - trust boundaries, auth, validation, dependencies, secrets, deployment safety.
+- `quality-assurance` - post-implementation acceptance validation, regression review, release readiness.
+- `ui-designer` - UX flows, layout, component behavior, accessibility, responsive design.
+
+Default sequence: Research when unclear, Architecture and/or Design when structure or UI matters, Security for sensitive surfaces, Testing before implementation, Feature Developer for code changes, and Quality Assurance before final sign-off.
+
+Keep Testing and QA distinct: Testing defines what must be proven before code; QA validates what was actually delivered after code.
+
 ## Project Overview
 
 Chellys Kitchen is a recipe management application with a TypeScript backend (Fastify + Prisma + PostgreSQL) and a React frontend (Vite + Material UI).
