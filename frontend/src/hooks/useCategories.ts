@@ -1,6 +1,6 @@
 // React Query Hooks for Categories
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, type Category, type CreateCategoryRequest, type UpdateCategoryRequest } from '../api/client';
+import { apiClient, type CreateCategoryRequest, type UpdateCategoryRequest } from '../api/client';
 
 export function useCategories() {
   return useQuery({

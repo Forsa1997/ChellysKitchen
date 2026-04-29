@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, type RecipeListParams } from '../api/client';
-import type { Recipe } from '../types/domain';
 
 const defaultMeta = {
   page: 1,

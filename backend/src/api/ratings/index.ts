@@ -2,7 +2,7 @@
 import { FastifyInstance } from 'fastify';
 import { getPrismaClient } from '../../infrastructure/database';
 import { requireAuth } from '../../middleware/auth';
-import { createRatingSchema, updateRatingSchema } from '../../domain/validators';
+import { createRatingSchema } from '../../domain/validators';
 
 export async function ratingRoutes(fastify: FastifyInstance) {
   const prisma = getPrismaClient();
@@ -31,7 +31,7 @@ export async function ratingRoutes(fastify: FastifyInstance) {
 
       const averageRating =
         ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length
+          ? ratings.reduce((sum: number, r: any) => sum + r.stars, 0) / ratings.length
           : 0;
 
       return reply.send({

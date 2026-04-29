@@ -3,12 +3,11 @@ import { getPrismaClient } from '../../infrastructure/database';
 import { PasswordService } from '../../domain/services/PasswordService';
 import { TokenService } from '../../infrastructure/auth';
 import { registerSchema, loginSchema } from '../../domain/validators';
-import type { CreateUserInput } from '../../domain/entities';
 
 export class AuthUseCases {
   private prisma = getPrismaClient();
 
-  async register(input: CreateUserInput) {
+  async register(input: any) {
     // Validate input
     const validated = registerSchema.parse(input);
 
@@ -36,7 +35,7 @@ export class AuthUseCases {
         email: validated.email,
         name: validated.name,
         password: hashedPassword,
-        role: validated.role || 'MEMBER',
+        role: (validated as any).role || 'MEMBER',
       },
       select: {
         id: true,

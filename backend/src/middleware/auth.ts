@@ -1,12 +1,12 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { UserRole, AccessTokenPayload } from '../types';
+import { UserRole, type AccessTokenPayload } from '../types';
 
-// Extend FastifyRequest to include user
-declare module 'fastify' {
-  interface FastifyRequest {
-    user?: AccessTokenPayload;
-  }
-}
+/**
+ * Get the authenticated user from the request
+ */
+export const getUser = (request: FastifyRequest): AccessTokenPayload | undefined => {
+  return request.user as AccessTokenPayload | undefined;
+};
 
 /**
  * Require authentication middleware
@@ -29,7 +29,8 @@ export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) 
     // Verify token using Fastify JWT
     const decoded = request.server.jwt.verify<AccessTokenPayload>(token);
 
-    request.user = decoded;
+    // Set the user property (this will override the JWT plugin's user property)
+    (request as any).user = decoded;
   } catch (error) {
     return reply.status(401).send({
       success: false,
@@ -45,7 +46,9 @@ export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) 
  */
 export const requireRole = (roles: UserRole[]) => {
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    if (!request.user) {
+    const user = getUser(request);
+
+    if (!user) {
       return reply.status(401).send({
         success: false,
         error: 'Unauthorized',
@@ -53,7 +56,7 @@ export const requireRole = (roles: UserRole[]) => {
       });
     }
 
-    if (!roles.includes(request.user.role)) {
+    if (!roles.includes(user.role)) {
       return reply.status(403).send({
         success: false,
         error: 'Forbidden',
@@ -76,7 +79,9 @@ export const requireMinRole = (minRole: UserRole) => {
   };
 
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    if (!request.user) {
+    const user = getUser(request);
+
+    if (!user) {
       return reply.status(401).send({
         success: false,
         error: 'Unauthorized',
@@ -84,7 +89,7 @@ export const requireMinRole = (minRole: UserRole) => {
       });
     }
 
-    const userLevel = roleHierarchy[request.user.role];
+    const userLevel = roleHierarchy[user.role];
     const requiredLevel = roleHierarchy[minRole];
 
     if (userLevel < requiredLevel) {
@@ -101,14 +106,14 @@ export const requireMinRole = (minRole: UserRole) => {
  * Optional authentication middleware
  * Attaches user payload if token is valid, but doesn't require it
  */
-export const optionalAuth = async (request: FastifyRequest, reply: FastifyReply) => {
+export const optionalAuth = async (request: FastifyRequest) => {
   try {
     const authHeader = request.headers.authorization;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.replace('Bearer ', '');
       const decoded = request.server.jwt.verify<AccessTokenPayload>(token);
-      request.user = decoded;
+      (request as any).user = decoded;
     }
   } catch (error) {
     // Ignore errors - authentication is optional

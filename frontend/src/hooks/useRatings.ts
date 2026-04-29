@@ -1,6 +1,6 @@
 // React Query Hooks for Ratings
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, type Rating, type CreateRatingRequest } from '../api/client';
+import { apiClient, type CreateRatingRequest } from '../api/client';
 
 export function useRecipeRatings(slug: string) {
   return useQuery({

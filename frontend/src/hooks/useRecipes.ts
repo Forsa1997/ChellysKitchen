@@ -1,6 +1,6 @@
 // React Query Hooks for Recipes
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, type Recipe, type RecipeListParams, type CreateRecipeRequest, type UpdateRecipeRequest } from '../api/client';
+import { apiClient, type RecipeListParams, type CreateRecipeRequest, type UpdateRecipeRequest } from '../api/client';
 
 export function useRecipes(params: RecipeListParams = {}) {
   return useQuery({

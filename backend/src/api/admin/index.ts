@@ -2,13 +2,14 @@
 import { FastifyInstance } from 'fastify';
 import { UserUseCases } from '../../application/users';
 import { requireAuth, requireRole } from '../../middleware/auth';
+import { UserRole } from '../../types';
 
 export async function adminRoutes(fastify: FastifyInstance) {
   const userUseCases = new UserUseCases();
 
   // Get all users (admin only)
   fastify.get('/users', {
-    preHandler: [requireAuth, requireRole(['ADMIN'])],
+    preHandler: [requireAuth, requireRole([UserRole.ADMIN])],
   }, async (request, reply) => {
     try {
       const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
@@ -21,7 +22,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
   // Update user role (admin only)
   fastify.patch('/users/:id/role', {
-    preHandler: [requireAuth, requireRole(['ADMIN'])],
+    preHandler: [requireAuth, requireRole([UserRole.ADMIN])],
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
@@ -35,7 +36,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
   // Delete user (admin only)
   fastify.delete('/users/:id', {
-    preHandler: [requireAuth, requireRole(['ADMIN'])],
+    preHandler: [requireAuth, requireRole([UserRole.ADMIN])],
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };

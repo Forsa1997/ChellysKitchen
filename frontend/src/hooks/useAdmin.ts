@@ -1,6 +1,6 @@
 // React Query Hooks for Admin
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, type User, type UpdateUserRoleRequest } from '../api/client';
+import { apiClient, type UpdateUserRoleRequest } from '../api/client';
 
 export function useUsers() {
   return useQuery({

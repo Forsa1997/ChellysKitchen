@@ -1,6 +1,7 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import jwt from '@fastify/jwt';
 import dotenv from 'dotenv';
 import { healthRoutes } from './api/health';
 import { authRoutes } from './api/auth';
@@ -47,6 +48,11 @@ const registerPlugins = async () => {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
+  // JWT configuration
+  await fastify.register(jwt, {
+    secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+  });
 };
 
 // Register routes
@@ -55,7 +61,7 @@ const registerRoutes = async () => {
   await fastify.register(healthRoutes);
 
   // Root endpoint
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async () => {
     return {
       name: 'Chellys Kitchen API',
       version: '1.0.0',

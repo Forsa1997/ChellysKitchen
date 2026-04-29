@@ -5,7 +5,7 @@ import { FastifyInstance } from 'fastify';
  */
 export async function healthRoutes(fastify: FastifyInstance) {
   // Health check endpoint
-  fastify.get('/health', async (request, reply) => {
+  fastify.get('/health', async () => {
     const healthStatus = {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -20,16 +20,16 @@ export async function healthRoutes(fastify: FastifyInstance) {
       // await prisma.$queryRaw`SELECT 1`;
       healthStatus.database = 'connected';
     } catch (error) {
-      fastify.log.error('Database health check failed:', error);
+      fastify.log.error({ error }, 'Database health check failed');
       healthStatus.database = 'disconnected';
       healthStatus.status = 'degraded';
     }
 
-    return reply.code(healthStatus.status === 'ok' ? 200 : 503).send(healthStatus);
+    return healthStatus;
   });
 
   // Readiness check
-  fastify.get('/health/ready', async (request, reply) => {
+  fastify.get('/health/ready', async () => {
     return {
       status: 'ready',
       timestamp: new Date().toISOString(),
@@ -37,7 +37,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
   });
 
   // Liveness check
-  fastify.get('/health/live', async (request, reply) => {
+  fastify.get('/health/live', async () => {
     return {
       status: 'alive',
       timestamp: new Date().toISOString(),

@@ -1,7 +1,6 @@
 // Admin Dashboard Page
 import {
   Alert,
-  Box,
   Button,
   Card,
   CardContent,
@@ -28,6 +27,7 @@ import {
 import { useState } from 'react';
 import { useUsers, useUpdateUserRole } from '../hooks/useAdmin';
 import { useAuth } from '../auth/AuthContext';
+import { apiClient, type User } from '../api/client';
 
 export function AdminDashboard() {
   const { user: currentUser } = useAuth();
@@ -37,7 +37,7 @@ export function AdminDashboard() {
   const [newRole, setNewRole] = useState<'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN'>('MEMBER');
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
-  const users = usersData?.users || [];
+  const users = usersData?.data || [];
 
   const handleRoleChange = (userId: string, currentRole: string) => {
     if (currentUser?.role !== 'ADMIN') {
@@ -121,7 +121,7 @@ export function AdminDashboard() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user) => (
+            {users.map((user: User) => (
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
