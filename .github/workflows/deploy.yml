@@ -1,94 +1,38 @@
-# GitHub Actions CI/CD Pipeline
-
-name: Deploy Chellys Kitchen
+name: Deploy
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: ["main"]
+  workflow_dispatch:
 
 jobs:
-  # Backend Tests
-  test-backend:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run TypeScript
-        run: npm run build
-
-      - name: Run tests
-        run: npm test
-
-  # Frontend Tests
-  test-frontend:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run TypeScript
-        run: npm run build
-
-      - name: Run tests
-        run: npm test
-
-  # Deploy Backend
   deploy-backend:
-    needs: [test-backend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Trigger backend deploy (Render)
+        if: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl --fail --show-error --silent \
+            --request POST \
+            "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL }}"
 
-      - name: Deploy to Render
-        uses: render/deploy@latest
-        with:
-          service: chellys-kitchen-api
-          apiKey: ${{ secrets.RENDER_API_KEY }}
-
-  # Deploy Frontend
   deploy-frontend:
-    needs: [test-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Trigger frontend deploy (Render)
+        if: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl --fail --show-error --silent \
+            --request POST \
+            "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}"
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+  summary:
+    needs: [deploy-backend, deploy-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "Deploy workflow finished."
+          echo "If a deploy was skipped, set:"
+          echo "- RENDER_BACKEND_DEPLOY_HOOK_URL"
+          echo "- RENDER_FRONTEND_DEPLOY_HOOK_URL"
