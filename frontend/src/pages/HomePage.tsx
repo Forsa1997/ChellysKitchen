@@ -1,6 +1,7 @@
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -15,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ChangeEvent, useMemo } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link as RouterLink, useSearchParams } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
@@ -93,6 +94,18 @@ export function HomePage() {
             Melde dich an, um eigene Rezepte zu erstellen. Demo-Zugang: demo@chellys-kitchen.local / demo1234
           </Alert>
         )}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+          {user ? (
+            <Button component={RouterLink} to="/recipes/create" variant="contained" size="large">
+              Rezept erstellen
+            </Button>
+          ) : (
+            <Button component={RouterLink} to="/signin" variant="contained" size="large">
+              Zum Login
+            </Button>
+          )}
+        </Stack>
+
       </Stack>
 
       <TextField
@@ -157,7 +170,11 @@ export function HomePage() {
         />
       </Stack>
 
-      <RecipeGrid recipes={recipes} />
+      {recipes.length === 0 ? (
+        <Alert severity="info">Keine Rezepte vorhanden. Erstelle das erste Rezept!</Alert>
+      ) : (
+        <RecipeGrid recipes={recipes} />
+      )}
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ md: 'center' }}>
         <Typography color="text.secondary">
