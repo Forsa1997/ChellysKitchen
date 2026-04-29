@@ -7,14 +7,28 @@ export class RecipeUseCases {
   private prisma = getPrismaClient();
 
   async getAllRecipes(params: any = {}) {
-    const { search, category, difficulty, status, page = 1, limit = 10 } = params;
+    const {
+      search,
+      q,
+      category,
+      difficulty,
+      status,
+      page = 1,
+      limit,
+      pageSize = 10,
+    } = params;
+
+    const parsedPage = Number(page) > 0 ? Number(page) : 1;
+    const parsedLimit = Number(limit ?? pageSize) > 0 ? Number(limit ?? pageSize) : 10;
 
     const where: any = {};
 
-    if (search) {
+    const searchTerm = search ?? q;
+
+    if (searchTerm) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { shortDescription: { contains: search, mode: 'insensitive' } },
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { shortDescription: { contains: searchTerm, mode: 'insensitive' } },
       ];
     }
 
@@ -36,8 +50,8 @@ export class RecipeUseCases {
     const [recipes, total] = await Promise.all([
       this.prisma.recipe.findMany({
         where,
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: (parsedPage - 1) * parsedLimit,
+        take: parsedLimit,
         orderBy: { createdAt: 'desc' },
         include: {
           createdBy: {
@@ -49,13 +63,20 @@ export class RecipeUseCases {
       this.prisma.recipe.count({ where }),
     ]);
 
+    const data = recipes.map((recipe: any) => ({
+      ...recipe,
+      preparationTimeMinutes: recipe.preparationTime,
+      descriptionExcerpt: recipe.shortDescription,
+    }));
+
     return {
-      data: recipes,
+      data,
       meta: {
-        page,
-        limit,
+        page: parsedPage,
+        limit: parsedLimit,
+        pageSize: parsedLimit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.max(1, Math.ceil(total / parsedLimit)),
       },
     };
   }
