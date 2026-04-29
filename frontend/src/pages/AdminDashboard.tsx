@@ -27,7 +27,7 @@ import {
 import { useState } from 'react';
 import { useUsers, useUpdateUserRole } from '../hooks/useAdmin';
 import { useAuth } from '../auth/AuthContext';
-import { apiClient, type User } from '../api/client';
+import { type User } from '../api/client';
 
 export function AdminDashboard() {
   const { user: currentUser } = useAuth();
