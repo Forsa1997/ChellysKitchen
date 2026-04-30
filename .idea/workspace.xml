@@ -5,49 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b001b670-6771-43ad-90a3-adff5194363a" name="Changes" comment="Add more md context">
-      <change afterPath="$PROJECT_DIR$/.copilot/EXAMPLE_PROMPTS.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/INDEX.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/INTEGRATION_GUIDE.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/SETUP.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/code-reviewer.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/coordinator.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/feature-developer.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/researcher.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/security-expert.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/solution-architect.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/testing-agent.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.copilot/agents/ui-designer.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/COMPLETION.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/SETUP.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/INDEX.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/code-reviewer/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/code-reviewer/instructions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/coordinator/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/coordinator/instructions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/feature-developer/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/feature-developer/instructions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/researcher/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/researcher/instructions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/security-expert/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/security-expert/instructions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/solution-architect/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/solution-architect/instructions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/testing-agent/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/testing-agent/instructions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/ui-designer/agent.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/copilot/agents/ui-designer/instructions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/server.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/backend/server.mjs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/auth/AuthContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/auth/AuthContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/CreateRecipePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/CreateRecipePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/RecipeDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/RecipeDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/recipes/RecipeGrid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/recipes/RecipeGrid.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/types/domain.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/domain.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,12 +27,12 @@
   </component>
   <component name="CopilotUserSelectedModel">
     <selectedModels>
-      <entry key="agent-panel" value="GPT-5#(OpenAI)" />
-      <entry key="chat-panel" value="GPT-5#(OpenAI)" />
+      <entry key="agent-panel" value="Claude Haiku 4.5" />
+      <entry key="chat-panel" value="Claude Haiku 4.5" />
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="118" />
+    <option name="cachedIndexableFilesCount" value="188" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FormatOnSaveOptions">
@@ -82,11 +45,23 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="codex/richte-subagentteam-ein" />
+        <entry key="$PROJECT_DIR$" value="fix/render-backend-build-types" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "Forsa1997"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Forsa1997/ChellysKitchen.git",
+    "accountId": "60ed6e79-969d-4ce2-a060-3493d2ac64d9"
+  }
+}]]></component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
@@ -106,28 +81,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "javascript.preferred.runtime.type.id": "node",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "rearrange.code.on.save": "true",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "ts.external.directory.path": "C:\\Users\\Chris\\git\\ChellysKitchen\\frontend\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;rearrange.code.on.save&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\Chris\\git\\ChellysKitchen\\frontend\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Chris\git\ChellysKitchen\frontend\src" />
@@ -166,6 +141,7 @@
       <workItem from="1777061176258" duration="1924000" />
       <workItem from="1777063116431" duration="2730000" />
       <workItem from="1777065964140" duration="1340000" />
+      <workItem from="1777579057262" duration="710000" />
     </task>
     <task id="LOCAL-00001" summary="Add template files to the project">
       <option name="closed" value="true" />
