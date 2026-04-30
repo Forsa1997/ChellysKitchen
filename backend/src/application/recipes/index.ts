@@ -2,6 +2,7 @@
 import { getPrismaClient } from '../../infrastructure/database';
 import { SlugService } from '../../domain/services/SlugService';
 import { createRecipeSchema, updateRecipeSchema } from '../../domain/validators';
+import type { Prisma } from '@prisma/client';
 
 export class RecipeUseCases {
   private prisma = getPrismaClient();
@@ -143,7 +144,21 @@ export class RecipeUseCases {
   }
 
   async createRecipe(input: any, userId: string) {
-    const validated = createRecipeSchema.parse(input);
+    const validated = createRecipeSchema.parse(input) as {
+      title: string;
+      shortDescription: string;
+      description?: string;
+      img?: string;
+      tag?: string;
+      difficulty: 'EINFACH' | 'MITTEL' | 'SCHWER';
+      servings: number;
+      preparationTime: number;
+      cookingTime: number;
+      category: string;
+      ingredients: Prisma.InputJsonValue;
+      steps: Prisma.InputJsonValue;
+      nutritionalValues?: Prisma.InputJsonValue;
+    };
 
     // Generate unique slug
     const existingRecipes = await this.prisma.recipe.findMany({
@@ -154,9 +169,23 @@ export class RecipeUseCases {
 
     const recipe = await this.prisma.recipe.create({
       data: {
-        ...validated,
+        title: validated.title,
+        shortDescription: validated.shortDescription,
+        description: validated.description,
+        img: validated.img,
+        tag: validated.tag,
+        difficulty: validated.difficulty,
+        servings: validated.servings,
+        preparationTime: validated.preparationTime,
+        cookingTime: validated.cookingTime,
+        category: validated.category,
+        ingredients: validated.ingredients,
+        steps: validated.steps,
+        nutritionalValues: validated.nutritionalValues,
         slug,
-        createdById: userId,
+        createdBy: {
+          connect: { id: userId },
+        },
         status: 'DRAFT',
       },
       include: {

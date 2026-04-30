@@ -3,6 +3,7 @@ import { getPrismaClient } from '../../infrastructure/database';
 import { PasswordService } from '../../domain/services/PasswordService';
 import { TokenService } from '../../infrastructure/auth';
 import { registerSchema, loginSchema } from '../../domain/validators';
+import { UserRole } from '../../types';
 
 export class AuthUseCases {
   private prisma = getPrismaClient();
@@ -47,7 +48,7 @@ export class AuthUseCases {
     });
 
     // Generate tokens
-    const accessToken = TokenService.generateAccessToken(user.id, user.email, user.role);
+    const accessToken = TokenService.generateAccessToken(user.id, user.email, user.role as UserRole);
     const refreshToken = TokenService.generateRefreshToken(user.id, 1);
 
     return {
@@ -77,7 +78,7 @@ export class AuthUseCases {
     }
 
     // Generate tokens
-    const accessToken = TokenService.generateAccessToken(user.id, user.email, user.role);
+    const accessToken = TokenService.generateAccessToken(user.id, user.email, user.role as UserRole);
     const refreshToken = TokenService.generateRefreshToken(user.id, 1);
 
     return {
@@ -107,7 +108,7 @@ export class AuthUseCases {
       }
 
       // Generate new access token
-      const accessToken = TokenService.generateAccessToken(user.id, user.email, user.role);
+      const accessToken = TokenService.generateAccessToken(user.id, user.email, user.role as UserRole);
 
       return {
         accessToken,
