@@ -33,14 +33,14 @@
   "main": "dist/server.js",
   "name": "chellys-kitchen-backend",
   "prisma": {
-    "seed": "node -r ts-node/register prisma/seed.ts"
+    "seed": "node dist/prisma/seed.js"
   },
   "scripts": {
     "build": "prisma generate && tsc || true",
     "dev": "nodemon --exec ts-node src/server.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:seed": "node dist/prisma/seed.js",
     "start": "prisma generate && prisma migrate deploy && node dist/server.js",
     "test": "jest"
   },
