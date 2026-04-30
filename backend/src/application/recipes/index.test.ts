@@ -223,7 +223,8 @@ test('createRecipe creates draft recipe owned by current user and generated slug
         return {
           id: 'recipe-1',
           ...args.data,
-          createdBy: { id: args.data.createdById, name: 'Test User' },
+          createdById: args.data.createdBy?.connect?.id,
+          createdBy: { id: args.data.createdBy?.connect?.id, name: 'Test User' },
         };
       },
     },
@@ -232,7 +233,7 @@ test('createRecipe creates draft recipe owned by current user and generated slug
   const result = await useCases.createRecipe(input, 'user-123');
 
   assert.equal(createCall.data.status, 'DRAFT');
-  assert.equal(createCall.data.createdById, 'user-123');
+  assert.equal(createCall.data.createdBy.connect.id, 'user-123');
   assert.equal(createCall.data.slug, 'spaghetti-bolognese-1');
   assert.equal(result.status, 'DRAFT');
   assert.equal(result.createdById, 'user-123');

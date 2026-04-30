@@ -43,9 +43,19 @@ export async function categoryRoutes(fastify: FastifyInstance) {
     preHandler: [requireAuth, requireRole([UserRole.ADMIN])],
   }, async (request, reply) => {
     try {
-      const validated = createCategorySchema.parse(request.body);
+      const validated = createCategorySchema.parse(request.body) as {
+        name: string;
+        slug: string;
+        description?: string;
+        icon?: string;
+      };
       const category = await prisma.category.create({
-        data: validated,
+        data: {
+          name: validated.name,
+          slug: validated.slug,
+          description: validated.description,
+          icon: validated.icon,
+        },
       });
       return reply.status(201).send(category);
     } catch (error: any) {
