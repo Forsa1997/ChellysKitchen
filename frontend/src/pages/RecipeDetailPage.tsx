@@ -1,11 +1,12 @@
-import { Alert, Avatar, Box, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, List, ListItem, ListItemText, Paper, Stack, Typography } from '@mui/material';
-import { useParams } from 'react-router';
+import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, List, ListItem, ListItemText, Paper, Stack, Typography } from '@mui/material';
+import { Link as RouterLink, useParams } from 'react-router';
 import { useState } from 'react';
 import { useRecipe } from '../hooks/useRecipes';
 import { useCreateRating, useDeleteRating } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
 import { AccessTime, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, WaterDrop } from '@mui/icons-material';
+import type { ApiError } from '../api/client';
 
 export function RecipeDetailPage() {
   const { slug } = useParams();
@@ -14,6 +15,8 @@ export function RecipeDetailPage() {
   const createRating = useCreateRating();
   const deleteRating = useDeleteRating();
   const [userRating, setUserRating] = useState<number>(0);
+  const apiError = error as ApiError | null;
+  const isNotFound = apiError?.statusCode === 404;
 
   const handleRatingChange = async (value: number) => {
     if (!user || !slug) return;
@@ -42,7 +45,14 @@ export function RecipeDetailPage() {
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="error">{error instanceof Error ? error.message : 'Fehler beim Laden des Rezepts'}</Alert>
+        <Stack spacing={2}>
+          <Alert severity={isNotFound ? 'warning' : 'error'}>
+            {isNotFound ? 'Rezept nicht gefunden.' : apiError?.message || 'Fehler beim Laden des Rezepts'}
+          </Alert>
+          <Box>
+            <Button component={RouterLink} to="/" variant="outlined">Zurück zur Übersicht</Button>
+          </Box>
+        </Stack>
       </Container>
     );
   }
@@ -50,7 +60,12 @@ export function RecipeDetailPage() {
   if (!recipe) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="warning">Rezept nicht gefunden.</Alert>
+        <Stack spacing={2}>
+          <Alert severity="warning">Rezept nicht gefunden.</Alert>
+          <Box>
+            <Button component={RouterLink} to="/" variant="outlined">Zurück zur Übersicht</Button>
+          </Box>
+        </Stack>
       </Container>
     );
   }
@@ -65,6 +80,15 @@ export function RecipeDetailPage() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack spacing={4}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="space-between" alignItems={{ sm: 'center' }}>
+          <Button component={RouterLink} to="/" variant="text">Zurück zur Übersicht</Button>
+          {user?.id === recipe.createdBy?.id && (
+            <Button variant="outlined" disabled>
+              Bearbeiten (TODO)
+            </Button>
+          )}
+        </Stack>
+
         {/* Header Section with Image */}
         <Paper sx={{ borderRadius: 4, overflow: 'hidden', boxShadow: 3 }}>
           {recipe.img && (

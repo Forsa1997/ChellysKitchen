@@ -180,6 +180,36 @@ test('getRecipeBySlug allows owner to access draft but blocks non-owner access',
   );
 });
 
+test('getRecipeBySlug returns detail DTO with instructions, preparationTimeMinutes and owner', async () => {
+  const useCases = new RecipeUseCases() as any;
+  useCases.prisma = {
+    recipe: {
+      findUnique: async () => ({
+        id: 'recipe-2',
+        slug: 'tomatensuppe',
+        status: 'PUBLISHED',
+        title: 'Tomatensuppe',
+        description: 'Cremig und frisch',
+        ingredients: [{ name: 'Tomaten', amount: 500, unit: 'g' }],
+        steps: [{ stepNumber: 1, instruction: 'Alles 20 Minuten kochen.' }],
+        preparationTime: 15,
+        servings: 4,
+        createdAt: '2026-04-30T12:00:00.000Z',
+        updatedAt: '2026-04-30T13:00:00.000Z',
+        createdById: 'owner-1',
+        createdBy: { id: 'owner-1', name: 'Chris' },
+      }),
+    },
+  };
+
+  const result = await useCases.getRecipeBySlug('tomatensuppe');
+
+  assert.equal(result.id, 'recipe-2');
+  assert.equal(result.preparationTimeMinutes, 15);
+  assert.deepEqual(result.instructions, [{ stepNumber: 1, instruction: 'Alles 20 Minuten kochen.' }]);
+  assert.deepEqual(result.owner, { id: 'owner-1', name: 'Chris' });
+});
+
 test('createRecipe creates draft recipe owned by current user and generated slug', async () => {
   const useCases = new RecipeUseCases() as any;
   const input = buildValidRecipeInput();
