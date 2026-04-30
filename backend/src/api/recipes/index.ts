@@ -1,16 +1,17 @@
 // Recipe Routes
 import { FastifyInstance } from 'fastify';
 import { RecipeUseCases } from '../../application/recipes';
-import { requireAuth, requireRole } from '../../middleware/auth';
+import { optionalAuth, requireAuth, requireRole } from '../../middleware/auth';
 import { UserRole } from '../../types';
 
 export async function recipeRoutes(fastify: FastifyInstance) {
   const recipeUseCases = new RecipeUseCases();
 
   // Get all recipes (public)
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', { preHandler: optionalAuth }, async (request, reply) => {
     try {
-      const result = await recipeUseCases.getAllRecipes(request.query);
+      const userId = (request as any).user?.sub;
+      const result = await recipeUseCases.getAllRecipes(request.query, userId);
       return reply.send(result);
     } catch (error: any) {
       return reply.status(500).send({ error: error.message });
@@ -18,10 +19,11 @@ export async function recipeRoutes(fastify: FastifyInstance) {
   });
 
   // Get recipe by slug (public)
-  fastify.get('/:slug', async (request, reply) => {
+  fastify.get('/:slug', { preHandler: optionalAuth }, async (request, reply) => {
     try {
       const { slug } = request.params as { slug: string };
-      const recipe = await recipeUseCases.getRecipeBySlug(slug);
+      const userId = (request as any).user?.sub;
+      const recipe = await recipeUseCases.getRecipeBySlug(slug, userId);
       return reply.send(recipe);
     } catch (error: any) {
       return reply.status(404).send({ error: error.message });

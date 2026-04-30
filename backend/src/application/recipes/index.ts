@@ -6,38 +6,61 @@ import { createRecipeSchema, updateRecipeSchema } from '../../domain/validators'
 export class RecipeUseCases {
   private prisma = getPrismaClient();
 
-  async getAllRecipes(params: any = {}) {
-    const { search, category, difficulty, status, page = 1, limit = 10 } = params;
+  async getAllRecipes(params: any = {}, userId?: string) {
+    const { search, q, category, difficulty, status } = params;
+    const searchTerm = search ?? q;
+    const page = Math.max(Number(params.page) || 1, 1);
+    const requestedLimit = Number(params.pageSize ?? params.limit) || 10;
+    const limit = Math.min(Math.max(requestedLimit, 1), 50);
 
-    const where: any = {};
+    const andConditions: any[] = [];
 
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { shortDescription: { contains: search, mode: 'insensitive' } },
-      ];
+    if (searchTerm) {
+      andConditions.push({
+        OR: [
+          { title: { contains: searchTerm, mode: 'insensitive' } },
+          { shortDescription: { contains: searchTerm, mode: 'insensitive' } },
+        ],
+      });
     }
 
     if (category) {
-      where.category = category;
+      andConditions.push({ category });
     }
 
     if (difficulty) {
-      where.difficulty = difficulty;
+      const difficultyMap: Record<string, string> = {
+        EINFACH: 'EINFACH',
+        MITTEL: 'MITTEL',
+        SCHWER: 'SCHWER',
+        Einfach: 'EINFACH',
+        Mittel: 'MITTEL',
+        Schwer: 'SCHWER',
+      };
+      const mappedDifficulty = difficultyMap[difficulty];
+      if (mappedDifficulty) {
+        andConditions.push({ difficulty: mappedDifficulty });
+      }
     }
 
-    if (status) {
-      where.status = status;
+    if (userId) {
+      andConditions.push({
+        OR: [{ status: 'PUBLISHED' }, { createdById: userId }],
+      });
+      if (status) {
+        andConditions.push({ status });
+      }
     } else {
-      // Default to published recipes for public access
-      where.status = 'PUBLISHED';
+      andConditions.push({ OR: [{ status: 'PUBLISHED' }] });
     }
+
+    const where: any = andConditions.length > 0 ? { AND: andConditions } : {};
 
     const [recipes, total] = await Promise.all([
       this.prisma.recipe.findMany({
         where,
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: (resolvedPage - 1) * resolvedLimit,
+        take: resolvedLimit,
         orderBy: { createdAt: 'desc' },
         include: {
           createdBy: {
@@ -53,14 +76,19 @@ export class RecipeUseCases {
       data: recipes,
       meta: {
         page,
-        limit,
+        pageSize: limit,
         total,
         totalPages: Math.ceil(total / limit),
+        q: searchTerm ?? '',
+        category: category ?? 'all',
+        sort: 'newest',
+        difficulty: difficulty ?? 'all',
+        maxTotalMinutes: null,
       },
     };
   }
 
-  async getRecipeBySlug(slug: string) {
+  async getRecipeBySlug(slug: string, userId?: string) {
     const recipe = await this.prisma.recipe.findUnique({
       where: { slug },
       include: {
@@ -81,6 +109,11 @@ export class RecipeUseCases {
     });
 
     if (!recipe) {
+      throw new Error('Recipe not found');
+    }
+
+    const canView = recipe.status === 'PUBLISHED' || (userId && recipe.createdById === userId);
+    if (!canView) {
       throw new Error('Recipe not found');
     }
 
@@ -116,6 +149,9 @@ export class RecipeUseCases {
 
   async updateRecipe(id: string, input: any, userId: string, userRole: string) {
     const validated = updateRecipeSchema.parse(input);
+    if (Object.prototype.hasOwnProperty.call(input, 'status')) {
+      throw new Error('Recipe status updates are not allowed in this endpoint');
+    }
 
     const recipe = await this.prisma.recipe.findUnique({
       where: { id },
@@ -134,6 +170,7 @@ export class RecipeUseCases {
       where: { id },
       data: {
         ...validated,
+        status: undefined,
         updatedById: userId,
       },
       include: {

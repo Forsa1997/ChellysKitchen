@@ -26,7 +26,7 @@ function App() {
             <AppShell>
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+                <Route path="/recipes/:slug" element={<RecipeDetailPage />} />
                 <Route
                   path="/recipes/new"
                   element={(
