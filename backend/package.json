@@ -33,7 +33,7 @@
   "main": "dist/server.js",
   "name": "chellys-kitchen-backend",
   "prisma": {
-    "seed": "npx ts-node prisma/seed.ts"
+    "seed": "node -r ts-node/register prisma/seed.ts"
   },
   "scripts": {
     "build": "prisma generate && tsc || true",
