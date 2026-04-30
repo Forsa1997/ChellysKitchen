@@ -1,16 +1,17 @@
 // Recipe Routes
 import { FastifyInstance } from 'fastify';
 import { RecipeUseCases } from '../../application/recipes';
-import { requireAuth, requireRole } from '../../middleware/auth';
+import { optionalAuth, requireAuth, requireRole } from '../../middleware/auth';
 import { UserRole } from '../../types';
 
 export async function recipeRoutes(fastify: FastifyInstance) {
   const recipeUseCases = new RecipeUseCases();
 
   // Get all recipes (public)
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', { preHandler: optionalAuth }, async (request, reply) => {
     try {
-      const result = await recipeUseCases.getAllRecipes(request.query);
+      const userId = (request as any).user?.sub;
+      const result = await recipeUseCases.getAllRecipes(request.query, userId);
       return reply.send(result);
     } catch (error: any) {
       return reply.status(500).send({ error: error.message });

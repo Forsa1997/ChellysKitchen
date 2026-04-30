@@ -6,15 +6,27 @@ import { createRecipeSchema, updateRecipeSchema } from '../../domain/validators'
 export class RecipeUseCases {
   private prisma = getPrismaClient();
 
-  async getAllRecipes(params: any = {}) {
-    const { search, category, difficulty, status, page = 1, limit = 10 } = params;
+  async getAllRecipes(params: any = {}, currentUserId?: string) {
+    const {
+      search,
+      q,
+      category,
+      difficulty,
+      status,
+      page = 1,
+      pageSize,
+      limit = 10,
+    } = params;
+    const searchTerm = search ?? q;
+    const resolvedPage = Number(page) || 1;
+    const resolvedLimit = Number(pageSize ?? limit) || 10;
 
     const where: any = {};
 
-    if (search) {
+    if (searchTerm) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { shortDescription: { contains: search, mode: 'insensitive' } },
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { shortDescription: { contains: searchTerm, mode: 'insensitive' } },
       ];
     }
 
@@ -29,15 +41,18 @@ export class RecipeUseCases {
     if (status) {
       where.status = status;
     } else {
-      // Default to published recipes for public access
-      where.status = 'PUBLISHED';
+      // Public listing shows published recipes.
+      // Authenticated users additionally see their own drafts/archived recipes.
+      where.OR = currentUserId
+        ? [{ status: 'PUBLISHED' }, { createdById: currentUserId }]
+        : [{ status: 'PUBLISHED' }];
     }
 
     const [recipes, total] = await Promise.all([
       this.prisma.recipe.findMany({
         where,
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: (resolvedPage - 1) * resolvedLimit,
+        take: resolvedLimit,
         orderBy: { createdAt: 'desc' },
         include: {
           createdBy: {
@@ -52,10 +67,15 @@ export class RecipeUseCases {
     return {
       data: recipes,
       meta: {
-        page,
-        limit,
+        page: resolvedPage,
+        pageSize: resolvedLimit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / resolvedLimit),
+        q: searchTerm ?? '',
+        category: category ?? 'all',
+        sort: 'newest',
+        difficulty: difficulty ?? 'all',
+        maxTotalMinutes: null,
       },
     };
   }

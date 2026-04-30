@@ -8,22 +8,22 @@ import { useAuth } from '../auth/AuthContext';
 import { AccessTime, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, WaterDrop } from '@mui/icons-material';
 
 export function RecipeDetailPage() {
-  const { id } = useParams();
-  const { data: recipe, isLoading, error } = useRecipe(id || '');
+  const { slug } = useParams();
+  const { data: recipe, isLoading, error } = useRecipe(slug || '');
   const { user } = useAuth();
   const createRating = useCreateRating();
   const deleteRating = useDeleteRating();
   const [userRating, setUserRating] = useState<number>(0);
 
   const handleRatingChange = async (value: number) => {
-    if (!user || !id) return;
+    if (!user || !slug) return;
 
     try {
       if (userRating === value) {
-        await deleteRating.mutateAsync(id);
+        await deleteRating.mutateAsync(slug);
         setUserRating(0);
       } else {
-        await createRating.mutateAsync({ slug: id, data: { stars: value } });
+        await createRating.mutateAsync({ slug, data: { stars: value } });
         setUserRating(value);
       }
     } catch (error) {
