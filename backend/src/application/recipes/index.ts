@@ -88,7 +88,15 @@ export class RecipeUseCases {
   }
 
   async createRecipe(input: any, userId: string) {
-    const validated = createRecipeSchema.parse(input);
+    const normalizedInput = {
+      ...input,
+      preparationTime: input.preparationTime ?? input.preparationTimeMinutes,
+      steps: input.steps ?? (typeof input.instructions === 'string'
+        ? input.instructions.split('\n').map((instruction: string, index: number) => ({ stepNumber: index + 1, instruction: instruction.trim() })).filter((step: any) => step.instruction)
+        : input.instructions),
+    };
+
+    const validated = createRecipeSchema.parse(normalizedInput);
 
     // Generate unique slug
     const existingRecipes = await this.prisma.recipe.findMany({
@@ -99,10 +107,22 @@ export class RecipeUseCases {
 
     const recipe = await this.prisma.recipe.create({
       data: {
-        ...validated,
         slug,
+        title: validated.title,
+        shortDescription: validated.shortDescription,
+        description: validated.description,
+        img: validated.img,
+        tag: validated.tag,
+        difficulty: validated.difficulty,
+        servings: validated.servings,
+        preparationTime: validated.preparationTime,
+        cookingTime: validated.cookingTime,
+        category: validated.category,
+        ingredients: validated.ingredients,
+        steps: validated.steps,
+        nutritionalValues: validated.nutritionalValues,
         createdById: userId,
-        status: 'DRAFT',
+        status: 'PUBLISHED',
       },
       include: {
         createdBy: {
