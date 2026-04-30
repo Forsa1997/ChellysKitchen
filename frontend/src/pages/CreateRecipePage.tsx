@@ -145,8 +145,31 @@ export function CreateRecipePage() {
     setError(null);
 
     try {
-      const validIngredients = ingredients.filter(ing => ing.name && ing.amount > 0 && ing.unit);
-      const validSteps = steps.filter(step => step.instruction);
+      const hasIncompleteIngredient = ingredients.some((ingredient) => {
+        const hasAnyValue = ingredient.name.trim() !== '' || ingredient.unit.trim() !== '' || ingredient.amount > 0;
+        const isComplete = ingredient.name.trim() !== '' && ingredient.unit.trim() !== '' && ingredient.amount > 0;
+        return hasAnyValue && !isComplete;
+      });
+      if (hasIncompleteIngredient) {
+        setError('Bitte vervollständige alle Zutaten (Menge, Einheit und Name), bevor du speicherst.');
+        return;
+      }
+
+      const hasEmptyStep = steps.some((step) => step.instruction.trim() === '');
+      if (hasEmptyStep) {
+        setError('Bitte fülle alle Zubereitungsschritte aus oder entferne leere Schritte vor dem Speichern.');
+        return;
+      }
+
+      const preparedIngredients = ingredients.map((ingredient) => ({
+        ...ingredient,
+        name: ingredient.name.trim(),
+        unit: ingredient.unit.trim(),
+      }));
+      const preparedSteps = steps.map((step) => ({
+        ...step,
+        instruction: step.instruction.trim(),
+      }));
 
       const recipe = await createRecipe.mutateAsync({
         title,
@@ -159,8 +182,8 @@ export function CreateRecipePage() {
         servings,
         preparationTime,
         cookingTime,
-        ingredients: validIngredients,
-        steps: validSteps,
+        ingredients: preparedIngredients,
+        steps: preparedSteps,
         nutritionalValues: Object.keys(nutritionalValues).length > 0 ? nutritionalValues : undefined,
       });
       navigate(`/recipes/${recipe.slug}`);

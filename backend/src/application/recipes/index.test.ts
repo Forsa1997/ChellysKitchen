@@ -36,10 +36,12 @@ test('getAllRecipes shows only published recipes for guests', async () => {
 
   await useCases.getAllRecipes({});
 
-  assert.deepEqual(receivedWhere.OR, [{ status: 'PUBLISHED' }]);
+  assert.deepEqual(receivedWhere, {
+    AND: [{ OR: [{ status: 'PUBLISHED' }] }],
+  });
 });
 
-test('getAllRecipes includes own recipes for authenticated users', async () => {
+test('getAllRecipes public list does not expose draft visibility even when status query is provided', async () => {
   const useCases = new RecipeUseCases() as any;
   let receivedWhere: any;
 
@@ -53,12 +55,14 @@ test('getAllRecipes includes own recipes for authenticated users', async () => {
     },
   };
 
-  await useCases.getAllRecipes({}, 'user-123');
+  await useCases.getAllRecipes({ status: 'DRAFT' });
 
-  assert.deepEqual(receivedWhere.OR, [{ status: 'PUBLISHED' }, { createdById: 'user-123' }]);
+  assert.deepEqual(receivedWhere, {
+    AND: [{ OR: [{ status: 'PUBLISHED' }] }],
+  });
 });
 
-test('getAllRecipes uses explicit status filter without visibility OR fallback', async () => {
+test('getAllRecipes authenticated list combines search filter with published-plus-own visibility', async () => {
   const useCases = new RecipeUseCases() as any;
   let receivedWhere: any;
 
@@ -72,10 +76,65 @@ test('getAllRecipes uses explicit status filter without visibility OR fallback',
     },
   };
 
-  await useCases.getAllRecipes({ status: 'DRAFT' }, 'user-123');
+  await useCases.getAllRecipes({ search: 'pasta' }, 'user-123');
 
-  assert.equal(receivedWhere.status, 'DRAFT');
-  assert.equal(receivedWhere.OR, undefined);
+  assert.deepEqual(receivedWhere.AND, [
+    {
+      OR: [
+        { title: { contains: 'pasta', mode: 'insensitive' } },
+        { shortDescription: { contains: 'pasta', mode: 'insensitive' } },
+      ],
+    },
+    {
+      OR: [{ status: 'PUBLISHED' }, { createdById: 'user-123' }],
+    },
+  ]);
+});
+
+test('getAllRecipes maps UI difficulty labels to persistence enum values consistently', async () => {
+  const useCases = new RecipeUseCases() as any;
+  let receivedWhere: any;
+
+  useCases.prisma = {
+    recipe: {
+      findMany: async ({ where }: any) => {
+        receivedWhere = where;
+        return [];
+      },
+      count: async () => 0,
+    },
+  };
+
+  await useCases.getAllRecipes({ difficulty: 'Einfach' }, 'user-123');
+
+  assert.deepEqual(receivedWhere.AND, [
+    { difficulty: 'EINFACH' },
+    { OR: [{ status: 'PUBLISHED' }, { createdById: 'user-123' }] },
+  ]);
+});
+
+test('getRecipeBySlug allows owner to access draft but blocks non-owner access', async () => {
+  const useCases = new RecipeUseCases() as any;
+  const draftRecipe = {
+    id: 'recipe-1',
+    slug: 'private-draft',
+    status: 'DRAFT',
+    createdById: 'owner-1',
+  };
+
+  useCases.prisma = {
+    recipe: {
+      findUnique: async () => draftRecipe,
+    },
+  };
+
+  const ownerView = await useCases.getRecipeBySlug('private-draft', 'owner-1');
+  assert.equal(ownerView.id, 'recipe-1');
+
+  await assert.rejects(
+    () => useCases.getRecipeBySlug('private-draft', 'other-user'),
+    /permission|forbidden|not found/i,
+  );
 });
 
 test('createRecipe creates draft recipe owned by current user and generated slug', async () => {
@@ -105,4 +164,32 @@ test('createRecipe creates draft recipe owned by current user and generated slug
   assert.equal(result.status, 'DRAFT');
   assert.equal(result.createdById, 'user-123');
   assert.equal(result.slug, 'spaghetti-bolognese-1');
+});
+test('updateRecipe does not allow status escalation through general update payload', async () => {
+  const useCases = new RecipeUseCases() as any;
+
+  useCases.prisma = {
+    recipe: {
+      findUnique: async () => ({
+        id: 'recipe-1',
+        createdById: 'user-123',
+        status: 'DRAFT',
+      }),
+      update: async () => ({ id: 'recipe-1' }),
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      useCases.updateRecipe(
+        'recipe-1',
+        {
+          title: 'Updated Recipe Title',
+          status: 'PUBLISHED',
+        },
+        'user-123',
+        'MEMBER',
+      ),
+    /not allowed/i,
+  );
 });

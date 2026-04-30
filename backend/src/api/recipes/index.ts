@@ -19,10 +19,11 @@ export async function recipeRoutes(fastify: FastifyInstance) {
   });
 
   // Get recipe by slug (public)
-  fastify.get('/:slug', async (request, reply) => {
+  fastify.get('/:slug', { preHandler: optionalAuth }, async (request, reply) => {
     try {
       const { slug } = request.params as { slug: string };
-      const recipe = await recipeUseCases.getRecipeBySlug(slug);
+      const userId = (request as any).user?.sub;
+      const recipe = await recipeUseCases.getRecipeBySlug(slug, userId);
       return reply.send(recipe);
     } catch (error: any) {
       return reply.status(404).send({ error: error.message });
