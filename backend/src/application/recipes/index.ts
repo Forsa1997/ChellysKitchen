@@ -6,6 +6,15 @@ import { createRecipeSchema, updateRecipeSchema } from '../../domain/validators'
 export class RecipeUseCases {
   private prisma = getPrismaClient();
 
+  private toRecipeDetailDto(recipe: any) {
+    return {
+      ...recipe,
+      instructions: recipe.steps ?? [],
+      preparationTimeMinutes: recipe.preparationTime ?? null,
+      owner: recipe.createdBy ?? null,
+    };
+  }
+
   async getAllRecipes(params: any = {}, userId?: string) {
     const { search, q, category, difficulty, status } = params;
     const searchTerm = search ?? q;
@@ -130,7 +139,7 @@ export class RecipeUseCases {
       throw new Error('Recipe not found');
     }
 
-    return recipe;
+    return this.toRecipeDetailDto(recipe);
   }
 
   async createRecipe(input: any, userId: string) {
