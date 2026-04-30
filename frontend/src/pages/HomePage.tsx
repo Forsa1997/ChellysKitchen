@@ -26,6 +26,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import TuneIcon from '@mui/icons-material/Tune';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { Link as RouterLink } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { useCategories } from '../hooks/useCategories';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
@@ -177,6 +178,22 @@ export function HomePage() {
             Melde dich an, um eigene Rezepte zu erstellen. Demo-Zugang: demo@chellys-kitchen.local / demo1234
           </Alert>
         )}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+          {user ? (
+            <Button component={RouterLink} to="/recipes/new" variant="contained">
+              Rezept erstellen
+            </Button>
+          ) : (
+            <>
+              <Button component={RouterLink} to="/signin" variant="outlined">
+                Anmelden
+              </Button>
+              <Button component={RouterLink} to="/signup" variant="contained">
+                Registrieren
+              </Button>
+            </>
+          )}
+        </Stack>
       </Stack>
 
       <Paper

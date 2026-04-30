@@ -12,6 +12,15 @@ export class RecipeUseCases {
     const page = Math.max(Number(params.page) || 1, 1);
     const requestedLimit = Number(params.pageSize ?? params.limit) || 10;
     const limit = Math.min(Math.max(requestedLimit, 1), 50);
+    const maxTotalMinutes = Number(params.maxTotalMinutes);
+
+    const sortMap: Record<string, any> = {
+      newest: { createdAt: 'desc' },
+      oldest: { createdAt: 'asc' },
+      title_asc: { title: 'asc' },
+      title_desc: { title: 'desc' },
+    };
+    const orderBy = sortMap[params.sort] ?? sortMap.newest;
 
     const andConditions: any[] = [];
 
@@ -43,6 +52,10 @@ export class RecipeUseCases {
       }
     }
 
+    if (Number.isFinite(maxTotalMinutes) && maxTotalMinutes > 0) {
+      andConditions.push({ preparationTime: { lte: maxTotalMinutes } });
+    }
+
     if (userId) {
       andConditions.push({
         OR: [{ status: 'PUBLISHED' }, { createdById: userId }],
@@ -59,9 +72,9 @@ export class RecipeUseCases {
     const [recipes, total] = await Promise.all([
       this.prisma.recipe.findMany({
         where,
-        skip: (resolvedPage - 1) * resolvedLimit,
-        take: resolvedLimit,
-        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy,
         include: {
           createdBy: {
             select: { id: true, name: true },
@@ -81,9 +94,9 @@ export class RecipeUseCases {
         totalPages: Math.ceil(total / limit),
         q: searchTerm ?? '',
         category: category ?? 'all',
-        sort: 'newest',
+        sort: params.sort ?? 'newest',
         difficulty: difficulty ?? 'all',
-        maxTotalMinutes: null,
+        maxTotalMinutes: Number.isFinite(maxTotalMinutes) && maxTotalMinutes > 0 ? maxTotalMinutes : null,
       },
     };
   }

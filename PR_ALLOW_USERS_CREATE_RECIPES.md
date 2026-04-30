@@ -1,46 +1,47 @@
-# feat: allow users to create recipes
+# feat: improve recipe overview
 
-## Änderungen
-- Backend-Rezeptlisting auf `optionalAuth` umgestellt, damit eingeloggte Nutzer neben veröffentlichten Rezepten auch eigene Rezepte sehen.
-- `getAllRecipes` erweitert (inkl. `q`/`pageSize`-Handling und angereicherter `meta`-Antwort).
-- Testabdeckung für Sichtbarkeitslogik und Draft-Erstellung ergänzt.
-- Frontend-Routing für Rezeptdetail auf `:slug` umgestellt.
-- Home-Ansicht überarbeitet (Filter/Search UX, Chips, Skeletons, Empty State, Category-Integration).
-- Rezeptdetailseite auf `slug`-Parametrisierung angepasst.
+## Zusammenfassung
+- Rezeptübersicht im Backend und Frontend für eine robuste, responsive Darstellung verbessert.
+- Backend-Listing unterstützt jetzt Pagination, Sortierung, Zeitfilter und validierte Query-Parameter.
+- Frontend zeigt klare Zustände für Laden, Fehler, Empty State sowie sichtbare CTA-Flows für angemeldete und nicht angemeldete Nutzer.
 
-## API-Endpunkte
-- `GET /recipes`
-  - nutzt jetzt `optionalAuth` als `preHandler`.
-  - bei authentifizierten Nutzern: zeigt `PUBLISHED` plus eigene Rezepte (`createdById = currentUserId`), sofern kein expliziter `status` gesetzt ist.
-  - unterstützt Query-Parameter-Mapping `q`/`search`, `pageSize`/`limit`.
-- Bestehende Endpunkte bleiben unverändert, Detailroute wird im Frontend über Slug konsumiert (`/recipes/:slug`).
+## API-Änderungen
+- `GET /api/recipes`:
+  - Query-Validierung via Zod für `q`, `search`, `category`, `difficulty`, `status`, `page`, `limit`, `pageSize`, `sort`, `maxTotalMinutes`.
+  - 400-Fehler bei ungültigen Query-Parametern.
+  - Pagination verwendet `page` + `pageSize|limit` korrekt (`skip/take`).
+  - Sortierung unterstützt `newest`, `oldest`, `title_asc`, `title_desc`.
+  - Zeitfilter `maxTotalMinutes` filtert auf `preparationTime`.
+  - Antwort enthält weiterhin Rezeptliste mit `id`, `title`, `shortDescription`, `servings`, Zeitangaben, `createdAt` und Owner-Info (`createdBy`).
 
-## DB-Änderungen
-- Keine Migration/Schema-Änderung in diesem Commit.
-- Verhalten nutzt bestehende Felder (`status`, `createdById`, `slug`).
+## UI-Änderungen
+- `HomePage`:
+  - gut sichtbare Aktionen unter dem Header:
+    - eingeloggt: `Rezept erstellen`
+    - ausgeloggt: `Anmelden` und `Registrieren`
+  - bestehende responsive Filter-/Such- und Empty-State-Struktur beibehalten.
+- `RecipeGrid`:
+  - Karten zeigen zusätzlich Autor und Erstellungsdatum.
+  - Karten bleiben zur Detailansicht (`/recipes/:slug`) verlinkt.
 
-## UI
-- HomePage:
-  - neue Such-/Filterleiste mit Debounce, Kategorie-/Schwierigkeits-/Zeitfiltern, Sortierung, aktiven Filter-Chips und Reset.
-  - Loading-Skeletons und verbesserter Empty State.
-- Routing:
-  - Rezeptdetailroute von `:id` auf `:slug` geändert.
-- RecipeDetailPage:
-  - Datenabruf und Rating-Mutationen auf `slug` umgestellt.
+## Mobile/Desktop-Verhalten
+- Desktop: mehrspaltiges Card-Grid (`md: 2`, `lg: 3`) bleibt aktiv.
+- Mobile: einspaltige Kartenliste (`xs: 1`) mit gut lesbaren CTA-Buttons.
+- Filter- und Header-Aktionen bleiben auf kleinen Screens gestapelt.
 
 ## Commands run
-- `git checkout -b codex/allow-users-create-recipes`
-- `git add backend/src/api/recipes/index.ts backend/src/application/recipes/index.ts backend/src/application/recipes/index.test.ts frontend/src/App.tsx frontend/src/pages/HomePage.tsx frontend/src/pages/RecipeDetailPage.tsx`
-- `git commit -m "feat: allow users to create recipes"`
-- `git push -u origin codex/allow-users-create-recipes`
+- `npm install` (backend)
+- `npm install` (frontend)
+- `npm test` (backend)
+- `npm run build` (backend)
+- `npm run lint` (frontend)
+- `npm run typecheck` (frontend)
+- `npm test` (frontend)
+- `npm run build` (frontend)
 
-## Test/Build Ergebnis
-- Automatisierte Tests/Build in diesem Worker-Schritt nicht ausgeführt.
-- Neuer Testfall hinzugefügt: `backend/src/application/recipes/index.test.ts`.
-
-## Deployment-Hinweise
-- Kein DB-Migrationsschritt erforderlich.
-- Nach Deployment bitte prüfen:
-  - öffentliche Rezeptliste zeigt weiterhin veröffentlichte Rezepte.
-  - eingeloggte Nutzer sehen zusätzlich eigene (nicht veröffentlichte) Rezepte in der Liste.
-  - Rezeptdetailrouting über Slug funktioniert für bestehende Links.
+## Test-/Build-Status
+- Backend Tests: ✅ (`9/9` bestanden via `tsx --test`)
+- Frontend Tests: ✅ (`RecipeGrid.test.tsx`)
+- Frontend Typecheck: ✅
+- Frontend Build: ✅
+- Backend Build: ⚠️ weiterhin fehlschlagend wegen bestehender, repo-fremder TS-Probleme in `categories`/`auth` plus bestehender Typinkonsistenz in `createRecipe`-Pfad.

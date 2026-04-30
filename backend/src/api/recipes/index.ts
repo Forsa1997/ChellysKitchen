@@ -1,8 +1,22 @@
 // Recipe Routes
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { RecipeUseCases } from '../../application/recipes';
 import { optionalAuth, requireAuth, requireRole } from '../../middleware/auth';
 import { UserRole } from '../../types';
+
+const recipeListQuerySchema = z.object({
+  q: z.string().trim().optional(),
+  search: z.string().trim().optional(),
+  category: z.string().trim().optional(),
+  difficulty: z.enum(['EINFACH', 'MITTEL', 'SCHWER', 'Einfach', 'Mittel', 'Schwer']).optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+  pageSize: z.coerce.number().int().min(1).max(50).optional(),
+  sort: z.enum(['newest', 'oldest', 'title_asc', 'title_desc']).optional(),
+  maxTotalMinutes: z.coerce.number().int().min(1).optional(),
+});
 
 export async function recipeRoutes(fastify: FastifyInstance) {
   const recipeUseCases = new RecipeUseCases();
@@ -11,9 +25,13 @@ export async function recipeRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: optionalAuth }, async (request, reply) => {
     try {
       const userId = (request as any).user?.sub;
-      const result = await recipeUseCases.getAllRecipes(request.query, userId);
+      const query = recipeListQuerySchema.parse(request.query ?? {});
+      const result = await recipeUseCases.getAllRecipes(query, userId);
       return reply.send(result);
     } catch (error: any) {
+      if (error?.name === 'ZodError') {
+        return reply.status(400).send({ error: 'Invalid recipe query parameters' });
+      }
       return reply.status(500).send({ error: error.message });
     }
   });

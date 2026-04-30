@@ -113,6 +113,49 @@ test('getAllRecipes maps UI difficulty labels to persistence enum values consist
   ]);
 });
 
+test('getAllRecipes uses pagination values for skip/take', async () => {
+  const useCases = new RecipeUseCases() as any;
+  let receivedArgs: any;
+
+  useCases.prisma = {
+    recipe: {
+      findMany: async (args: any) => {
+        receivedArgs = args;
+        return [];
+      },
+      count: async () => 0,
+    },
+  };
+
+  await useCases.getAllRecipes({ page: 3, pageSize: 5 });
+
+  assert.equal(receivedArgs.skip, 10);
+  assert.equal(receivedArgs.take, 5);
+});
+
+test('getAllRecipes supports maxTotalMinutes and title sorting', async () => {
+  const useCases = new RecipeUseCases() as any;
+  let receivedArgs: any;
+
+  useCases.prisma = {
+    recipe: {
+      findMany: async (args: any) => {
+        receivedArgs = args;
+        return [];
+      },
+      count: async () => 0,
+    },
+  };
+
+  await useCases.getAllRecipes({ maxTotalMinutes: 45, sort: 'title_asc' }, 'user-123');
+
+  assert.deepEqual(receivedArgs.orderBy, { title: 'asc' });
+  assert.deepEqual(receivedArgs.where.AND, [
+    { preparationTime: { lte: 45 } },
+    { OR: [{ status: 'PUBLISHED' }, { createdById: 'user-123' }] },
+  ]);
+});
+
 test('getRecipeBySlug allows owner to access draft but blocks non-owner access', async () => {
   const useCases = new RecipeUseCases() as any;
   const draftRecipe = {
