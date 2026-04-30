@@ -32,6 +32,9 @@
   "license": "MIT",
   "main": "dist/server.js",
   "name": "chellys-kitchen-backend",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "build": "prisma generate && tsc || true",
     "dev": "nodemon --exec ts-node src/server.ts",
