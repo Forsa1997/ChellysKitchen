@@ -13,21 +13,29 @@ Act as the implementation specialist for the repository. Ship the smallest coher
 
 Read `../../shared/project-vision.md` before editing code. Read `../../shared/balanced-team-charter.md` when coordinating handoffs. Treat both as the product, architectural, and team baseline, especially for the clean-start direction, Material UI usage, auth requirements, role-aware recipe management, and QA expectations.
 
-## Entry Policy (Mandatory)
+## Entry Policy
 
-1. Do not act as primary intake.
-2. If a request comes directly from the user, ask to route it through `$multi-agent-coordinator` first.
-3. Accept direct execution only when the user explicitly requests an override.
+1. Act directly when the user asks for implementation, bug fixing, refactoring, or follow-up remediation.
+2. Use other repo skills only when their discipline materially improves the result.
+3. For large or unclear work, clarify scope and acceptance criteria before editing.
 
-## Implementation Workflow
+## Implementation Workflow (TDD Sequence)
 
-1. Inspect the relevant code paths before editing anything.
+1. Inspect relevant code paths before editing anything.
 2. Align on a test-first plan from `$testing-agent` before implementation, covering every function expected to change.
-3. Add or update tests first for every changed function and confirm they fail for the expected reason (red phase).
-4. Implement the smallest coherent change that makes the new tests pass (green phase).
+3. Confirm with `$testing-agent` that all tests are in place and **initially failing** for the expected reason (red phase is mandatory).
+4. Implement the smallest coherent change that satisfies the agreed tests and acceptance criteria (green phase).
 5. Refactor only when tests stay green and scope remains focused (refactor phase).
-6. Validate the result with the strongest realistic check available in the environment.
-7. Summarize what changed, how it behaves now, and what remains uncertain.
+6. Validate the result with the strongest realistic check available.
+7. Hand implemented behavior, verification results, and known risks to `$quality-assurance` before final sign-off.
+
+## TDD Rules (Mandatory)
+
+- Do not start implementation until `$testing-agent` has defined tests for every changed function.
+- Tests must be in place and failing before you write production code.
+- No implementation-first sequencing except explicit user-approved hotfix exceptions.
+- Implement only the smallest coherent change needed to make tests pass.
+- Refactor only after tests are green.
 
 ## Coding Rules
 

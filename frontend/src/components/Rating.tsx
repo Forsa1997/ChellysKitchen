@@ -13,7 +13,7 @@ export function RatingDisplay({ value, count, size = 'medium', showCount = true 
   const formattedValue = Math.round(value * 10) / 10;
 
   return (
-    <Stack direction="row" alignItems="center" spacing={1}>
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
       <Rating
         value={formattedValue}
         precision={0.5}

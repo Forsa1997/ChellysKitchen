@@ -1,4 +1,4 @@
-import { Card, CardContent, CardMedia, Chip, Grid2, Stack, Typography } from '@mui/material';
+import { Card, CardContent, CardMedia, Chip, Grid, Stack, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router';
 import type { Recipe } from '../types/domain';
 import { totalRecipeMinutes } from './recipeCardViewModel';
@@ -15,9 +15,9 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
   });
 
   return (
-    <Grid2 container spacing={2}>
+    <Grid container spacing={2}>
       {recipes.map((recipe) => (
-        <Grid2 key={recipe.id} size={{ xs: 12, md: 6, lg: 4 }}>
+        <Grid key={recipe.id} size={{ xs: 12, md: 6, lg: 4 }}>
           <Card
             component={RouterLink}
             to={`/recipes/${recipe.slug}`}
@@ -25,7 +25,7 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
           >
             <CardMedia image={recipe.img} component="img" height="180" alt={recipe.title} />
             <CardContent sx={{ p: 2 }}>
-              <Stack direction="row" spacing={1} mb={1}>
+              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                 {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
                 <Chip label={recipe.difficulty} size="small" variant="outlined" />
               </Stack>
@@ -36,13 +36,13 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
               <Typography variant="caption" color="text.secondary">
                 {totalRecipeMinutes(recipe.preparationTime, recipe.cookingTime)} Minuten • {recipe.servings} Portionen
               </Typography>
-              <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.75 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
                 Von {recipe.createdBy?.name ?? 'Unbekannt'} • {dateFormatter.format(new Date(recipe.createdAt))}
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
       ))}
-    </Grid2>
+    </Grid>
   );
 }

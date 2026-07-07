@@ -264,33 +264,33 @@ export function CreateRecipePage() {
               </Select>
             </FormControl>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
                   label="Portionen"
                   type="number"
                   fullWidth
                   value={servings}
-                  inputProps={{ min: 1 }}
+                  slotProps={{ htmlInput: { min: 1 } }}
                   onChange={(event) => setServings(Number(event.target.value))}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
                   label="Vorbereitungszeit (Min.)"
                   type="number"
                   fullWidth
                   value={preparationTime}
-                  inputProps={{ min: 0 }}
+                  slotProps={{ htmlInput: { min: 0 } }}
                   onChange={(event) => setPreparationTime(Number(event.target.value))}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
                   label="Kochzeit (Min.)"
                   type="number"
                   fullWidth
                   value={cookingTime}
-                  inputProps={{ min: 0 }}
+                  slotProps={{ htmlInput: { min: 0 } }}
                   onChange={(event) => setCookingTime(Number(event.target.value))}
                 />
               </Grid>
@@ -311,18 +311,18 @@ export function CreateRecipePage() {
             <Typography variant="h6">Zutaten</Typography>
             {ingredients.map((ingredient, index) => (
               <Paper key={index} sx={{ p: 2 }}>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={3}>
+                <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                  <Grid size={{ xs: 12, sm: 3 }}>
                     <TextField
                       label="Menge"
                       type="number"
                       fullWidth
                       value={ingredient.amount || ''}
-                      inputProps={{ min: 0, step: 0.1 }}
+                      slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                       onChange={(e) => updateIngredient(index, 'amount', Number(e.target.value))}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={2}>
+                  <Grid size={{ xs: 12, sm: 2 }}>
                     <TextField
                       label="Einheit"
                       fullWidth
@@ -331,7 +331,7 @@ export function CreateRecipePage() {
                       placeholder="z.B. g, ml, EL"
                     />
                   </Grid>
-                  <Grid item xs={10} sm={6}>
+                  <Grid size={{ xs: 10, sm: 6 }}>
                     <TextField
                       label="Zutat"
                       fullWidth
@@ -340,7 +340,7 @@ export function CreateRecipePage() {
                       placeholder="z.B. Mehl"
                     />
                   </Grid>
-                  <Grid item xs={2} sm={1}>
+                  <Grid size={{ xs: 2, sm: 1 }}>
                     <IconButton
                       onClick={() => removeIngredient(index)}
                       disabled={ingredients.length === 1}
@@ -368,7 +368,7 @@ export function CreateRecipePage() {
             <Typography variant="h6">Zubereitungsschritte</Typography>
             {steps.map((step, index) => (
               <Paper key={index} sx={{ p: 2 }}>
-                <Stack direction="row" spacing={2} alignItems="flex-start">
+                <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
                   <Box sx={{ minWidth: 40, pt: 1 }}>
                     <Typography variant="h6" color="primary">
                       {step.stepNumber}
@@ -413,43 +413,43 @@ export function CreateRecipePage() {
               Alle Nährwerte sind optional. Lasse Felder leer, wenn du sie nicht angeben möchtest.
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Kalorien (kcal)"
                   type="number"
                   fullWidth
                   value={nutritionalValues.calories || ''}
-                  inputProps={{ min: 0 }}
+                  slotProps={{ htmlInput: { min: 0 } }}
                   onChange={(e) => updateNutritionalValue('calories', e.target.value)}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Eiweiß (g)"
                   type="number"
                   fullWidth
                   value={nutritionalValues.protein || ''}
-                  inputProps={{ min: 0 }}
+                  slotProps={{ htmlInput: { min: 0 } }}
                   onChange={(e) => updateNutritionalValue('protein', e.target.value)}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Kohlenhydrate (g)"
                   type="number"
                   fullWidth
                   value={nutritionalValues.carbohydrates || ''}
-                  inputProps={{ min: 0 }}
+                  slotProps={{ htmlInput: { min: 0 } }}
                   onChange={(e) => updateNutritionalValue('carbohydrates', e.target.value)}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Fett (g)"
                   type="number"
                   fullWidth
                   value={nutritionalValues.fat || ''}
-                  inputProps={{ min: 0 }}
+                  slotProps={{ htmlInput: { min: 0 } }}
                   onChange={(e) => updateNutritionalValue('fat', e.target.value)}
                 />
               </Grid>
@@ -487,7 +487,7 @@ export function CreateRecipePage() {
 
             <Divider />
 
-            <Stack direction="row" justifyContent="space-between" spacing={2}>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
               <Button
                 disabled={activeStep === 0}
                 onClick={handleBack}

@@ -1,4 +1,4 @@
 interface:
   display_name: "UI Designer"
-  short_description: "Design specialist (prefer routed via orchestrator)"
-  default_prompt: "Use $ui-designer via $multi-agent-coordinator to translate this request into a clear, responsive interface."
+  short_description: "Design skill for UI flows, layout, states, and accessibility"
+  default_prompt: "Use $ui-designer to translate this request into a clear, responsive interface."

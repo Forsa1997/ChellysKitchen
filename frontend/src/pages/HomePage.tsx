@@ -208,10 +208,9 @@ export function HomePage() {
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={1.5}
-            alignItems={{ md: 'center' }}
-            justifyContent="space-between"
+            sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <TuneIcon color="primary" fontSize="small" />
               <Box>
                 <Typography variant="subtitle1">
@@ -241,19 +240,21 @@ export function HomePage() {
             placeholder="Rezept, Zutat oder Anlass suchen"
             onChange={(event) => handleQueryChange(event.target.value)}
             fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-              endAdornment: queryInput ? (
-                <InputAdornment position="end">
-                  <IconButton aria-label="Suche löschen" edge="end" onClick={clearQuery} size="small">
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ) : null,
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: queryInput ? (
+                  <InputAdornment position="end">
+                    <IconButton aria-label="Suche löschen" edge="end" onClick={clearQuery} size="small">
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              },
             }}
           />
 
@@ -292,7 +293,7 @@ export function HomePage() {
 
           <Divider />
 
-          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems={{ lg: 'center' }}>
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: { lg: 'center' } }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
                 Schwierigkeit
@@ -363,7 +364,7 @@ export function HomePage() {
           </Stack>
 
           {hasActiveFilters && (
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
               {listParams.q && <Chip label={`Suche: ${listParams.q}`} onDelete={clearQuery} size="small" />}
               {listParams.category !== 'all' && (
                 <Chip
@@ -402,7 +403,7 @@ export function HomePage() {
         <RecipeGrid recipes={recipes} />
       ) : (
         <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, textAlign: 'center', borderRadius: 2 }}>
-          <Stack spacing={1.5} alignItems="center">
+          <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
             <Typography variant="h5">
               {listParams.q ? `Keine Rezepte für "${listParams.q}" gefunden` : 'Keine passenden Rezepte gefunden'}
             </Typography>
@@ -415,7 +416,11 @@ export function HomePage() {
       )}
 
       {meta.totalPages > 1 && (
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ md: 'center' }}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={2}
+          sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}
+        >
           <Typography color="text.secondary">
             Seite {meta.page} von {meta.totalPages}
           </Typography>

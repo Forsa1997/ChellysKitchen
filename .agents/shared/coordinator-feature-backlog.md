@@ -1,7 +1,7 @@
-# Chellys Kitchen – Nächste Feature-Kandidaten für den Coordinator
+# Chellys Kitchen – Nächste Feature-Kandidaten
 
 ## Zweck dieses Dokuments
-Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um die nächsten Umsetzungsrunden zu planen, Spezialrollen zuzuweisen und die Reihenfolge sinnvoll zu priorisieren.
+Diese Datei dient als Arbeitsgrundlage, um die nächsten Umsetzungsrunden zu planen, passende Skills auszuwählen und die Reihenfolge sinnvoll zu priorisieren.
 
 ## Priorisierungslogik
 - **P0 (Foundation zuerst):** Alles, was nötig ist, damit aus dem Prototyp eine echte App mit persistenter Datenhaltung wird.
@@ -21,7 +21,7 @@ Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um d
 - Erste Migrationen für Kernentitäten (`User`, `Role`, `Recipe`, `RecipeIngredient`, `RecipeStep`, `Category`, `RecipeStatus`).
 - Einheitliche Fehlerstruktur und Request-Validierung.
 
-**Coordinator-Zuweisung:**
+**Skill-Zuweisung:**
 - `$solution-architect`: Modulgrenzen, Datenmodell, Migrationsstrategie.
 - `$feature-developer`: Implementierung API-Grundgerüst + DB-Zugriff.
 - `$security-expert`: sichere Defaults (Input Validation, Fehler-/Leak-Vermeidung).
@@ -42,7 +42,7 @@ Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um d
 - Token- oder Session-Strategie inkl. Ablauf/Refresh-Entscheidung.
 - Frontend-Anbindung der bestehenden SignIn/SignUp-Screens.
 
-**Coordinator-Zuweisung:**
+**Skill-Zuweisung:**
 - `$security-expert`: Auth-Flow, Token-Lebensdauer, Cookie/Speicherstrategie.
 - `$feature-developer`: Backend + Frontend Integration.
 - `$ui-designer` (gezielt): Fehlermeldungen, Lade-/Error-States.
@@ -62,7 +62,7 @@ Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um d
 - Policy-Middleware auf API-Ebene.
 - Ownership-Regeln als Startpunkt: `member` nur eigene Rezepte editieren/löschen.
 
-**Coordinator-Zuweisung:**
+**Skill-Zuweisung:**
 - `$solution-architect`: Rollen-/Policy-Modell.
 - `$security-expert`: Missbrauchsszenarien, Privilege Escalation Checks.
 - `$feature-developer`: Durchgängige Enforcement-Implementierung.
@@ -83,7 +83,7 @@ Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um d
 - Statusmodell (`draft`, `published`, `archived`).
 - Frontend-Formulare mit Validierung und UX-States.
 
-**Coordinator-Zuweisung:**
+**Skill-Zuweisung:**
 - `$feature-developer`: End-to-End CRUD.
 - `$ui-designer`: Formularstruktur, mobile UX, Feldhierarchie.
 - `$security-expert`: Validierung, Server-seitige Autorisierung pro Aktion.
@@ -102,7 +102,7 @@ Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um d
 - Pagination für Listenansichten.
 - Frontend-Filter synchron mit URL (sharebare Suchzustände).
 
-**Coordinator-Zuweisung:**
+**Skill-Zuweisung:**
 - `$solution-architect`: API-Contract + Performance-Ansatz.
 - `$feature-developer`: Implementierung API + UI-Bindung.
 
@@ -120,7 +120,7 @@ Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um d
 - Validierung (Dateityp/Größe), Metadaten und Referenzen in DB.
 - Sichere Auslieferung/Verlinkung.
 
-**Coordinator-Zuweisung:**
+**Skill-Zuweisung:**
 - `$solution-architect`: Storage-Abstraktion + Cloud-Migrationspfad.
 - `$security-expert`: Upload-Sicherheit, Content-Type-Prüfung.
 - `$feature-developer`: API/Frontend-Integration.
@@ -176,11 +176,11 @@ Diese Datei dient als Arbeitsgrundlage für den `$multi-agent-coordinator`, um d
 
 ---
 
-## Offene Entscheidungen für den Coordinator vor Kickoff
+## Offene Entscheidungen vor Kickoff
 - Public Browsing ohne Login: **ja/nein**?
 - Primärsprache zum Start: **Deutsch oder Englisch**?
 - Backend-Framework: **Express/Fastify/Nest**?
 - Auth-Transport: **HTTP-only Cookie oder Bearer Token**?
 - Ziel-Cloud mittelfristig: **AWS/Azure/GCP/anderes**?
 
-> Hinweis für den `$multi-agent-coordinator`: Wenn mehrere Spezialisten parallel arbeiten, Dateibesitz klar trennen (z. B. Architekturdoku vs. Backend-Implementierung vs. UI-Komponenten), um Merge-Konflikte zu minimieren.
+> Hinweis: Wenn mehrere Skills parallel genutzt werden, Dateibesitz klar trennen (z. B. Architekturdoku vs. Backend-Implementierung vs. UI-Komponenten), um Merge-Konflikte zu minimieren.

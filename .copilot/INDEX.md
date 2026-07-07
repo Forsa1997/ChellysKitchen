@@ -1,6 +1,29 @@
-# 🎉 GitHub Copilot Custom Agents Setup - KOMPLETT
+# 🎉 GitHub Copilot Custom Agents - AGENTEN SIND JETZT AUSWÄHLBAR! ⭐
 
-Ich habe dein komplettes Multi-Agent-Orchestrations-System für GitHub Copilot aufgebaut. Hier ist was erstellt wurde:
+## ✨ DAS NEUE: Agenten direkt im Chat auswählen
+
+Du kannst die Agenten jetzt direkt im Copilot Chat aufrufen! Gib `@` ein und wähle:
+
+```
+@coordinator      → Product Manager (Planung & Koordination)
+@feature-developer    → Code schreiben (TDD)
+@testing-agent    → Failing Tests schreiben (Red-Phase FIRST)
+@security-expert  → Auth & Security prüfen
+@solution-architect   → Architektur designen
+@ui-designer      → Layouts & UX designen
+@researcher       → Anforderungen klären
+@code-reviewer    → QA & Approval Gate
+```
+
+**Quick Start:**
+1. Öffne Copilot Chat (Cmd+Shift+I / Strg+Shift+I)
+2. Gib `@` ein
+3. Wähle einen Agent
+4. Stelle deine Frage!
+
+---
+
+## 🚀 Ich habe für dich gebaut:
 
 ---
 
@@ -8,25 +31,48 @@ Ich habe dein komplettes Multi-Agent-Orchestrations-System für GitHub Copilot a
 
 ```
 .copilot/
+├── INDEX.md                     ← Du bist hier! Überblick über alles
 ├── README.md                    ← Start hier! Overview der Agenten
-├── INTEGRATION_GUIDE.md          ← Wie man die Agenten nutzt (Detail)
+├── QUICK_REFERENCE.md           ← ⭐ SCHNELLE REFERENZ - @ im Chat benutzen
+├── SETUP_GITHUB_COPILOT.md      ← ⭐ Detaillierte Setup-Anleitung
+├── agents.json                  ← ⭐ Zentrale Agenten-Registry (neu!)
+├── INTEGRATION_GUIDE.md         ← Wie man die Agenten nutzt (Detail)
 ├── SETUP.md                     ← Technische Setup-Anleitung
-├── EXAMPLE_PROMPTS.md           ← XXX Beispiel-Prompts für jeden Use-Case
+├── EXAMPLE_PROMPTS.md           ← Beispiel-Prompts für jeden Use-Case
 └── agents/
-    ├── coordinator.md           ← Product Manager Orchestrator (Einstiegspunkt)
-    ├── feature-developer.md     ← Implementation Specialist
-    ├── testing-agent.md         ← Test-First Quality
-    ├── security-expert.md       ← Security & Auth Specialist
-    ├── solution-architect.md    ← System Designer
-    ├── ui-designer.md           ← UI/UX Designer
-    ├── researcher.md            ← Discovery Specialist
-    ├── code-reviewer.md         ← Quality Gate
+    ├── coordinator.md           ← @coordinator - Product Manager Orchestrator
+    ├── feature-developer.md     ← @feature-developer - Implementation Specialist
+    ├── testing-agent.md         ← @testing-agent - Test-First Quality
+    ├── security-expert.md       ← @security-expert - Security & Auth Specialist
+    ├── solution-architect.md    ← @solution-architect - System Designer
+    ├── ui-designer.md           ← @ui-designer - UI/UX Designer
+    ├── researcher.md            ← @researcher - Discovery Specialist
+    ├── code-reviewer.md         ← @code-reviewer - Quality Gate
     └── README.md                ← Agents Overview
 ```
 
 ---
 
-## ✨ Was ich für dich gebaut habe
+## ✨ Das Neue (heute hinzugefügt)
+
+Diese Dateien wurden eben erstellt, um Agenten direkt auswählbar zu machen:
+
+1. **`.copilot/agents.json`** ⭐
+   - Zentrale Registry aller Agenten
+   - Beschreibt Workflows und Best Practices
+   - Kann für Auto-Discovery verwendet werden
+
+2. **`.copilot/QUICK_REFERENCE.md`** ⭐ 
+   - 2-Minuten Schnelleinstieg
+   - Agent-Auswahl Guide
+   - Tipps & Tricks
+   - **START HIER wenn du sofort loslegen willst!**
+
+3. **`.copilot/SETUP_GITHUB_COPILOT.md`** ⭐
+   - Detaillierte Setup-Anleitung
+   - 3 verschiedene Setup-Optionen
+   - Troubleshooting Guide
+   - Verification Steps
 
 ### 1. **8 Spezialisierte Custom Agents**
 
@@ -88,32 +134,24 @@ Coordinator koordiniert und synthesiert Ergebnisse
 
 ---
 
-## 🚀 Wie du startest
+## 🎯 Nächste Schritte (Sofort starten)
 
-### Step 1: Verstehen (5 Min)
-Lese `.copilot/README.md` und `.copilot/INTEGRATION_GUIDE.md`
+### 1️⃣ Kennenlernen (3 Min)
+Lies `.copilot/QUICK_REFERENCE.md` - da stehen alle Shortcuts!
 
-### Step 2: Setup (10-15 Min)
-Folge `.copilot/SETUP.md` um Agents in GitHub Copilot zu registrieren:
-- Für jeden Agent: Custom Instruction anlegen
-- Name: @[agent-name]
-- Description: Kurzbeschreibung
-- Instructions: Content der .md Datei
+### 2️⃣ Setup (5-10 Min)  
+Folge `.copilot/SETUP_GITHUB_COPILOT.md`:
+- beste Methode: Auto-Discovery in VS Code
+- Backup: Manuelle Custom Instructions
 
-### Step 3: Erste Anfrage (5 Min)
-Versuche einen einfachen Request:
+### 3️⃣ Test (2 Min)
+Öffne Copilot Chat und tippe:
 ```
-@coordinator Ich möchte dass Nutzer Rezepte als Favorit markieren können
+@coordinator Hallo! Ich bin bereit ein Feature zu planen
 ```
 
-Beobachte, wie der Coordinator plant und delegiert.
-
-### Step 4: Experiment
-Probiere verschiedene Agents:
-- `@testing-agent` für TDD
-- `@security-expert` für Sicherheit
-- `@ui-designer` für neue Screens
-- `@code-reviewer` für Code-Review
+### 4️⃣ Go! 
+Du bist ready! Nutze die Agenten für dein nächstes Feature 🚀
 
 ---
 
@@ -234,20 +272,24 @@ Das System:
 
 ## 📋 Datei-Checkup
 
-Erstellt wurden:
-- ✅ `.copilot/README.md`
-- ✅ `.copilot/INTEGRATION_GUIDE.md`
-- ✅ `.copilot/SETUP.md`
-- ✅ `.copilot/EXAMPLE_PROMPTS.md`
-- ✅ `.copilot/agents/README.md`
-- ✅ `.copilot/agents/coordinator.md`
-- ✅ `.copilot/agents/feature-developer.md`
-- ✅ `.copilot/agents/security-expert.md`
-- ✅ `.copilot/agents/solution-architect.md`
-- ✅ `.copilot/agents/code-reviewer.md`
-- ✅ `.copilot/agents/researcher.md`
-- ✅ `.copilot/agents/ui-designer.md`
-- ✅ `.copilot/agents/testing-agent.md` (vereinfacht wegen Timeouts)
+Erstellt/Aktualisiert wurden:
+- ✅ `.copilot/INDEX.md` (du bist hier)
+- ✅ `.copilot/README.md` (Agenten-Übersicht)
+- ✅ `.copilot/QUICK_REFERENCE.md` ⭐ (Schnelle Referenz - START HIER!)
+- ✅ `.copilot/SETUP_GITHUB_COPILOT.md` ⭐ (Detaillierte Setup Anleitung)
+- ✅ `.copilot/agents.json` ⭐ (Zentrale Agenten-Registry)
+- ✅ `.copilot/INTEGRATION_GUIDE.md` (Detaillierte Integration)
+- ✅ `.copilot/SETUP.md` (Technische Setup Basis)
+- ✅ `.copilot/EXAMPLE_PROMPTS.md` (Beispiel-Prompts)
+- ✅ `.copilot/agents/README.md` (Agenten-Info)
+- ✅ `.copilot/agents/coordinator.md` (@coordinator)
+- ✅ `.copilot/agents/feature-developer.md` (@feature-developer)
+- ✅ `.copilot/agents/testing-agent.md` (@testing-agent)
+- ✅ `.copilot/agents/security-expert.md` (@security-expert)
+- ✅ `.copilot/agents/solution-architect.md` (@solution-architect)
+- ✅ `.copilot/agents/ui-designer.md` (@ui-designer)
+- ✅ `.copilot/agents/researcher.md` (@researcher)
+- ✅ `.copilot/agents/code-reviewer.md` (@code-reviewer)
 
 Alles ist bereit zur Verwendung! 🎊
 

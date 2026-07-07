@@ -1,4 +1,4 @@
 interface:
   display_name: "Feature Developer"
-  short_description: "Implementation specialist (prefer routed via orchestrator)"
-  default_prompt: "Use $feature-developer via $multi-agent-coordinator to implement this change with minimal, testable edits."
+  short_description: "Implementation skill for focused, testable repo changes"
+  default_prompt: "Use $feature-developer to implement this change with minimal, testable edits."

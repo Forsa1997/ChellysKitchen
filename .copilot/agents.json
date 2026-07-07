@@ -1,0 +1,252 @@
+{
+  "version": "1.0",
+  "description": "Custom Copilot Agents für Chellys Kitchen - Balanced Team Orchestration",
+  "baseDirectory": "./.copilot/agents/",
+  "agents": [
+    {
+      "id": "coordinator",
+      "name": "PM Orchestrator",
+      "shortName": "@coordinator",
+      "description": "Product Manager Orchestrator - Haupteinstiegspunkt für Feature Requests. Koordiniert Research, Architecture, Testing, Development, Security, QA und Design Spezialisten.",
+      "file": "coordinator.md",
+      "category": "orchestration",
+      "isPrimary": true,
+      "tags": ["planning", "orchestration", "coordination", "intake"],
+      "usage": "@coordinator [Feature Request oder Problem]",
+      "examples": [
+        "@coordinator Ich möchte dass Nutzer ihre Favoriten speichern können",
+        "@coordinator Bitte plane die Implementierung von Rezept-Duplikaten"
+      ],
+      "helpText": "Verwende den Coordinator als dein Haupteinstiegspunkt für komplexe Anfragen. Er wird: 1. Deine Anfrage analysieren 2. Die nötigen Spezialisten bestimmen 3. Sie koordinieren 4. Ein kohärentes Ergebnis liefern"
+    },
+    {
+      "id": "feature-developer",
+      "name": "Feature Developer",
+      "shortName": "@feature-developer",
+      "description": "Implementation Specialist - Schreibt Code nach TDD-Prinzipien. Minimal, testbar und wartbar.",
+      "file": "feature-developer.md",
+      "category": "implementation",
+      "tags": ["implementation", "coding", "tdd", "development"],
+      "usage": "@feature-developer [Implementation Task]",
+      "examples": [
+        "@feature-developer Implementiere DELETE Endpoint für Rezepte",
+        "@feature-developer Implementiere Login-Seite nach Design der UI-Designer"
+      ],
+      "helpText": "Nutze Feature Developer für Code-Implementation. Stelle sicher, dass Testing Agent vorher Tests definiert hat (Tests müssen erst rot werden, bevor du Code schreibst).",
+      "prerequisite": "testing-agent should define tests first (Red-Phase mandatory)"
+    },
+    {
+      "id": "testing-agent",
+      "name": "Testing Agent",
+      "shortName": "@testing-agent",
+      "description": "Test-First Quality Specialist - Definiert Failing-First Tests und enforced TDD. Tests müssen VOR Implementation rot werden.",
+      "file": "testing-agent.md",
+      "category": "quality",
+      "tags": ["testing", "tdd", "quality", "acceptance-criteria"],
+      "usage": "@testing-agent [Feature zu testen]",
+      "examples": [
+        "@testing-agent Definiere Failing Tests für Rezept-Löschung",
+        "@testing-agent Was müssen wir testen für den Login-Flow?"
+      ],
+      "helpText": "Nutze Testing Agent VOR Feature Developer. Der Agent wird: 1. Acceptance Criteria klären 2. Failing Tests schreiben 3. Feature Developer gibt die Tests an den Code-Writer",
+      "mustRunBefore": ["feature-developer"]
+    },
+    {
+      "id": "security-expert",
+      "name": "Security Expert",
+      "shortName": "@security-expert",
+      "description": "Security & Auth Specialist - Findet Sicherheitslücken, validiert Auth-Flows, prüft Trust Boundaries.",
+      "file": "security-expert.md",
+      "category": "security",
+      "tags": ["security", "auth", "validation", "vulnerabilities", "trust-boundaries"],
+      "usage": "@security-expert [Code oder Architecture zu reviewen]",
+      "examples": [
+        "@security-expert Ist dieser Login-Flow sicher?",
+        "@security-expert Prüfe die Autorisierung im Recipe DELETE Endpoint"
+      ],
+      "helpText": "Nutze Security Expert für: Auth-Flows, Validierung, Dependency-Risks, Secrets, Trust Boundaries."
+    },
+    {
+      "id": "solution-architect",
+      "name": "Solution Architect",
+      "shortName": "@solution-architect",
+      "description": "System Designer - Definiert Module, Interfaces, Data Flow, Sequenzierung. Optimiert für Klarheit und Wartbarkeit.",
+      "file": "solution-architect.md",
+      "category": "architecture",
+      "tags": ["architecture", "design", "system-design", "interfaces"],
+      "usage": "@solution-architect [Architecture Question oder Feature]",
+      "examples": [
+        "@solution-architect Wie sollte der Rezept-Search im Frontend/Backend aufgeteilt sein?",
+        "@solution-architect Design den Favoriten-Feature (API-Contract, State Management)"
+      ],
+      "helpText": "Nutze Solution Architect für: System-Design, Module-Boundaries, API-Contracts, Performance-Implications."
+    },
+    {
+      "id": "ui-designer",
+      "name": "UI Designer",
+      "shortName": "@ui-designer",
+      "description": "UI/UX Design Specialist - Spezifiziert Layouts, Component-Verhalten, Responsive & Accessible Design.",
+      "file": "ui-designer.md",
+      "category": "design",
+      "tags": ["design", "ux", "ui", "accessibility", "responsive"],
+      "usage": "@ui-designer [Feature oder Screen zu designen]",
+      "examples": [
+        "@ui-designer Design eine Rezept-Suchseite mit Filtern",
+        "@ui-designer Wie sollte die Favoriten-Liste aussehen?"
+      ],
+      "helpText": "Nutze UI Designer für: Layouts, Information Hierarchy, Interaction States, Accessibility, Responsive Design. Ergebnis: Implementation-ready UI Specification."
+    },
+    {
+      "id": "researcher",
+      "name": "Researcher",
+      "shortName": "@researcher",
+      "description": "Discovery & Framing Specialist - Klärt unklare Requirements, vergleicht Optionen, reduziert Unsicherheit.",
+      "file": "researcher.md",
+      "category": "research",
+      "tags": ["research", "discovery", "options", "unknowns", "evidence"],
+      "usage": "@researcher [Unklare Frage oder Decision]",
+      "examples": [
+        "@researcher Sollten wir JWT oder Cookies für Auth nutzen?",
+        "@researcher Wir're unsicher über den Database-Schema für Rezepte. Vor- und Nachteile?"
+      ],
+      "helpText": "Nutze Researcher für: Requirements-Klärung, Unknowns Reduction, Options Comparison, Decision Support."
+    },
+    {
+      "id": "code-reviewer",
+      "name": "Code Reviewer",
+      "shortName": "@code-reviewer",
+      "description": "Quality Gate & Code Review Specialist - Findet Bugs, Regressions, Security Issues. Final Approval Gate.",
+      "file": "code-reviewer.md",
+      "category": "quality",
+      "tags": ["review", "quality", "defects", "regressions"],
+      "usage": "@code-reviewer [Code zum Reviewen]",
+      "examples": [
+        "@code-reviewer Bitte überprüfe diese Änderungen vor dem Merge",
+        "@code-reviewer Sind diese Tests ausreichend für den Login-Flow?"
+      ],
+      "helpText": "Nutze Code Reviewer als Final Gate vor Merge: Checkt Acceptance Criteria, Regressions, Test Coverage, Security, UX States."
+    }
+  ],
+  "workflows": {
+    "standard-feature-development": {
+      "name": "Standard Feature Development Workflow",
+      "description": "Empfohlen für neue Features, Bug-Fixes, Refactors",
+      "steps": [
+        {
+          "step": 1,
+          "agent": "coordinator",
+          "task": "Feature-Anfrage sammeln und planen"
+        },
+        {
+          "step": 2,
+          "agent": "researcher",
+          "task": "(optional) Unklare Requirements klären",
+          "condition": "Wenn Requirements unklar sind"
+        },
+        {
+          "step": 3,
+          "agents": ["solution-architect", "ui-designer"],
+          "task": "Parallel: Architecture & Design",
+          "note": "Können parallel laufen wenn disjunkte Scopes"
+        },
+        {
+          "step": 4,
+          "agent": "security-expert",
+          "task": "Security Review & Threat Boundaries",
+          "condition": "Wenn Auth, Validation, Uploads, External Input"
+        },
+        {
+          "step": 5,
+          "agent": "testing-agent",
+          "task": "Tests schreiben (Red Phase)",
+          "criticalNote": "Tests MÜSSEN rot werden bevor Implementation startet!"
+        },
+        {
+          "step": 6,
+          "agent": "feature-developer",
+          "task": "Implementation (Green & Refactor Phases)",
+          "prerequisite": "Nur nach Step 5!"
+        },
+        {
+          "step": 7,
+          "agent": "code-reviewer",
+          "task": "Final Quality Gate vor Merge"
+        }
+      ]
+    },
+    "quick-security-audit": {
+      "name": "Quick Security Audit",
+      "description": "Wenn ein Security-Concern gefunden wurde",
+      "steps": [
+        {
+          "step": 1,
+          "agent": "security-expert",
+          "task": "Sicherheitsanalyse durchführen"
+        },
+        {
+          "step": 2,
+          "agent": "solution-architect",
+          "task": "(optional) Architecture-Fix vorschlagen",
+          "condition": "Wenn architectural change needed"
+        },
+        {
+          "step": 3,
+          "agent": "feature-developer",
+          "task": "Remediation implementieren"
+        }
+      ]
+    },
+    "api-design-session": {
+      "name": "API Design Session",
+      "description": "Für neue API Endpoints oder signifikante API-Änderungen",
+      "steps": [
+        {
+          "step": 1,
+          "agent": "solution-architect",
+          "task": "API-Contract entwerfen (Request/Response)"
+        },
+        {
+          "step": 2,
+          "agent": "security-expert",
+          "task": "Auth, Validation, Error Handling reviewen"
+        },
+        {
+          "step": 3,
+          "agent": "testing-agent",
+          "task": "Integration-Tests für API schreiben"
+        },
+        {
+          "step": 4,
+          "agent": "feature-developer",
+          "task": "API implementieren"
+        }
+      ]
+    }
+  },
+  "setupInstructions": {
+    "gitHub-copilot-chat": [
+      "1. Öffne GitHub Copilot Chat (Cmd+Shift+I oder Strg+Shift+I)",
+      "2. Gib @ ein, um Agenten-Autovervollständigung zu starten",
+      "3. Wähle einen Agent: @coordinator, @feature-developer, etc.",
+      "4. Folge den Anweisungen für den verwendeten Agent"
+    ],
+    "copilot-editor": [
+      "Alt+Cmd+I (Mac) oder Alt+Strg+I (Windows)",
+      "Wähle den Agent mit @ Prefix"
+    ]
+  },
+  "tips": [
+    "Start mit @coordinator für komplexe Requests - er koordiniert alles",
+    "Testing Agent MUSS vor Feature Developer laufen (Red-Phase mandatory)",
+    "Researcher nutzen wenn Requirements unklar sind",
+    "Agents können parallel arbeiten, aber Coordinator muss alles synthetisieren",
+    "Security Expert early bei Auth/Validation/Uploads",
+    "Code Reviewer als Final Gate vor Merge"
+  ],
+  "contextFiles": {
+    "projectVision": ".agents/shared/project-vision.md",
+    "teamCharter": ".agents/shared/balanced-team-charter.md",
+    "featureBacklog": ".agents/shared/coordinator-feature-backlog.md"
+  }
+}
+

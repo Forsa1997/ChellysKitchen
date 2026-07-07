@@ -36,7 +36,7 @@ export function RecipeDetailPage() {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress />
       </Box>
     );
@@ -80,7 +80,11 @@ export function RecipeDetailPage() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack spacing={4}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="space-between" alignItems={{ sm: 'center' }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}
+        >
           <Button component={RouterLink} to="/" variant="text">Zurück zur Übersicht</Button>
           {user?.id === recipe.createdBy?.id && (
             <Button variant="outlined" disabled>
@@ -101,7 +105,7 @@ export function RecipeDetailPage() {
           )}
           <CardContent sx={{ p: { xs: 3, md: 4 } }}>
             {/* Tags and Categories */}
-            <Stack direction="row" spacing={1} mb={2} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 2, flexWrap: 'wrap' }}>
               {recipe.tag && (
                 <Chip label={recipe.tag} size="small" color="secondary" variant="filled" />
               )}
@@ -146,20 +150,20 @@ export function RecipeDetailPage() {
             )}
 
             {/* Quick Stats */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
-              <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <AccessTime color="action" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
                   {totalTime} Min.
                 </Typography>
               </Stack>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <Restaurant color="action" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
                   {recipe.preparationTime} Min. Vorbereitung
                 </Typography>
               </Stack>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <People color="action" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
                   {recipe.servings} Portionen
@@ -186,7 +190,7 @@ export function RecipeDetailPage() {
 
             {/* Author Info */}
             <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
-              <Stack direction="row" spacing={2} alignItems="center">
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                 <Avatar sx={{ bgcolor: 'primary.main' }}>
                   {recipe.createdBy.name.charAt(0).toUpperCase()}
                 </Avatar>
@@ -210,7 +214,7 @@ export function RecipeDetailPage() {
         {/* Main Content Grid */}
         <Grid container spacing={4}>
           {/* Left Column - Ingredients */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ borderRadius: 3, height: 'fit-content' }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
@@ -250,14 +254,14 @@ export function RecipeDetailPage() {
                   <Divider sx={{ mb: 2 }} />
                   <Grid container spacing={2}>
                     {recipe.nutritionalValues.calories !== undefined && (
-                      <Grid item xs={6}>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                      <Grid size={{ xs: 6 }}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                           <LocalFireDepartment color="error" fontSize="small" />
                           <Box>
                             <Typography variant="body2" color="text.secondary">
                               Kalorien
                             </Typography>
-                            <Typography variant="body1" fontWeight={600}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
                               {recipe.nutritionalValues.calories} kcal
                             </Typography>
                           </Box>
@@ -265,14 +269,14 @@ export function RecipeDetailPage() {
                       </Grid>
                     )}
                     {recipe.nutritionalValues.protein !== undefined && (
-                      <Grid item xs={6}>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                      <Grid size={{ xs: 6 }}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                           <FitnessCenter color="primary" fontSize="small" />
                           <Box>
                             <Typography variant="body2" color="text.secondary">
                               Eiweiß
                             </Typography>
-                            <Typography variant="body1" fontWeight={600}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
                               {recipe.nutritionalValues.protein} g
                             </Typography>
                           </Box>
@@ -280,14 +284,14 @@ export function RecipeDetailPage() {
                       </Grid>
                     )}
                     {recipe.nutritionalValues.carbohydrates !== undefined && (
-                      <Grid item xs={6}>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                      <Grid size={{ xs: 6 }}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                           <Grain color="warning" fontSize="small" />
                           <Box>
                             <Typography variant="body2" color="text.secondary">
                               Kohlenhydrate
                             </Typography>
-                            <Typography variant="body1" fontWeight={600}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
                               {recipe.nutritionalValues.carbohydrates} g
                             </Typography>
                           </Box>
@@ -295,14 +299,14 @@ export function RecipeDetailPage() {
                       </Grid>
                     )}
                     {recipe.nutritionalValues.fat !== undefined && (
-                      <Grid item xs={6}>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                      <Grid size={{ xs: 6 }}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                           <WaterDrop color="info" fontSize="small" />
                           <Box>
                             <Typography variant="body2" color="text.secondary">
                               Fett
                             </Typography>
-                            <Typography variant="body1" fontWeight={600}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
                               {recipe.nutritionalValues.fat} g
                             </Typography>
                           </Box>
@@ -316,7 +320,7 @@ export function RecipeDetailPage() {
           </Grid>
 
           {/* Right Column - Steps */}
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ borderRadius: 3 }}>
               <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
@@ -325,7 +329,7 @@ export function RecipeDetailPage() {
                 <Stack spacing={3}>
                   {recipe.steps.map((step: any, index: number) => (
                     <Box key={step.stepNumber}>
-                      <Stack direction="row" spacing={3} alignItems="flex-start">
+                      <Stack direction="row" spacing={3} sx={{ alignItems: 'flex-start' }}>
                         <Box
                           sx={{
                             minWidth: 48,
@@ -366,7 +370,11 @@ export function RecipeDetailPage() {
         {/* Footer Info */}
         <Paper sx={{ borderRadius: 3, bgcolor: 'grey.50' }}>
           <CardContent sx={{ p: 3 }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems="center">
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={2}
+              sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <Typography variant="body2" color="text.secondary">
                 Veröffentlicht am {recipe.publishedAt
                   ? new Date(recipe.publishedAt).toLocaleDateString('de-DE', {

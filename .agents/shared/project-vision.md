@@ -119,15 +119,15 @@ Use these only as defaults until the user makes explicit choices:
 - Keep stories incremental, but ensure the resulting architecture still points toward the target product.
 - Keep deployment concerns in mind early: configuration, secrets, migrations, health checks, and environment separation should fit a cloud deployment model.
 
-## Multi-Agent Working Agreement
+## Skill Working Agreement
 
-- Every specialist should read this file before planning, reviewing, or implementing work.
-- `$multi-agent-coordinator` should use this file as the shared baseline when splitting stories across specialists.
+- Every repo-local skill should read this file before planning, reviewing, or implementing work.
+- Prefer direct skill use over orchestration; use `$multi-agent-coordinator` only for explicit PM-style planning.
 - `$solution-architect` should use it to prevent accidental prototype-driven architecture.
 - `$ui-designer` should use it to preserve the desired visual identity while improving UX quality.
 - `$security-expert` should use it to enforce backend-first auth and authorization thinking.
 - `$feature-developer` should use it to keep implementation aligned with the intended product, not just the current mock UI.
-- All specialists should prefer decisions that remain easy to deploy, operate, and secure in a cloud environment.
+- All skills should prefer decisions that remain easy to deploy, operate, and secure in a cloud environment.
 
 ## Open Product Questions
 

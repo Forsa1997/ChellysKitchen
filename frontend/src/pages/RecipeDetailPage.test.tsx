@@ -1,5 +1,5 @@
 import { afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { RecipeDetailPage } from './RecipeDetailPage';
@@ -43,7 +43,7 @@ describe('RecipeDetailPage', () => {
     useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
     useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
 
-    renderPage();
+    const screen = renderPage();
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
@@ -58,7 +58,7 @@ describe('RecipeDetailPage', () => {
     useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
     useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
 
-    renderPage();
+    const screen = renderPage();
 
     expect(screen.getByText('Rezept nicht gefunden.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Zurück zur Übersicht' })).toHaveAttribute('href', '/');
@@ -96,7 +96,7 @@ describe('RecipeDetailPage', () => {
     useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
     useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
 
-    renderPage();
+    const screen = renderPage();
 
     expect(screen.getByRole('heading', { name: 'Pasta' })).toBeInTheDocument();
     expect(screen.getByText('Schnell und lecker')).toBeInTheDocument();

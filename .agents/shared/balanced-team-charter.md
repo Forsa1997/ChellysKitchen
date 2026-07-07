@@ -1,16 +1,16 @@
-# Balanced Team Charter
+# Skill Collaboration Charter
 
 ## Purpose
 
-Use this charter to keep the subagent team balanced around one Product Manager orchestrator and seven specialists: Researcher, Solution Architect, Testing Agent, Feature Developer, Security Expert, Quality Assurance, and UI Designer.
+Use this charter to keep repo-local skills small, direct, and composable. Prefer the narrowest skill that fits the work, and combine skills only when the task genuinely needs multiple disciplines.
 
 ## Operating Model
 
-- `$multi-agent-coordinator` owns intake, prioritization, role selection, tradeoff decisions, and final synthesis.
-- Specialists own narrow, explicit deliverables and return assumptions, risks, and unresolved questions.
-- The team should avoid duplicate work. When two roles touch the same area, the coordinator must assign a primary owner and a supporting owner.
-- Work should flow from uncertainty reduction to design and architecture, then risk analysis, test definition, implementation, and QA sign-off.
-- Direct specialist use is allowed only when the user explicitly requests it; otherwise route through the coordinator.
+- Skills may be invoked directly when the user names them or when the task matches their description.
+- Each skill owns a narrow, explicit discipline and should return assumptions, risks, and unresolved questions when they matter.
+- Avoid duplicate work. When two skills touch the same area, pick a primary discipline and use the other only for the missing perspective.
+- Work should flow from uncertainty reduction to design and architecture, then risk analysis, test definition, implementation, and QA sign-off when the task warrants that much process.
+- `$multi-agent-coordinator` is legacy and optional. Use it only when the user explicitly asks for orchestration or when a large ambiguous initiative benefits from a PM-style synthesis.
 
 ## Role Boundaries
 
@@ -27,7 +27,7 @@ Use this charter to keep the subagent team balanced around one Product Manager o
 1. Requirements are clear enough to state acceptance criteria.
 2. Architecture and UI constraints are explicit when the change affects structure or user flows.
 3. Security-sensitive surfaces have threat-model input before implementation.
-4. Tests are defined before production changes unless the coordinator records a hotfix exception.
+4. Tests are defined before production changes unless the user explicitly asks for a hotfix-style exception.
 5. Implementation is verified with targeted checks.
 6. QA validates delivered behavior against acceptance criteria and reports release readiness.
 

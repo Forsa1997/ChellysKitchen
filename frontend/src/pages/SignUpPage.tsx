@@ -31,7 +31,7 @@ export function SignUpPage() {
   const isLoading = authLoading || isSubmitting;
 
   return (
-    <Box display="flex" justifyContent="center" mt={4}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
       <Card sx={{ maxWidth: 480, width: '100%', borderRadius: 4 }}>
         <CardContent>
           <Stack component="form" spacing={2} onSubmit={onSubmit}>

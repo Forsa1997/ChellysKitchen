@@ -1,11 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { RecipeGrid } from './RecipeGrid';
 
 describe('RecipeGrid', () => {
   it('renders card metadata and links to detail page', () => {
-    render(
+    const screen = render(
       <MemoryRouter>
         <RecipeGrid
           recipes={[

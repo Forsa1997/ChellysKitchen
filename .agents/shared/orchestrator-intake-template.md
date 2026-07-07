@@ -1,6 +1,6 @@
-# Orchestrator Intake Template
+# Skill Intake Template
 
-Use this template when sending requests to `$multi-agent-coordinator`.
+Use this template when a larger task needs explicit scope, acceptance criteria, and skill selection before implementation.
 
 ## Request
 
@@ -17,8 +17,8 @@ Use this template when sending requests to `$multi-agent-coordinator`.
 2.
 3.
 
-## Optional Overrides
+## Skill Selection
 
-- Allow direct specialist call: yes/no
-- Required specialist roles:
-- Forbidden specialist roles:
+- Primary skill:
+- Supporting skills:
+- Skills to avoid:

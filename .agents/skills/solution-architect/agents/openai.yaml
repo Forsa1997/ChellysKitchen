@@ -1,4 +1,4 @@
 interface:
   display_name: "Solution Architect"
-  short_description: "Architecture specialist (prefer routed via orchestrator)"
-  default_prompt: "Use $solution-architect via $multi-agent-coordinator to propose system design, interfaces, and sequencing."
+  short_description: "Architecture skill for boundaries, interfaces, and sequencing"
+  default_prompt: "Use $solution-architect to propose system design, interfaces, and sequencing."

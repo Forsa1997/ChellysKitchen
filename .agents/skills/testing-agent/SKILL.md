@@ -13,11 +13,11 @@ Own test strategy and TDD enforcement for implementation tasks. Define the targe
 
 Read `../../shared/project-vision.md` before planning tests. Read `../../shared/balanced-team-charter.md` when coordinating with QA or implementation. Align scenarios with product direction, role-aware behavior, existing architecture constraints, and the distinction between pre-implementation test design and post-implementation QA.
 
-## Entry Policy (Mandatory)
+## Entry Policy
 
-1. Do not act as primary intake.
-2. If a request comes directly from the user, ask to route it through `$multi-agent-coordinator` first.
-3. Accept direct execution only when the user explicitly requests an override.
+1. Act directly when the user asks for tests, test strategy, acceptance criteria, TDD, or verification gates.
+2. Keep the test plan tied to observable behavior and the repo's existing tooling.
+3. Coordinate with implementation and QA only when the task needs those follow-up disciplines.
 
 ## TDD Rules (Mandatory)
 
@@ -52,10 +52,20 @@ When collaborating with `$feature-developer`, always provide:
 
 Reject "implementation-first" sequencing unless there is a critical hotfix exception explicitly approved by the user.
 
+## Mandatory TDD Enforcement
+
+- **Red → Green → Refactor** is mandatory for all scoped changes.
+- New or changed tests must fail first for the expected reason (red phase) before implementation begins.
+- Define or update tests for every changed function before production code changes.
+- Require `$feature-developer` to implement the minimal code to make tests pass (green phase).
+- Refactor only when tests stay green and scope remains focused (refactor phase).
+- No implementation-first sequencing except explicit user-approved hotfix overrides.
+
 ## Boundary With Quality Assurance
 
 - Own test strategy, failing-first test definitions, and automated verification gates before and during implementation.
 - Do not replace `$quality-assurance`; QA owns final acceptance validation, regression review, release-readiness verdict, and manual/flow-based checks after implementation.
+- Testing defines what must be proven before code; QA validates what was actually delivered after code.
 
 ## Output
 

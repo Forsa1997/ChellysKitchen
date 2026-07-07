@@ -31,8 +31,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-              alignItems={{ xs: 'stretch', sm: 'center' }}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              sx={{ alignItems: { xs: 'stretch', sm: 'center' }, width: { xs: '100%', sm: 'auto' } }}
             >
               {user ? (
                 <>
