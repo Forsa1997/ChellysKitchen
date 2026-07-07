@@ -41,3 +41,6 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# Persistent data store + uploaded images (DATA_DIR)
+.data/

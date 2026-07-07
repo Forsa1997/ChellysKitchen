@@ -41,13 +41,14 @@
   },
   "scripts": {
     "build": "prisma generate && tsc && node build.js",
-    "dev": "nodemon --exec ts-node src/server.ts",
+    "dev": "node --watch server.mjs",
+    "dev:prisma": "nodemon --exec ts-node src/server.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node dist/prisma/seed.js",
     "start": "node dist/server.js",
     "start:render": "node server.mjs",
-    "test": "tsx --test src/application/recipes/index.test.ts"
+    "test": "node --test src/persistence.test.mjs src/cors.test.mjs src/uploads.test.mjs src/queryRecipes.test.mjs test/server.smoke.test.mjs"
   },
   "version": "1.0.0"
 }

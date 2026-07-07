@@ -57,6 +57,9 @@ export function queryRecipes(recipes, queryParams = {}) {
   const difficultyMeta = difficulty === 'all' ? 'all' : requestedDifficulty;
   const maxTotalMinutesInput = toPositiveInt(queryParams.maxTotalMinutes, 0);
   const maxTotalMinutes = maxTotalMinutesInput > 0 ? maxTotalMinutesInput : null;
+  // Public listing defaults to PUBLISHED only; pass status='all' (or a
+  // specific status) to include drafts/archived (used by admin views).
+  const status = String(queryParams.status ?? 'PUBLISHED').trim().toUpperCase();
 
   const filtered = recipes.filter((recipe) => {
     const matchesQuery =
@@ -66,10 +69,12 @@ export function queryRecipes(recipes, queryParams = {}) {
     const matchesCategory = category === 'all' || recipe.category === category;
     const recipeDifficulty = normalizeDifficulty(String(recipe.difficulty ?? 'all').trim());
     const matchesDifficulty = difficulty === 'all' || recipeDifficulty === difficulty;
+    const recipeStatus = String(recipe.status ?? 'PUBLISHED').toUpperCase();
+    const matchesStatus = status === 'ALL' || recipeStatus === status;
     const totalMinutes = Number(recipe.preparationTime ?? 0) + Number(recipe.cookingTime ?? 0);
     const matchesMaxTotalMinutes = maxTotalMinutes == null || totalMinutes <= maxTotalMinutes;
 
-    return matchesQuery && matchesCategory && matchesDifficulty && matchesMaxTotalMinutes;
+    return matchesQuery && matchesCategory && matchesDifficulty && matchesStatus && matchesMaxTotalMinutes;
   });
 
   const sorted = sortRecipes(filtered, sort);

@@ -23,11 +23,14 @@ import {
   SelectChangeEvent,
   FormControl,
   InputLabel,
+  Snackbar,
 } from '@mui/material';
 import { useState } from 'react';
-import { useUsers, useUpdateUserRole } from '../hooks/useAdmin';
+import { Link as RouterLink } from 'react-router';
+import { useUsers, useUpdateUserRole, useAdminRecipes } from '../hooks/useAdmin';
+import { usePublishRecipe, useArchiveRecipe, useDeleteRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
-import { type User, type UserRole } from '../api/client';
+import { type User, type UserRole, type Recipe } from '../api/client';
 
 type UserWithCounts = User & {
   _count?: {
@@ -38,12 +41,18 @@ type UserWithCounts = User & {
 export function AdminDashboard() {
   const { user: currentUser } = useAuth();
   const { data: usersData, isLoading, error } = useUsers();
+  const { data: recipesData } = useAdminRecipes();
   const updateUserRole = useUpdateUserRole();
+  const publishRecipe = usePublishRecipe();
+  const archiveRecipe = useArchiveRecipe();
+  const deleteRecipe = useDeleteRecipe();
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [newRole, setNewRole] = useState<UserRole>('MEMBER');
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const users = usersData?.data || [];
+  const recipes = recipesData?.data || [];
 
   const handleRoleChange = (userId: string, currentRole: string) => {
     if (currentUser?.role !== 'ADMIN') {
@@ -65,8 +74,16 @@ export function AdminDashboard() {
       });
       setRoleDialogOpen(false);
       setSelectedUser(null);
-    } catch (error) {
-      console.error('Failed to update user role:', error);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Rolle konnte nicht geändert werden.');
+    }
+  };
+
+  const handleRecipeAction = async (action: () => Promise<unknown>, failureMessage: string) => {
+    try {
+      await action();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : failureMessage);
     }
   };
 
@@ -158,6 +175,96 @@ export function AdminDashboard() {
         </Table>
       </TableContainer>
 
+      <Box>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          Rezepte moderieren
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          Veröffentliche, archiviere oder lösche Rezepte.
+        </Typography>
+      </Box>
+
+      <TableContainer component={Paper} variant="outlined">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Titel</TableCell>
+              <TableCell>Kategorie</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Autor</TableCell>
+              <TableCell>Aktionen</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {recipes.map((recipe: Recipe) => (
+              <TableRow key={recipe.id}>
+                <TableCell>
+                  <Button component={RouterLink} to={`/recipes/${recipe.slug}`} size="small" sx={{ textTransform: 'none' }}>
+                    {recipe.title}
+                  </Button>
+                </TableCell>
+                <TableCell>{recipe.category}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={recipe.status}
+                    size="small"
+                    color={recipe.status === 'PUBLISHED' ? 'success' : recipe.status === 'ARCHIVED' ? 'warning' : 'default'}
+                  />
+                </TableCell>
+                <TableCell>{recipe.createdBy?.name}</TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+                    <Button
+                      component={RouterLink}
+                      to={`/recipes/${recipe.slug}/edit`}
+                      size="small"
+                      variant="outlined"
+                    >
+                      Bearbeiten
+                    </Button>
+                    {recipe.status !== 'PUBLISHED' && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        disabled={publishRecipe.isPending}
+                        onClick={() => handleRecipeAction(() => publishRecipe.mutateAsync(recipe.id), 'Veröffentlichen fehlgeschlagen.')}
+                      >
+                        Veröffentlichen
+                      </Button>
+                    )}
+                    {recipe.status !== 'ARCHIVED' && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="warning"
+                        disabled={archiveRecipe.isPending}
+                        onClick={() => handleRecipeAction(() => archiveRecipe.mutateAsync(recipe.id), 'Archivieren fehlgeschlagen.')}
+                      >
+                        Archivieren
+                      </Button>
+                    )}
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      disabled={deleteRecipe.isPending}
+                      onClick={() => {
+                        if (window.confirm(`"${recipe.title}" wirklich löschen?`)) {
+                          handleRecipeAction(() => deleteRecipe.mutateAsync(recipe.id), 'Löschen fehlgeschlagen.');
+                        }
+                      }}
+                    >
+                      Löschen
+                    </Button>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
       <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)}>
         <DialogTitle>Benutzerrolle ändern</DialogTitle>
         <DialogContent>
@@ -183,6 +290,16 @@ export function AdminDashboard() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={actionError !== null}
+        autoHideDuration={4000}
+        onClose={() => setActionError(null)}
+      >
+        <Alert severity="error" onClose={() => setActionError(null)} sx={{ width: '100%' }}>
+          {actionError}
+        </Alert>
+      </Snackbar>
     </Stack>
   );
 }

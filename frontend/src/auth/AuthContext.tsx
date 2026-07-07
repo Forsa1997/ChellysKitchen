@@ -37,16 +37,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     meQuery.refetch();
   }, [token]);
 
-  // Update token state when apiClient tokens change
+  // Update token state when apiClient tokens change (login/register/logout/refresh)
   useEffect(() => {
-    const checkToken = () => {
-      const currentToken = apiClient.getAccessToken();
-      setToken(currentToken);
-    };
-
-    // Check token periodically for changes
-    const interval = setInterval(checkToken, 1000);
-    return () => clearInterval(interval);
+    const unsubscribe = apiClient.onTokenChange(() => {
+      setToken(apiClient.getAccessToken());
+    });
+    return unsubscribe;
   }, []);
 
   const user = meQuery.data?.user ?? null;

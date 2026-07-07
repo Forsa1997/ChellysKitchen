@@ -139,7 +139,7 @@ export interface CreateRecipeInput {
   };
 }
 
-export interface UpdateRecipeInput extends Partial<CreateRecipeInput> {}
+export type UpdateRecipeInput = Partial<CreateRecipeInput>;
 
 export interface CreateRatingInput {
   stars: number;
