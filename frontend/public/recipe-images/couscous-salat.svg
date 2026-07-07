@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Sommerlicher Couscous-Salat">
+  <defs>
+    <linearGradient id="bg6" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef2e6"/>
+      <stop offset="1" stop-color="#cdd9bd"/>
+    </linearGradient>
+    <radialGradient id="bowl6" cx="0.5" cy="0.4" r="0.65">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e7e2d6"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg6)"/>
+  <ellipse cx="400" cy="300" rx="290" ry="150" fill="#000" opacity="0.08"/>
+  <ellipse cx="400" cy="270" rx="235" ry="150" fill="url(#bowl6)"/>
+  <ellipse cx="400" cy="270" rx="235" ry="150" fill="none" stroke="#ddd6c8" stroke-width="4"/>
+  <!-- couscous bed -->
+  <ellipse cx="400" cy="262" rx="196" ry="122" fill="#e6cf87"/>
+  <g fill="#f0dea6">
+    <circle cx="320" cy="230" r="4"/><circle cx="360" cy="250" r="4"/><circle cx="410" cy="235" r="4"/>
+    <circle cx="460" cy="255" r="4"/><circle cx="340" cy="290" r="4"/><circle cx="430" cy="300" r="4"/>
+    <circle cx="380" cy="310" r="4"/><circle cx="480" cy="290" r="4"/><circle cx="300" cy="265" r="4"/>
+    <circle cx="490" cy="230" r="4"/>
+  </g>
+  <!-- cucumber -->
+  <g>
+    <circle cx="330" cy="250" r="16" fill="#7bb54a"/><circle cx="330" cy="250" r="10" fill="#cfe6a5"/>
+    <circle cx="452" cy="290" r="16" fill="#7bb54a"/><circle cx="452" cy="290" r="10" fill="#cfe6a5"/>
+    <circle cx="400" cy="240" r="15" fill="#7bb54a"/><circle cx="400" cy="240" r="9" fill="#cfe6a5"/>
+  </g>
+  <!-- tomatoes -->
+  <g fill="#e14b3a">
+    <circle cx="370" cy="285" r="16"/><circle cx="470" cy="250" r="15"/><circle cx="350" cy="300" r="14"/>
+  </g>
+  <g fill="#f5806e" opacity="0.7">
+    <circle cx="365" cy="280" r="6"/><circle cx="465" cy="245" r="5"/>
+  </g>
+  <!-- feta cubes -->
+  <g fill="#fbfaf6">
+    <rect x="418" y="228" width="24" height="24" rx="4"/>
+    <rect x="300" y="292" width="24" height="22" rx="4"/>
+    <rect x="432" y="304" width="22" height="22" rx="4"/>
+  </g>
+  <g fill="#eceae2">
+    <rect x="418" y="240" width="24" height="12" rx="3"/>
+    <rect x="300" y="303" width="24" height="11" rx="3"/>
+  </g>
+  <!-- mint leaves -->
+  <g fill="#3f9a4a">
+    <path d="M390 210 q16 -18 32 -4 q-10 20 -32 4z"/>
+    <path d="M355 328 q14 -16 30 -4 q-9 18 -30 4z"/>
+  </g>
+</svg>

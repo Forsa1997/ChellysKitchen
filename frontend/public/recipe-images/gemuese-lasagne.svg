@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Mediterrane Gemuese-Lasagne">
+  <defs>
+    <linearGradient id="bg8" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3ece0"/>
+      <stop offset="1" stop-color="#ddccb0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg8)"/>
+  <ellipse cx="400" cy="392" rx="250" ry="48" fill="#000" opacity="0.08"/>
+  <ellipse cx="400" cy="382" rx="245" ry="44" fill="#ffffff"/>
+  <ellipse cx="400" cy="382" rx="245" ry="44" fill="none" stroke="#e6ded2" stroke-width="3"/>
+  <!-- lasagne slice (layered wedge) -->
+  <g>
+    <!-- side face showing layers -->
+    <path d="M290 360 L510 360 L470 200 L330 200 Z" fill="#f2e4c8"/>
+    <!-- layer 1 pasta -->
+    <rect x="326" y="196" width="148" height="16" rx="3" fill="#eccf8f"/>
+    <!-- tomato sauce -->
+    <path d="M328 212 L472 212 L474 236 L326 236 Z" fill="#c8402a"/>
+    <!-- veg specks -->
+    <g fill="#3f8b3a"><circle cx="360" cy="224" r="4"/><circle cx="410" cy="226" r="4"/><circle cx="450" cy="222" r="4"/></g>
+    <g fill="#7a3fa0"><circle cx="386" cy="228" r="4"/><circle cx="434" cy="230" r="4"/></g>
+    <!-- pasta -->
+    <path d="M326 236 L474 236 L476 252 L324 252 Z" fill="#eccf8f"/>
+    <!-- bechamel -->
+    <path d="M324 252 L476 252 L478 278 L322 278 Z" fill="#fbf4e4"/>
+    <!-- pasta -->
+    <path d="M322 278 L478 278 L480 294 L320 294 Z" fill="#eccf8f"/>
+    <!-- tomato -->
+    <path d="M320 294 L480 294 L482 320 L318 320 Z" fill="#c8402a"/>
+    <g fill="#5aa04c"><circle cx="356" cy="307" r="4"/><circle cx="408" cy="309" r="4"/><circle cx="452" cy="305" r="4"/></g>
+    <!-- bottom pasta -->
+    <path d="M318 320 L482 320 L486 360 L314 360 Z" fill="#e9c983"/>
+    <!-- melted cheese top -->
+    <path d="M328 200 q72 -26 144 0 q4 10 -8 16 q-64 -18 -128 0 q-12 -6 -8 -16z" fill="#f4c95a"/>
+    <path d="M340 202 q60 -18 120 0 q-2 8 -14 12 q-46 -12 -92 0 q-12 -4 -14 -12z" fill="#f7dd8f"/>
+    <!-- browned cheese spots -->
+    <g fill="#d99a3a"><ellipse cx="380" cy="204" rx="10" ry="4"/><ellipse cx="430" cy="206" rx="8" ry="3"/></g>
+  </g>
+  <!-- basil garnish on top -->
+  <g fill="#3f8b3a" transform="translate(400 188)">
+    <path d="M0 0 q14 -16 28 -2 q-9 18 -28 2z"/>
+    <path d="M-6 4 q-14 -14 -28 -2 q9 18 28 2z"/>
+  </g>
+</svg>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Vanille-Panna-Cotta mit Beeren">
+  <defs>
+    <linearGradient id="bg12" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6eee6"/>
+      <stop offset="1" stop-color="#e0cdc0"/>
+    </linearGradient>
+    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffdf8"/>
+      <stop offset="1" stop-color="#f2e6d3"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg12)"/>
+  <ellipse cx="400" cy="392" rx="250" ry="52" fill="#000" opacity="0.08"/>
+  <ellipse cx="400" cy="382" rx="245" ry="46" fill="#ffffff"/>
+  <ellipse cx="400" cy="382" rx="245" ry="46" fill="none" stroke="#e6ded2" stroke-width="3"/>
+  <!-- panna cotta dome -->
+  <path d="M300 350 q0 -110 100 -110 q100 0 100 110 z" fill="url(#cream)"/>
+  <ellipse cx="400" cy="350" rx="100" ry="20" fill="#e9dcc7"/>
+  <!-- soft highlight -->
+  <path d="M340 320 q10 -60 60 -66" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+  <!-- vanilla flecks -->
+  <g fill="#8a6a3a" opacity="0.6">
+    <circle cx="360" cy="300" r="2"/><circle cx="420" cy="290" r="2"/><circle cx="390" cy="320" r="2"/>
+    <circle cx="440" cy="316" r="2"/><circle cx="350" cy="330" r="2"/>
+  </g>
+  <!-- berry compote on top -->
+  <path d="M330 258 q70 -40 140 0 q-6 22 -70 22 q-64 0 -70 -22z" fill="#9c1f4a"/>
+  <path d="M340 254 q60 -30 120 0 q-6 14 -60 14 q-54 0 -60 -14z" fill="#c02c5a"/>
+  <!-- whole berries -->
+  <g>
+    <!-- raspberry -->
+    <g transform="translate(370 246)">
+      <g fill="#d21f52"><circle cx="0" cy="0" r="7"/><circle cx="10" cy="2" r="7"/><circle cx="5" cy="-9" r="7"/><circle cx="15" cy="-7" r="7"/></g>
+    </g>
+    <!-- blueberries -->
+    <circle cx="420" cy="248" r="11" fill="#3a3f7a"/><circle cx="416" cy="244" r="4" fill="#6a70b0" opacity="0.7"/>
+    <circle cx="446" cy="256" r="10" fill="#4a3f7a"/><circle cx="442" cy="252" r="3" fill="#7a70b0" opacity="0.7"/>
+    <!-- blackberry -->
+    <g transform="translate(400 240)"><g fill="#3a1f4a"><circle cx="0" cy="0" r="5"/><circle cx="7" cy="2" r="5"/><circle cx="4" cy="-6" r="5"/><circle cx="10" cy="-4" r="5"/></g></g>
+  </g>
+  <!-- coulis drips down the side -->
+  <g fill="#b5204f" opacity="0.85">
+    <path d="M338 266 q-4 30 2 52 q-12 -14 -12 -34 q0 -12 10 -18z"/>
+    <path d="M462 266 q4 26 -2 46 q12 -12 12 -30 q0 -10 -10 -16z"/>
+  </g>
+  <!-- mint sprig -->
+  <g fill="#3f9a4a" transform="translate(400 224)">
+    <path d="M0 0 q14 -18 30 -4 q-10 20 -30 4z"/>
+    <path d="M-4 4 q-14 -16 -30 -2 q10 18 30 2z"/>
+  </g>
+</svg>

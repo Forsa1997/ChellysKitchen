@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Zitronen-Haehnchen vom Blech">
+  <defs>
+    <linearGradient id="bg4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4ede1"/>
+      <stop offset="1" stop-color="#ddcbb0"/>
+    </linearGradient>
+    <linearGradient id="pan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4d52"/>
+      <stop offset="1" stop-color="#33363a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg4)"/>
+  <ellipse cx="400" cy="300" rx="300" ry="150" fill="#000" opacity="0.08"/>
+  <!-- baking sheet -->
+  <rect x="150" y="130" width="500" height="300" rx="24" fill="url(#pan)"/>
+  <rect x="172" y="152" width="456" height="256" rx="16" fill="#3b3e42"/>
+  <rect x="172" y="152" width="456" height="256" rx="16" fill="none" stroke="#54585d" stroke-width="3"/>
+  <!-- roasted juices sheen -->
+  <ellipse cx="400" cy="290" rx="200" ry="100" fill="#b9822f" opacity="0.18"/>
+  <!-- chicken thighs -->
+  <g>
+    <ellipse cx="290" cy="230" rx="62" ry="46" fill="#c98a3f"/>
+    <ellipse cx="290" cy="224" rx="46" ry="30" fill="#e0a558"/>
+    <ellipse cx="278" cy="216" rx="18" ry="10" fill="#efc27f" opacity="0.7"/>
+    <ellipse cx="500" cy="320" rx="62" ry="46" fill="#c07f38"/>
+    <ellipse cx="500" cy="314" rx="46" ry="30" fill="#daa052"/>
+    <ellipse cx="490" cy="306" rx="18" ry="10" fill="#efc27f" opacity="0.7"/>
+  </g>
+  <!-- potatoes -->
+  <g fill="#e6c877">
+    <ellipse cx="410" cy="215" rx="34" ry="26"/>
+    <ellipse cx="470" cy="235" rx="30" ry="24"/>
+    <ellipse cx="350" cy="330" rx="34" ry="26"/>
+    <ellipse cx="300" cy="345" rx="28" ry="22"/>
+  </g>
+  <g fill="#f2e2ac" opacity="0.8">
+    <ellipse cx="405" cy="208" rx="16" ry="9"/>
+    <ellipse cx="345" cy="323" rx="16" ry="9"/>
+  </g>
+  <!-- lemon slices -->
+  <g>
+    <circle cx="380" cy="290" r="30" fill="#f4d84e"/>
+    <circle cx="380" cy="290" r="24" fill="#fbed8f"/>
+    <g stroke="#f4d84e" stroke-width="3"><path d="M380 268 v44 M358 290 h44 M364 274 l32 32 M396 274 l-32 32"/></g>
+    <circle cx="540" cy="230" r="26" fill="#f4d84e"/>
+    <circle cx="540" cy="230" r="20" fill="#fbed8f"/>
+    <g stroke="#f4d84e" stroke-width="3"><path d="M540 210 v40 M520 230 h40 M526 216 l28 28 M554 216 l-28 28"/></g>
+  </g>
+  <!-- rosemary sprigs -->
+  <g stroke="#3f7a34" stroke-width="4" fill="none" stroke-linecap="round">
+    <g transform="translate(240 300) rotate(-25)">
+      <path d="M0 0 l70 -8"/>
+      <path d="M14 -1 l-4 -8 M14 -1 l6 -6 M32 -3 l-4 -8 M32 -3 l6 -6 M50 -6 l-4 -8 M50 -6 l6 -6"/>
+    </g>
+    <g transform="translate(430 350) rotate(10)">
+      <path d="M0 0 l60 -6"/>
+      <path d="M14 -1 l-4 -8 M14 -1 l6 -6 M32 -3 l-4 -8 M32 -3 l6 -6 M48 -5 l-4 -8 M48 -5 l6 -6"/>
+    </g>
+  </g>
+</svg>

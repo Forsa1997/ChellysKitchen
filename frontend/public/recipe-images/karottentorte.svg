@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Saftige Karottentorte">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf1e6"/>
+      <stop offset="0.55" stop-color="#f3e2cd"/>
+      <stop offset="1" stop-color="#e6cfac"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg2)"/>
+  <ellipse cx="400" cy="404" rx="250" ry="46" fill="#000" opacity="0.08"/>
+  <!-- plate -->
+  <ellipse cx="400" cy="392" rx="240" ry="44" fill="#ffffff"/>
+  <ellipse cx="400" cy="392" rx="240" ry="44" fill="none" stroke="#e6ded2" stroke-width="3"/>
+  <!-- cake slice body -->
+  <g>
+    <!-- bottom sponge -->
+    <path d="M300 384 L500 384 L470 330 L330 330 Z" fill="#b9772f"/>
+    <rect x="330" y="300" width="140" height="30" fill="#c9852f"/>
+    <!-- frosting layer middle -->
+    <rect x="330" y="286" width="140" height="18" fill="#fbf6ee"/>
+    <!-- second sponge -->
+    <rect x="330" y="256" width="140" height="34" fill="#c9852f"/>
+    <!-- top frosting -->
+    <path d="M328 258 q70 -34 144 0 l0 6 q-72 26 -144 0 z" fill="#fbf6ee"/>
+    <path d="M328 258 q70 -30 144 0 l0 -2 q-72 -28 -144 0 z" fill="#ffffff"/>
+    <!-- carrot flecks -->
+    <g fill="#e08b2c">
+      <rect x="350" y="264" width="8" height="4" rx="2"/>
+      <rect x="392" y="272" width="9" height="4" rx="2"/>
+      <rect x="430" y="266" width="8" height="4" rx="2"/>
+      <rect x="360" y="312" width="8" height="4" rx="2"/>
+      <rect x="408" y="316" width="9" height="4" rx="2"/>
+      <rect x="352" y="352" width="8" height="4" rx="2"/>
+      <rect x="410" y="356" width="9" height="4" rx="2"/>
+      <rect x="440" y="346" width="8" height="4" rx="2"/>
+    </g>
+    <!-- marzipan carrot decoration on top -->
+    <g transform="translate(400 236) rotate(-18)">
+      <path d="M0 0 L26 6 L4 16 Z" fill="#ef8f2b"/>
+      <g stroke="#4f9a43" stroke-width="3" stroke-linecap="round">
+        <path d="M-2 -2 l-8 -12 M2 -2 l0 -16 M6 -1 l8 -12"/>
+      </g>
+    </g>
+  </g>
+</svg>

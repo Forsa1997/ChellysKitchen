@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Rauchige BBQ-Burger">
+  <defs>
+    <linearGradient id="bg11" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2e9dc"/>
+      <stop offset="1" stop-color="#dbc4a3"/>
+    </linearGradient>
+    <linearGradient id="bunTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8ab5c"/>
+      <stop offset="1" stop-color="#d18f3c"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg11)"/>
+  <ellipse cx="400" cy="410" rx="240" ry="50" fill="#000" opacity="0.08"/>
+  <ellipse cx="400" cy="402" rx="230" ry="42" fill="#ffffff"/>
+  <ellipse cx="400" cy="402" rx="230" ry="42" fill="none" stroke="#e6ded2" stroke-width="3"/>
+  <!-- bottom bun -->
+  <path d="M280 372 q120 34 240 0 l0 -8 q-120 26 -240 0 z" fill="#d3923f"/>
+  <path d="M280 356 q120 30 240 0 q0 12 -6 18 q-114 26 -228 0 q-6 -6 -6 -18z" fill="#e2a558"/>
+  <!-- patty -->
+  <path d="M272 330 q128 34 256 0 q2 18 -10 26 q-118 30 -236 0 q-12 -8 -10 -26z" fill="#5a3620"/>
+  <path d="M272 330 q128 30 256 0" fill="none" stroke="#3f2314" stroke-width="4"/>
+  <!-- bbq sauce drip -->
+  <g fill="#8f2f18">
+    <path d="M300 340 q6 22 0 34 q-8 -10 -8 -22 q0 -8 8 -12z"/>
+    <path d="M470 342 q6 20 0 32 q-8 -10 -8 -20 q0 -8 8 -12z"/>
+    <path d="M390 348 q6 24 0 38 q-8 -12 -8 -24 q0 -8 8 -14z"/>
+  </g>
+  <!-- cheddar -->
+  <g fill="#f2a83c">
+    <path d="M286 312 q114 30 228 0 l24 22 q-6 6 -18 4 l-18 16 l-22 -12 l-20 12 l-20 -12 l-20 12 l-20 -12 l-20 12 l-20 -12 l-18 12 q-14 2 -18 -6 z"/>
+  </g>
+  <!-- tomato slice -->
+  <path d="M292 300 q108 26 216 0 q2 8 -6 12 q-102 24 -204 0 q-8 -4 -6 -12z" fill="#e14b3a"/>
+  <!-- lettuce ruffle -->
+  <path d="M280 288 q14 -14 30 0 q16 -14 30 0 q16 -14 30 0 q16 -14 30 0 q16 -14 30 0 q16 -14 30 0 q16 -14 30 0 q10 8 4 16 q-114 26 -228 0 q-8 -8 4 -16z" fill="#6fae3f"/>
+  <path d="M282 300 q118 24 236 0" fill="none" stroke="#589131" stroke-width="3"/>
+  <!-- top bun -->
+  <path d="M262 268 q138 -150 276 0 q4 12 -8 18 q-130 30 -260 0 q-12 -6 -8 -18z" fill="url(#bunTop)"/>
+  <path d="M280 250 q120 -96 240 0" fill="none" stroke="#c98235" stroke-width="3" opacity="0.5"/>
+  <!-- sesame seeds -->
+  <g fill="#fbeed0">
+    <ellipse cx="360" cy="210" rx="6" ry="3" transform="rotate(20 360 210)"/>
+    <ellipse cx="410" cy="196" rx="6" ry="3" transform="rotate(-10 410 196)"/>
+    <ellipse cx="450" cy="212" rx="6" ry="3" transform="rotate(30 450 212)"/>
+    <ellipse cx="330" cy="234" rx="6" ry="3" transform="rotate(-15 330 234)"/>
+    <ellipse cx="400" cy="228" rx="6" ry="3" transform="rotate(10 400 228)"/>
+    <ellipse cx="480" cy="238" rx="6" ry="3" transform="rotate(-25 480 238)"/>
+    <ellipse cx="380" cy="250" rx="6" ry="3" transform="rotate(15 380 250)"/>
+    <ellipse cx="440" cy="248" rx="6" ry="3" transform="rotate(-5 440 248)"/>
+  </g>
+</svg>

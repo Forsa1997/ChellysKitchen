@@ -1,7 +1,7 @@
 export const recipes = [
   {
     id: 'r1',
-    img: 'https://picsum.photos/800/450?random=1',
+    img: '/recipe-images/pasta-spinat-lachs.svg',
     tag: 'Kochen',
     title: 'Cremige Pasta mit Spinat und Lachs',
     shortDescription:
@@ -28,7 +28,7 @@ export const recipes = [
   },
   {
     id: 'r2',
-    img: 'https://picsum.photos/800/450?random=2',
+    img: '/recipe-images/karottentorte.svg',
     tag: 'Backen',
     title: 'Saftige Karottentorte',
     shortDescription: 'Klassische Karottentorte mit cremigem Frischkäse-Frosting',
@@ -53,7 +53,7 @@ export const recipes = [
   },
   {
     id: 'r3',
-    img: 'https://picsum.photos/800/450?random=3',
+    img: '/recipe-images/bbq-rippchen.svg',
     tag: 'Grillen',
     title: 'BBQ Rippchen mit Honig-Glasur',
     shortDescription: 'Zarte Rippchen mit süß-würziger Honig-BBQ-Glasur',
@@ -79,7 +79,7 @@ export const recipes = [
   {
     id: 'r4',
     slug: 'zitronen-haehnchen-vom-blech',
-    img: 'https://picsum.photos/800/450?random=14',
+    img: '/recipe-images/zitronen-haehnchen-blech.svg',
     tag: 'Kochen',
     title: 'Zitronen-Haehnchen vom Blech',
     shortDescription: 'Saftiges Haehnchen mit Kartoffeln, Zitrone und Kraeutern aus dem Ofen',
@@ -109,7 +109,7 @@ export const recipes = [
   {
     id: 'r5',
     slug: 'linsen-kokos-suppe',
-    img: 'https://picsum.photos/800/450?random=15',
+    img: '/recipe-images/linsen-kokos-suppe.svg',
     tag: 'Suppe',
     title: 'Linsen-Kokos-Suppe',
     shortDescription: 'Cremige rote Linsensuppe mit Kokosmilch, Ingwer und Limette',
@@ -139,7 +139,7 @@ export const recipes = [
   {
     id: 'r6',
     slug: 'sommerlicher-couscous-salat',
-    img: 'https://picsum.photos/800/450?random=16',
+    img: '/recipe-images/couscous-salat.svg',
     tag: 'Salat',
     title: 'Sommerlicher Couscous-Salat',
     shortDescription: 'Frischer Couscous-Salat mit Gurke, Tomate, Feta und Minze',
@@ -169,7 +169,7 @@ export const recipes = [
   {
     id: 'r7',
     slug: 'schoko-himbeer-brownies',
-    img: 'https://picsum.photos/800/450?random=17',
+    img: '/recipe-images/schoko-himbeer-brownies.svg',
     tag: 'Backen',
     title: 'Schoko-Himbeer-Brownies',
     shortDescription: 'Fudgy Brownies mit dunkler Schokolade und fruchtigen Himbeeren',
@@ -199,7 +199,7 @@ export const recipes = [
   {
     id: 'r8',
     slug: 'mediterrane-gemuese-lasagne',
-    img: 'https://picsum.photos/800/450?random=18',
+    img: '/recipe-images/gemuese-lasagne.svg',
     tag: 'Vegetarisch',
     title: 'Mediterrane Gemuese-Lasagne',
     shortDescription: 'Ofenlasagne mit Zucchini, Aubergine, Tomaten und cremiger Bechamel',
@@ -229,7 +229,7 @@ export const recipes = [
   {
     id: 'r9',
     slug: 'asia-nudelpfanne-mit-erdnusssauce',
-    img: 'https://picsum.photos/800/450?random=19',
+    img: '/recipe-images/asia-nudelpfanne.svg',
     tag: 'Schnell',
     title: 'Asia-Nudelpfanne mit Erdnusssauce',
     shortDescription: 'Schnelle Nudelpfanne mit knackigem Gemuese und cremiger Erdnusssauce',
@@ -259,7 +259,7 @@ export const recipes = [
   {
     id: 'r10',
     slug: 'apfel-zimt-porridge',
-    img: 'https://picsum.photos/800/450?random=20',
+    img: '/recipe-images/apfel-zimt-porridge.svg',
     tag: 'Fruehstueck',
     title: 'Apfel-Zimt-Porridge',
     shortDescription: 'Cremiges Porridge mit Apfel, Zimt und geroesteten Nuessen',
@@ -289,7 +289,7 @@ export const recipes = [
   {
     id: 'r11',
     slug: 'rauchige-bbq-burger',
-    img: 'https://picsum.photos/800/450?random=21',
+    img: '/recipe-images/bbq-burger.svg',
     tag: 'Grillen',
     title: 'Rauchige BBQ-Burger',
     shortDescription: 'Saftige Burger mit rauchiger Sauce, Cheddar und karamellisierten Zwiebeln',
@@ -319,7 +319,7 @@ export const recipes = [
   {
     id: 'r12',
     slug: 'vanille-panna-cotta-mit-beeren',
-    img: 'https://picsum.photos/800/450?random=22',
+    img: '/recipe-images/panna-cotta-beeren.svg',
     tag: 'Dessert',
     title: 'Vanille-Panna-Cotta mit Beeren',
     shortDescription: 'Seidige Panna Cotta mit Vanille und frischem Beerenkompott',
