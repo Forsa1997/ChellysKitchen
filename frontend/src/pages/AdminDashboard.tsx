@@ -2,10 +2,9 @@
 import {
   Alert,
   Button,
-  Card,
-  CardContent,
   Chip,
   CircularProgress,
+  Box,
   Paper,
   Stack,
   Table,
@@ -21,20 +20,27 @@ import {
   DialogActions,
   MenuItem,
   Select,
+  SelectChangeEvent,
   FormControl,
   InputLabel,
 } from '@mui/material';
 import { useState } from 'react';
 import { useUsers, useUpdateUserRole } from '../hooks/useAdmin';
 import { useAuth } from '../auth/AuthContext';
-import { type User } from '../api/client';
+import { type User, type UserRole } from '../api/client';
+
+type UserWithCounts = User & {
+  _count?: {
+    recipesCreated?: number;
+  };
+};
 
 export function AdminDashboard() {
   const { user: currentUser } = useAuth();
   const { data: usersData, isLoading, error } = useUsers();
   const updateUserRole = useUpdateUserRole();
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [newRole, setNewRole] = useState<'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN'>('MEMBER');
+  const [newRole, setNewRole] = useState<UserRole>('MEMBER');
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
   const users = usersData?.data || [];
@@ -45,7 +51,7 @@ export function AdminDashboard() {
     }
 
     setSelectedUser(userId);
-    setNewRole(currentRole as 'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN');
+    setNewRole(currentRole as UserRole);
     setRoleDialogOpen(true);
   };
 
@@ -64,7 +70,7 @@ export function AdminDashboard() {
     }
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'ADMIN':
         return 'error';
@@ -75,6 +81,10 @@ export function AdminDashboard() {
       default:
         return 'default';
     }
+  };
+
+  const handleNewRoleChange = (event: SelectChangeEvent<UserRole>) => {
+    setNewRole(event.target.value as UserRole);
   };
 
   if (currentUser?.role !== 'ADMIN') {
@@ -95,20 +105,16 @@ export function AdminDashboard() {
 
   return (
     <Stack spacing={3}>
-      <Typography variant="h4">Admin Dashboard</Typography>
+      <Box>
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Admin Dashboard
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+          Verwalte Benutzerrollen und Berechtigungen.
+        </Typography>
+      </Box>
 
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Benutzer Management
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Verwalte Benutzerrollen und Berechtigungen
-          </Typography>
-        </CardContent>
-      </Card>
-
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} variant="outlined">
         <Table>
           <TableHead>
             <TableRow>
@@ -121,18 +127,18 @@ export function AdminDashboard() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user: User) => (
+            {users.map((user: UserWithCounts) => (
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Chip label={user.role} color={getRoleColor(user.role) as any} size="small" />
+                  <Chip label={user.role} color={getRoleColor(user.role)} size="small" />
                 </TableCell>
                 <TableCell>
                   {new Date(user.createdAt).toLocaleDateString('de-DE')}
                 </TableCell>
                 <TableCell>
-                  {(user as any)._count?.recipesCreated || 0}
+                  {user._count?.recipesCreated || 0}
                 </TableCell>
                 <TableCell>
                   {user.id !== currentUser?.id && (
@@ -161,7 +167,7 @@ export function AdminDashboard() {
               labelId="role-select-label"
               label="Neue Rolle"
               value={newRole}
-              onChange={(e) => setNewRole(e.target.value as any)}
+              onChange={handleNewRoleChange}
             >
               <MenuItem value="GUEST">Gast</MenuItem>
               <MenuItem value="MEMBER">Mitglied</MenuItem>

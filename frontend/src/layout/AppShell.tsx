@@ -8,14 +8,24 @@ export function AppShell({ children }: PropsWithChildren) {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <AppBar position="sticky" color="transparent" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Container maxWidth="xl">
+      <AppBar
+        position="sticky"
+        color="transparent"
+        elevation={0}
+        sx={{
+          bgcolor: 'background.paper',
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Container maxWidth="lg">
           <Toolbar
             disableGutters
             sx={{
               justifyContent: 'space-between',
-              py: 1,
-              gap: 1,
+              minHeight: { xs: 64, sm: 72 },
+              py: { xs: 1.25, sm: 0 },
+              gap: 2,
               alignItems: { xs: 'flex-start', sm: 'center' },
               flexDirection: { xs: 'column', sm: 'row' },
             }}
@@ -24,7 +34,7 @@ export function AppShell({ children }: PropsWithChildren) {
               component={RouterLink}
               to="/"
               variant="h6"
-              sx={{ textDecoration: 'none', color: 'primary.main' }}
+              sx={{ textDecoration: 'none', color: 'primary.main', fontWeight: 700 }}
             >
               Chellys Kitchen
             </Typography>
@@ -43,7 +53,11 @@ export function AppShell({ children }: PropsWithChildren) {
                       Admin Dashboard
                     </Button>
                   )}
-                  <Typography variant="body2" sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ px: { sm: 0.5 }, textAlign: { xs: 'center', sm: 'left' } }}
+                  >
                     Hallo, {user.name}
                   </Typography>
                   <Button variant="outlined" onClick={logout} fullWidth>
@@ -64,7 +78,7 @@ export function AppShell({ children }: PropsWithChildren) {
           </Toolbar>
         </Container>
       </AppBar>
-      <Container component="main" maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>{children}</Container>
+      <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>{children}</Container>
     </Box>
   );
 }

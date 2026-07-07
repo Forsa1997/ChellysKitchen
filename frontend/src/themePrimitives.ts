@@ -19,8 +19,6 @@ declare module '@mui/material/styles' {
         900: string;
     }
 
-    interface PaletteColor extends ColorRange {}
-
     interface Palette {
         baseShadow: string;
     }
@@ -31,16 +29,16 @@ const defaultTheme = createTheme();
 const customShadows: Shadows = [...defaultTheme.shadows];
 
 export const brand = {
-    50: 'hsl(210, 100%, 95%)',
-    100: 'hsl(210, 100%, 92%)',
-    200: 'hsl(210, 100%, 80%)',
-    300: 'hsl(210, 100%, 65%)',
-    400: 'hsl(210, 98%, 48%)',
-    500: 'hsl(210, 98%, 42%)',
-    600: 'hsl(210, 98%, 55%)',
-    700: 'hsl(210, 100%, 35%)',
-    800: 'hsl(210, 100%, 16%)',
-    900: 'hsl(210, 100%, 21%)',
+    50: 'hsl(342, 85%, 97%)',
+    100: 'hsl(342, 80%, 93%)',
+    200: 'hsl(342, 72%, 84%)',
+    300: 'hsl(342, 68%, 70%)',
+    400: 'hsl(342, 64%, 54%)',
+    500: 'hsl(342, 70%, 44%)',
+    600: 'hsl(342, 74%, 36%)',
+    700: 'hsl(342, 70%, 28%)',
+    800: 'hsl(342, 62%, 18%)',
+    900: 'hsl(342, 58%, 12%)',
 };
 
 export const gray = {
@@ -116,6 +114,18 @@ export const getDesignTokens = (mode: PaletteMode) => {
                     dark: brand[700],
                 }),
             },
+            secondary: {
+                light: orange[100],
+                main: orange[300],
+                dark: orange[600],
+                contrastText: gray[900],
+                ...(mode === 'dark' && {
+                    light: orange[300],
+                    main: orange[400],
+                    dark: orange[700],
+                    contrastText: gray[900],
+                }),
+            },
             info: {
                 light: brand[100],
                 main: brand[300],
@@ -163,8 +173,8 @@ export const getDesignTokens = (mode: PaletteMode) => {
             },
             divider: mode === 'dark' ? alpha(gray[700], 0.6) : alpha(gray[300], 0.4),
             background: {
-                default: 'hsl(0, 0%, 99%)',
-                paper: 'hsl(220, 35%, 97%)',
+                default: 'hsl(36, 33%, 98%)',
+                paper: 'hsl(0, 0%, 100%)',
                 ...(mode === 'dark' && { default: gray[900], paper: 'hsl(220, 30%, 7%)' }),
             },
             text: {
@@ -188,7 +198,7 @@ export const getDesignTokens = (mode: PaletteMode) => {
                 fontSize: defaultTheme.typography.pxToRem(48),
                 fontWeight: 600,
                 lineHeight: 1.2,
-                letterSpacing: -0.5,
+                letterSpacing: 0,
             },
             h2: {
                 fontSize: defaultTheme.typography.pxToRem(36),
@@ -247,6 +257,12 @@ export const colorSchemes = {
                 dark: brand[700],
                 contrastText: brand[50],
             },
+            secondary: {
+                light: orange[100],
+                main: orange[300],
+                dark: orange[600],
+                contrastText: gray[900],
+            },
             info: {
                 light: brand[100],
                 main: brand[300],
@@ -273,8 +289,8 @@ export const colorSchemes = {
             },
             divider: alpha(gray[300], 0.4),
             background: {
-                default: 'hsl(0, 0%, 99%)',
-                paper: 'hsl(220, 35%, 97%)',
+                default: 'hsl(36, 33%, 98%)',
+                paper: 'hsl(0, 0%, 100%)',
             },
             text: {
                 primary: gray[800],
@@ -346,7 +362,7 @@ export const typography = {
         fontSize: defaultTheme.typography.pxToRem(48),
         fontWeight: 600,
         lineHeight: 1.2,
-        letterSpacing: -0.5,
+        letterSpacing: 0,
     },
     h2: {
         fontSize: defaultTheme.typography.pxToRem(36),
@@ -394,7 +410,7 @@ export const shape = {
     borderRadius: 8,
 };
 
-// @ts-ignore
+// @ts-expect-error CSS variable shadows are accepted by MUI at runtime.
 const defaultShadows: Shadows = [
     'none',
     'var(--template-palette-baseShadow)',

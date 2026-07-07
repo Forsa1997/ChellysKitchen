@@ -33,6 +33,7 @@ describe('RecipeGrid', () => {
 
     expect(screen.getByText('Pasta')).toBeInTheDocument();
     expect(screen.getByText('Schnell und lecker')).toBeInTheDocument();
+    expect(screen.getByText('30 Minuten · 2 Portionen')).toBeInTheDocument();
     expect(screen.getByText(/Chris/)).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveAttribute('href', '/recipes/pasta');
   });

@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Paper, Stack, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
@@ -31,11 +31,15 @@ export function SignUpPage() {
   const isLoading = authLoading || isSubmitting;
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-      <Card sx={{ maxWidth: 480, width: '100%', borderRadius: 4 }}>
-        <CardContent>
-          <Stack component="form" spacing={2} onSubmit={onSubmit}>
-            <Typography variant="h4">Konto erstellen</Typography>
+    <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 2, md: 4 } }}>
+      <Paper variant="outlined" sx={{ maxWidth: 480, width: '100%', p: { xs: 2.5, md: 3 } }}>
+        <Stack component="form" spacing={2} onSubmit={onSubmit}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>Konto erstellen</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+              Registriere dich, um Rezepte zu speichern und zu teilen.
+            </Typography>
+          </Box>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField
               label="Name"
@@ -71,9 +75,8 @@ export function SignUpPage() {
             >
               {isLoading ? 'Bitte warten...' : 'Registrieren'}
             </Button>
-          </Stack>
-        </CardContent>
-      </Card>
+        </Stack>
+      </Paper>
     </Box>
   );
 }

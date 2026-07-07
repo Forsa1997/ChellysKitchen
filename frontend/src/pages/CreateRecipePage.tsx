@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, Container, Divider, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Step, StepLabel, Stepper, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Divider, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Step, StepLabel, Stepper, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useCreateRecipe } from '../hooks/useRecipes';
@@ -310,7 +310,7 @@ export function CreateRecipePage() {
           <Stack spacing={3}>
             <Typography variant="h6">Zutaten</Typography>
             {ingredients.map((ingredient, index) => (
-              <Paper key={index} sx={{ p: 2 }}>
+              <Paper key={index} variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
                 <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                   <Grid size={{ xs: 12, sm: 3 }}>
                     <TextField
@@ -367,7 +367,7 @@ export function CreateRecipePage() {
           <Stack spacing={3}>
             <Typography variant="h6">Zubereitungsschritte</Typography>
             {steps.map((step, index) => (
-              <Paper key={index} sx={{ p: 2 }}>
+              <Paper key={index} variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
                 <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
                   <Box sx={{ minWidth: 40, pt: 1 }}>
                     <Typography variant="h6" color="primary">
@@ -463,61 +463,67 @@ export function CreateRecipePage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Card sx={{ borderRadius: 4 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Stack spacing={4}>
-            <Typography variant="h4" align="center">Neues Rezept erstellen</Typography>
+    <Stack spacing={3}>
+      <Box>
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Neues Rezept erstellen
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 620 }}>
+          Erfasse die wichtigsten Informationen Schritt für Schritt.
+        </Typography>
+      </Box>
 
-            {error && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity="error">{error}</Alert>}
 
-            <Stepper activeStep={activeStep} alternativeLabel>
+      <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
+        <Stack spacing={3}>
+          <Box sx={{ overflowX: 'auto', pb: 0.5 }}>
+            <Stepper activeStep={activeStep} alternativeLabel sx={{ minWidth: { xs: 680, md: 'auto' } }}>
               {STEPS.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
                 </Step>
               ))}
             </Stepper>
+          </Box>
 
-            <Divider />
+          <Divider />
 
-            <Box sx={{ minHeight: 400 }}>
-              {getStepContent(activeStep)}
-            </Box>
+          <Box sx={{ minHeight: 360 }}>
+            {getStepContent(activeStep)}
+          </Box>
 
-            <Divider />
+          <Divider />
 
-            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+          <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+            <Button
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              variant="outlined"
+            >
+              Zurück
+            </Button>
+
+            {activeStep === STEPS.length - 1 ? (
               <Button
-                disabled={activeStep === 0}
-                onClick={handleBack}
-                variant="outlined"
+                onClick={onSubmit}
+                variant="contained"
+                disabled={createRecipe.isPending}
               >
-                Zurück
+                {createRecipe.isPending ? 'Speichern...' : 'Rezept speichern'}
               </Button>
-
-              {activeStep === STEPS.length - 1 ? (
-                <Button
-                  onClick={onSubmit}
-                  variant="contained"
-                  disabled={createRecipe.isPending}
-                  size="large"
-                >
-                  {createRecipe.isPending ? 'Speichern...' : 'Rezept speichern'}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleNext}
-                  variant="contained"
-                  disabled={!validateStep(activeStep)}
-                >
-                  Weiter
-                </Button>
-              )}
-            </Stack>
+            ) : (
+              <Button
+                onClick={handleNext}
+                variant="contained"
+                disabled={!validateStep(activeStep)}
+              >
+                Weiter
+              </Button>
+            )}
           </Stack>
-        </CardContent>
-      </Card>
-    </Container>
+        </Stack>
+      </Paper>
+    </Stack>
   );
 }

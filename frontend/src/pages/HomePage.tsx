@@ -177,20 +177,27 @@ export function HomePage() {
   }
 
   return (
-    <Stack spacing={3}>
-      <Stack spacing={1}>
-        <Typography variant="h3" sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>
-          Rezepte entdecken
-        </Typography>
-        <Typography color="text.secondary">
-          Finde schnelle Alltagsgerichte, Lieblingsrezepte und neue Ideen.
-        </Typography>
-        {!user && (
-          <Alert severity="info">
-            Melde dich an, um eigene Rezepte zu erstellen. Demo-Zugang: demo@chellys-kitchen.local / demo1234
-          </Alert>
-        )}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+    <Stack spacing={3.5}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) auto' },
+          alignItems: 'end',
+        }}
+      >
+        <Stack spacing={1}>
+          <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>
+            Chellys Kitchen
+          </Typography>
+          <Typography variant="h3" sx={{ fontSize: { xs: '2rem', md: '2.625rem' }, fontWeight: 700 }}>
+            Rezepte entdecken
+          </Typography>
+          <Typography color="text.secondary" sx={{ maxWidth: 620 }}>
+            Finde schnelle Alltagsgerichte, Lieblingsrezepte und neue Ideen.
+          </Typography>
+        </Stack>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ justifyContent: { md: 'flex-end' } }}>
           {user ? (
             <Button component={RouterLink} to="/recipes/new" variant="contained">
               Rezept erstellen
@@ -214,13 +221,20 @@ export function HomePage() {
             Zufälliges Rezept
           </Button>
         </Stack>
+      </Box>
+
+      <Stack spacing={1.5}>
+        {!user && (
+          <Alert severity="info">
+            Melde dich an, um eigene Rezepte zu erstellen. Demo-Zugang: demo@chellys-kitchen.local / demo1234
+          </Alert>
+        )}
       </Stack>
 
       <Paper
         variant="outlined"
         sx={{
           p: { xs: 2, md: 2.5 },
-          borderRadius: 2,
           bgcolor: 'background.paper',
         }}
       >
@@ -258,7 +272,7 @@ export function HomePage() {
               disabled={!hasActiveFilters}
               sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
             >
-              Alle zurücksetzen
+              Zurücksetzen
             </Button>
           </Stack>
 
@@ -311,7 +325,7 @@ export function HomePage() {
                   '& .MuiToggleButtonGroup-grouped': {
                     border: 1,
                     borderColor: 'divider',
-                    borderRadius: '999px !important',
+                    borderRadius: '8px !important',
                     minHeight: 40,
                     px: 2,
                     whiteSpace: 'nowrap',
@@ -353,7 +367,7 @@ export function HomePage() {
                   '& .MuiToggleButtonGroup-grouped': {
                     border: 1,
                     borderColor: 'divider',
-                    borderRadius: '999px !important',
+                    borderRadius: '8px !important',
                     minHeight: 40,
                     px: 2,
                   },
@@ -382,7 +396,7 @@ export function HomePage() {
                   '& .MuiToggleButtonGroup-grouped': {
                     border: 1,
                     borderColor: 'divider',
-                    borderRadius: '999px !important',
+                    borderRadius: '8px !important',
                     minHeight: 40,
                     px: 2,
                   },
@@ -446,7 +460,7 @@ export function HomePage() {
       {recipes.length > 0 ? (
         <RecipeGrid recipes={recipes} />
       ) : (
-        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, textAlign: 'center', borderRadius: 2 }}>
+        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, textAlign: 'center' }}>
           <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
             <Typography variant="h5">
               {listParams.q ? `Keine Rezepte für "${listParams.q}" gefunden` : 'Keine passenden Rezepte gefunden'}

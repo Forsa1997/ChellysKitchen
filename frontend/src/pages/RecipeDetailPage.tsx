@@ -112,8 +112,8 @@ export function RecipeDetailPage() {
   } as const satisfies Record<typeof recipe.difficulty, 'success' | 'warning' | 'error'>;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack spacing={4}>
+    <>
+      <Stack spacing={3.5}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={1.5}
@@ -135,8 +135,7 @@ export function RecipeDetailPage() {
           </Stack>
         </Stack>
 
-        {/* Header Section with Image */}
-        <Paper sx={{ borderRadius: 4, overflow: 'hidden', boxShadow: 3 }}>
+        <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
           {recipe.img && (
             <CardMedia
               component="img"
@@ -145,8 +144,7 @@ export function RecipeDetailPage() {
               sx={{ height: { xs: 250, sm: 350, md: 450 }, width: '100%', objectFit: 'cover' }}
             />
           )}
-          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-            {/* Tags and Categories */}
+          <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
             <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 2, flexWrap: 'wrap' }}>
               {recipe.tag && (
                 <Chip label={recipe.tag} size="small" color="secondary" variant="filled" />
@@ -160,15 +158,13 @@ export function RecipeDetailPage() {
               <Chip label={recipe.category} size="small" variant="outlined" />
             </Stack>
 
-            {/* Title and Description */}
             <Typography
               variant="h3"
               sx={{
                 fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
                 fontWeight: 700,
-                mb: 2
+                mb: 1.5
               }}
-              gutterBottom
             >
               {recipe.title}
             </Typography>
@@ -176,7 +172,7 @@ export function RecipeDetailPage() {
             <Typography
               variant="body1"
               color="text.secondary"
-              sx={{ fontSize: '1.1rem', mb: 3 }}
+              sx={{ fontSize: '1.05rem', mb: 3, maxWidth: 760 }}
             >
               {recipe.shortDescription}
             </Typography>
@@ -191,8 +187,12 @@ export function RecipeDetailPage() {
               </Typography>
             )}
 
-            {/* Quick Stats */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              useFlexGap
+              sx={{ mb: 3, flexWrap: 'wrap' }}
+            >
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <AccessTime color="action" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
@@ -213,7 +213,6 @@ export function RecipeDetailPage() {
               </Stack>
             </Stack>
 
-            {/* Rating Section */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <RatingDisplay value={recipe.averageRating || 0} count={recipe.totalRatings || 0} />
               {user && (
@@ -230,7 +229,6 @@ export function RecipeDetailPage() {
               )}
             </Box>
 
-            {/* Author Info */}
             <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
               <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                 <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -253,11 +251,9 @@ export function RecipeDetailPage() {
           </CardContent>
         </Paper>
 
-        {/* Main Content Grid */}
-        <Grid container spacing={4}>
-          {/* Left Column - Ingredients */}
+        <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ borderRadius: 3, height: 'fit-content' }}>
+            <Paper variant="outlined" sx={{ height: 'fit-content' }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
                   Zutaten
@@ -323,7 +319,7 @@ export function RecipeDetailPage() {
 
             {/* Nutritional Values */}
             {recipe.nutritionalValues && Object.keys(recipe.nutritionalValues).length > 0 && (
-              <Paper sx={{ borderRadius: 3, mt: 3, height: 'fit-content' }}>
+              <Paper variant="outlined" sx={{ mt: 3, height: 'fit-content' }}>
                 <CardContent sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
                     Nährwerte
@@ -396,9 +392,8 @@ export function RecipeDetailPage() {
             )}
           </Grid>
 
-          {/* Right Column - Steps */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ borderRadius: 3 }}>
+            <Paper variant="outlined">
               <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Zubereitung
@@ -409,25 +404,25 @@ export function RecipeDetailPage() {
                       <Stack direction="row" spacing={3} sx={{ alignItems: 'flex-start' }}>
                         <Box
                           sx={{
-                            minWidth: 48,
-                            height: 48,
-                            borderRadius: '50%',
+                            minWidth: 36,
+                            height: 36,
+                            borderRadius: 1,
                             bgcolor: 'primary.main',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontWeight: 700,
-                            fontSize: '1.25rem',
+                            fontSize: '1rem',
                             flexShrink: 0
                           }}
                         >
                           {step.stepNumber}
                         </Box>
-                        <Box sx={{ flexGrow: 1, pt: 1 }}>
+                        <Box sx={{ flexGrow: 1, pt: 0.5 }}>
                           <Typography
                             variant="body1"
-                            sx={{ fontSize: '1.1rem', lineHeight: 1.6, whiteSpace: 'pre-line' }}
+                            sx={{ lineHeight: 1.65, whiteSpace: 'pre-line' }}
                           >
                             {step.instruction}
                           </Typography>
@@ -444,8 +439,7 @@ export function RecipeDetailPage() {
           </Grid>
         </Grid>
 
-        {/* Footer Info */}
-        <Paper sx={{ borderRadius: 3, bgcolor: 'grey.50' }}>
+        <Paper variant="outlined">
           <CardContent sx={{ p: 3 }}>
             <Stack
               direction={{ xs: 'column', md: 'row' }}
@@ -480,6 +474,6 @@ export function RecipeDetailPage() {
         onClose={() => setCopyStatus('idle')}
         message={copyStatus === 'success' ? 'Link kopiert' : 'Link konnte nicht kopiert werden'}
       />
-    </Container>
+    </>
   );
 }

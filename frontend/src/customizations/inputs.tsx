@@ -56,17 +56,17 @@ export const inputsCustomizations: Components<Theme> = {
                         },
                         style: {
                             color: 'white',
-                            backgroundColor: gray[900],
-                            backgroundImage: `linear-gradient(to bottom, ${gray[700]}, ${gray[800]})`,
-                            boxShadow: `inset 0 1px 0 ${gray[600]}, inset 0 -1px 0 1px hsl(220, 0%, 0%)`,
-                            border: `1px solid ${gray[700]}`,
+                            backgroundColor: brand[500],
+                            backgroundImage: 'none',
+                            boxShadow: 'none',
+                            border: `1px solid ${brand[500]}`,
                             '&:hover': {
-                                backgroundImage: 'none',
-                                backgroundColor: gray[700],
+                                backgroundColor: brand[600],
+                                borderColor: brand[600],
                                 boxShadow: 'none',
                             },
                             '&:active': {
-                                backgroundColor: gray[800],
+                                backgroundColor: brand[700],
                             },
                             ...theme.applyStyles('dark', {
                                 color: 'black',
@@ -93,9 +93,9 @@ export const inputsCustomizations: Components<Theme> = {
                         style: {
                             color: 'white',
                             backgroundColor: brand[300],
-                            backgroundImage: `linear-gradient(to bottom, ${alpha(brand[400], 0.8)}, ${brand[500]})`,
-                            boxShadow: `inset 0 2px 0 ${alpha(brand[200], 0.2)}, inset 0 -2px 0 ${alpha(brand[700], 0.4)}`,
-                            border: `1px solid ${brand[500]}`,
+                            backgroundImage: 'none',
+                            boxShadow: 'none',
+                            border: `1px solid ${brand[400]}`,
                             '&:hover': {
                                 backgroundColor: brand[700],
                                 boxShadow: 'none',
@@ -114,7 +114,7 @@ export const inputsCustomizations: Components<Theme> = {
                             color: (theme.vars || theme).palette.text.primary,
                             border: '1px solid',
                             borderColor: gray[200],
-                            backgroundColor: alpha(gray[50], 0.3),
+                            backgroundColor: (theme.vars || theme).palette.background.paper,
                             '&:hover': {
                                 backgroundColor: gray[100],
                                 borderColor: gray[300],
@@ -230,7 +230,7 @@ export const inputsCustomizations: Components<Theme> = {
                 color: (theme.vars || theme).palette.text.primary,
                 border: '1px solid ',
                 borderColor: gray[200],
-                backgroundColor: alpha(gray[50], 0.3),
+                backgroundColor: (theme.vars || theme).palette.background.paper,
                 '&:hover': {
                     backgroundColor: gray[100],
                     borderColor: gray[300],
@@ -278,8 +278,8 @@ export const inputsCustomizations: Components<Theme> = {
         styleOverrides: {
             root: ({ theme }) => ({
                 borderRadius: '10px',
-                backgroundColor: alpha(gray[100], 0.6),
-                border: `1px solid ${alpha(gray[300], 0.5)}`,
+                backgroundColor: 'transparent',
+                border: 'none',
                 [`& .${toggleButtonGroupClasses.selected}`]: {
                     color: brand[500],
                 },
@@ -298,8 +298,15 @@ export const inputsCustomizations: Components<Theme> = {
             root: ({ theme }) => ({
                 padding: '12px 16px',
                 textTransform: 'none',
-                borderRadius: '10px',
+                borderRadius: (theme.vars || theme).shape.borderRadius,
                 fontWeight: 500,
+                '&.Mui-selected': {
+                    backgroundColor: alpha(brand[100], 0.75),
+                    color: brand[700],
+                },
+                '&.Mui-selected:hover': {
+                    backgroundColor: brand[100],
+                },
                 ...theme.applyStyles('dark', {
                     color: gray[400],
                     borderColor: alpha(gray[700], 0.8),
@@ -388,7 +395,7 @@ export const inputsCustomizations: Components<Theme> = {
                 color: (theme.vars || theme).palette.text.primary,
                 borderRadius: (theme.vars || theme).shape.borderRadius,
                 border: `1px solid ${(theme.vars || theme).palette.divider}`,
-                backgroundColor: (theme.vars || theme).palette.background.default,
+                backgroundColor: (theme.vars || theme).palette.background.paper,
                 transition: 'border 120ms ease-in',
                 '&:hover': {
                     borderColor: gray[400],
