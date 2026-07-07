@@ -260,6 +260,7 @@ class ApiClient {
   private baseUrl: string;
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
+  private tokenListeners: Set<() => void> = new Set();
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -280,6 +281,7 @@ class ApiClient {
     this.refreshToken = refreshToken;
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
+    this.notifyTokenChange();
   }
 
   public clearTokens(): void {
@@ -287,6 +289,7 @@ class ApiClient {
     this.refreshToken = null;
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    this.notifyTokenChange();
   }
 
   public getAccessToken(): string | null {
@@ -297,13 +300,29 @@ class ApiClient {
     return !!this.accessToken;
   }
 
+  /**
+   * Subscribe to access-token changes (login/register/logout/refresh).
+   * Returns an unsubscribe function. Lets consumers react without polling.
+   */
+  public onTokenChange(listener: () => void): () => void {
+    this.tokenListeners.add(listener);
+    return () => {
+      this.tokenListeners.delete(listener);
+    };
+  }
+
+  private notifyTokenChange(): void {
+    this.tokenListeners.forEach((listener) => listener());
+  }
+
   // ============================================================================
   // HTTP Methods
   // ============================================================================
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isRetry = false
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {
@@ -312,7 +331,7 @@ class ApiClient {
     };
 
     if (this.accessToken) {
-      (headers as any)['Authorization'] = `Bearer ${this.accessToken}`;
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(url, {
@@ -321,6 +340,25 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      // On 401, try to refresh the access token once and replay the request.
+      const canRefresh =
+        response.status === 401 &&
+        !!this.refreshToken &&
+        !isRetry &&
+        endpoint !== '/api/auth/refresh';
+
+      if (canRefresh) {
+        try {
+          await this.refreshAccessToken();
+          return this.request<T>(endpoint, options, true);
+        } catch {
+          this.clearTokens();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/signin';
+          }
+        }
+      }
+
       const error = await this.handleError(response);
       throw error;
     }
@@ -351,18 +389,6 @@ class ApiClient {
       };
     }
 
-    // Handle 401 Unauthorized - try to refresh token
-    if (response.status === 401 && this.refreshToken) {
-      try {
-        await this.refreshAccessToken();
-        // Let caller retry
-      } catch {
-        // Refresh failed, clear tokens
-        this.clearTokens();
-        window.location.href = '/login';
-      }
-    }
-
     return error;
   }
 
@@ -375,10 +401,12 @@ class ApiClient {
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/api/auth/register', {
+    const response = await this.request<AuthResponse>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    this.saveTokens(response.accessToken, response.refreshToken);
+    return response;
   }
 
   /**
@@ -637,6 +665,29 @@ class ApiClient {
    */
   async getAdminRecipes(): Promise<AdminRecipeListResponse> {
     return this.request<AdminRecipeListResponse>('/api/admin/recipes');
+  }
+
+  // ============================================================================
+  // Upload Endpoint
+  // ============================================================================
+
+  /**
+   * POST /api/uploads
+   * Upload an image file. Reads the file as a base64 data URL and returns the
+   * absolute URL of the stored image.
+   */
+  async uploadImage(file: File): Promise<{ url: string }> {
+    const data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Bild konnte nicht gelesen werden.'));
+      reader.readAsDataURL(file);
+    });
+
+    return this.request<{ url: string }>('/api/uploads', {
+      method: 'POST',
+      body: JSON.stringify({ filename: file.name, data }),
+    });
   }
 
   // ============================================================================

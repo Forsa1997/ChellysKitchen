@@ -24,6 +24,22 @@ services:
         value: 7d
       - key: CORS_ORIGIN
         sync: false
+      # Initial admin account (needed to reach the admin dashboard).
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Directory for the JSON data store and uploaded images.
+      # On Render's free tier the filesystem is ephemeral: data survives
+      # restarts but NOT redeploys. To persist across redeploys, attach a
+      # persistent disk (paid plan) and point DATA_DIR at its mount path,
+      # e.g. set DATA_DIR=/var/data and uncomment the `disk` block below.
+      - key: DATA_DIR
+        value: ./.data
+    # disk:
+    #   name: chellys-kitchen-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
 
   - type: web
     name: chellys-kitchen-web

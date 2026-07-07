@@ -7,6 +7,7 @@ import { RequireAuth } from './auth/RequireAuth';
 import { QueryProvider } from './providers/QueryProvider';
 import { AppShell } from './layout/AppShell';
 import { CreateRecipePage } from './pages/CreateRecipePage';
+import { EditRecipePage } from './pages/EditRecipePage';
 import { HomePage } from './pages/HomePage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { SignInPage } from './pages/SignInPage';
@@ -32,6 +33,14 @@ function App() {
                   element={(
                     <RequireAuth>
                       <CreateRecipePage />
+                    </RequireAuth>
+                  )}
+                />
+                <Route
+                  path="/recipes/:slug/edit"
+                  element={(
+                    <RequireAuth>
+                      <EditRecipePage />
                     </RequireAuth>
                   )}
                 />

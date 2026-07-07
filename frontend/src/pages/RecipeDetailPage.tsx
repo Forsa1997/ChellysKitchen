@@ -1,13 +1,15 @@
 import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Paper, Snackbar, Stack, Tooltip, Typography } from '@mui/material';
-import { Link as RouterLink, useParams } from 'react-router';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
-import { useRecipe } from '../hooks/useRecipes';
-import { useCreateRating, useDeleteRating } from '../hooks/useRatings';
+import { useRecipe, useDeleteRecipe, usePublishRecipe, useArchiveRecipe } from '../hooks/useRecipes';
+import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, ContentCopy, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, WaterDrop } from '@mui/icons-material';
+import { AccessTime, Add, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, WaterDrop } from '@mui/icons-material';
 import type { ApiError } from '../api/client';
 import type { Ingredient, RecipeStep } from '../types/domain';
+
+const EDITOR_ROLES = ['EDITOR', 'ADMIN'];
 
 const formatAmount = (amount: number) =>
   new Intl.NumberFormat('de-DE', {
@@ -16,13 +18,22 @@ const formatAmount = (amount: number) =>
 
 export function RecipeDetailPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { data: recipe, isLoading, error } = useRecipe(slug || '');
   const { user } = useAuth();
   const createRating = useCreateRating();
   const deleteRating = useDeleteRating();
-  const [userRating, setUserRating] = useState<number>(0);
+  const { data: existingRating } = useRecipeRatings(user && slug ? slug : '');
+  const deleteRecipe = useDeleteRecipe();
+  const publishRecipe = usePublishRecipe();
+  const archiveRecipe = useArchiveRecipe();
+  // The user's own rating comes from the server; a local override reflects
+  // clicks immediately without an effect syncing state.
+  const [ratingOverride, setRatingOverride] = useState<number | null>(null);
+  const userRating = ratingOverride ?? existingRating?.stars ?? 0;
   const [servingSelection, setServingSelection] = useState<{ recipeId: string; servings: number } | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [ratingError, setRatingError] = useState<string | null>(null);
   const apiError = error as ApiError | null;
   const isNotFound = apiError?.statusCode === 404;
 
@@ -32,13 +43,43 @@ export function RecipeDetailPage() {
     try {
       if (userRating === value) {
         await deleteRating.mutateAsync(slug);
-        setUserRating(0);
+        setRatingOverride(0);
       } else {
         await createRating.mutateAsync({ slug, data: { stars: value } });
-        setUserRating(value);
+        setRatingOverride(value);
       }
-    } catch (error) {
-      console.error('Failed to update rating:', error);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Bewertung konnte nicht gespeichert werden.';
+      setRatingError(message);
+    }
+  };
+
+  const handleDeleteRecipe = async () => {
+    if (!recipe) return;
+    if (!window.confirm('Dieses Rezept wirklich löschen?')) return;
+    try {
+      await deleteRecipe.mutateAsync(recipe.id);
+      navigate('/');
+    } catch {
+      setRatingError('Rezept konnte nicht gelöscht werden.');
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!recipe) return;
+    try {
+      await publishRecipe.mutateAsync(recipe.id);
+    } catch {
+      setRatingError('Rezept konnte nicht veröffentlicht werden.');
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!recipe) return;
+    try {
+      await archiveRecipe.mutateAsync(recipe.id);
+    } catch {
+      setRatingError('Rezept konnte nicht archiviert werden.');
     }
   };
 
@@ -127,11 +168,36 @@ export function RecipeDetailPage() {
             <Button startIcon={<LocalPrintshop />} variant="outlined" onClick={handlePrint}>
               Drucken
             </Button>
-            {user?.id === recipe.createdBy?.id && (
-              <Button variant="outlined" disabled>
-                Bearbeiten (TODO)
-              </Button>
-            )}
+            {(() => {
+              const isOwner = user?.id === recipe.createdBy?.id;
+              const isEditor = user ? EDITOR_ROLES.includes(user.role) : false;
+              const canEdit = isOwner || isEditor;
+              const canDelete = isOwner || user?.role === 'ADMIN';
+              return (
+                <>
+                  {canEdit && (
+                    <Button component={RouterLink} to={`/recipes/${recipe.slug}/edit`} startIcon={<EditIcon />} variant="outlined">
+                      Bearbeiten
+                    </Button>
+                  )}
+                  {isEditor && recipe.status !== 'PUBLISHED' && (
+                    <Button onClick={handlePublish} startIcon={<PublishIcon />} variant="outlined" color="success" disabled={publishRecipe.isPending}>
+                      Veröffentlichen
+                    </Button>
+                  )}
+                  {isEditor && recipe.status !== 'ARCHIVED' && (
+                    <Button onClick={handleArchive} startIcon={<ArchiveIcon />} variant="outlined" color="warning" disabled={archiveRecipe.isPending}>
+                      Archivieren
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button onClick={handleDeleteRecipe} startIcon={<DeleteIcon />} variant="outlined" color="error" disabled={deleteRecipe.isPending}>
+                      Löschen
+                    </Button>
+                  )}
+                </>
+              );
+            })()}
           </Stack>
         </Stack>
 
@@ -474,6 +540,15 @@ export function RecipeDetailPage() {
         onClose={() => setCopyStatus('idle')}
         message={copyStatus === 'success' ? 'Link kopiert' : 'Link konnte nicht kopiert werden'}
       />
+      <Snackbar
+        open={ratingError !== null}
+        autoHideDuration={4000}
+        onClose={() => setRatingError(null)}
+      >
+        <Alert severity="error" onClose={() => setRatingError(null)} sx={{ width: '100%' }}>
+          {ratingError}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

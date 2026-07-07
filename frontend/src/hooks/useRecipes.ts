@@ -34,9 +34,11 @@ export function useUpdateRecipe() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateRecipeRequest }) =>
       apiClient.updateRecipe(id, data),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
+      // Detail queries are keyed by slug, not id, so invalidate all of them.
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      queryClient.invalidateQueries({ queryKey: ['recipe', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['recipe'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-recipes'] });
     },
   });
 }
@@ -48,6 +50,7 @@ export function useDeleteRecipe() {
     mutationFn: (id: string) => apiClient.deleteRecipe(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-recipes'] });
     },
   });
 }
@@ -59,6 +62,8 @@ export function usePublishRecipe() {
     mutationFn: (id: string) => apiClient.publishRecipe(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-recipes'] });
     },
   });
 }
@@ -70,6 +75,8 @@ export function useArchiveRecipe() {
     mutationFn: (id: string) => apiClient.archiveRecipe(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-recipes'] });
     },
   });
 }

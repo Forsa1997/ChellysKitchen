@@ -28,7 +28,7 @@ export function useDeleteRating() {
 
   return useMutation({
     mutationFn: (slug: string) => apiClient.deleteRating(slug),
-    onSuccess: (slug) => {
+    onSuccess: (_data, slug) => {
       queryClient.invalidateQueries({ queryKey: ['recipe-ratings', slug] });
       queryClient.invalidateQueries({ queryKey: ['recipe', slug] });
     },

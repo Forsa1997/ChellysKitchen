@@ -1,18 +1,28 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer } from 'node:http';
+import { createReadStream, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import { recipes } from './data/recipes.mjs';
 import { queryRecipes } from './src/queryRecipes.mjs';
 import { resolveCorsOrigin } from './src/cors.mjs';
+import {
+  createDebouncedPersister,
+  createStore,
+} from './src/persistence.mjs';
+import {
+  contentTypeForExt,
+  MAX_UPLOAD_BYTES,
+  validateImageUpload,
+} from './src/uploads.mjs';
 
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigin = process.env.CORS_ORIGIN;
 
-const users = new Map();
-const sessions = new Map();
-const refreshSessions = new Map();
-const recipeStore = [...recipes];
-const ratingsStore = new Map(); // Store ratings by recipeId -> Map<userId, rating>
-const categoriesStore = [
+const DATA_DIR = process.env.DATA_DIR ?? './.data';
+const UPLOADS_DIR = resolve(DATA_DIR, 'uploads');
+const store = createStore(resolve(DATA_DIR, 'store.json'));
+
+const DEFAULT_CATEGORIES = [
   { id: 'cat_1', name: 'Cooking', slug: 'cooking', description: 'Hauptgerichte und Kochrezepte', icon: '🍳' },
   { id: 'cat_2', name: 'Baking', slug: 'baking', description: 'Backwaren und Desserts', icon: '🧁' },
   { id: 'cat_3', name: 'Barbeque', slug: 'barbeque', description: 'Grillen und BBQ', icon: '🍖' },
@@ -20,6 +30,47 @@ const categoriesStore = [
   { id: 'cat_5', name: 'Soups', slug: 'soups', description: 'Suppen und Eintöpfe', icon: '🍲' },
   { id: 'cat_6', name: 'Desserts', slug: 'desserts', description: 'Süße Desserts', icon: '🍰' },
 ];
+
+// Hydrate state from disk (survives restarts); fall back to seed data on
+// first run or an unreadable store file.
+const loadedState = store.load();
+const users = loadedState?.users ?? new Map();
+const sessions = loadedState?.sessions ?? new Map();
+const refreshSessions = loadedState?.refreshSessions ?? new Map();
+const recipeStore = loadedState?.recipeStore ?? [...recipes];
+const ratingsStore = loadedState?.ratingsStore ?? new Map(); // recipeId -> Map<userId, rating>
+const categoriesStore = loadedState?.categoriesStore ?? [...DEFAULT_CATEGORIES];
+
+const persister = createDebouncedPersister(
+  store,
+  () => ({ users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore }),
+  200,
+);
+const persist = () => persister.schedule();
+
+const ROLE_RANK = { GUEST: 0, MEMBER: 1, EDITOR: 2, ADMIN: 3 };
+const VALID_ROLES = Object.keys(ROLE_RANK);
+
+function hasMinRole(user, role) {
+  return !!user && (ROLE_RANK[user.role] ?? -1) >= (ROLE_RANK[role] ?? Infinity);
+}
+
+function findRecipeByIdOrSlug(idOrSlug) {
+  return recipeStore.find(
+    (entry) => entry.id === idOrSlug || (entry.slug ?? toSlug(entry.title)) === idOrSlug,
+  ) ?? null;
+}
+
+function uniqueSlug(title, currentId) {
+  const base = toSlug(title) || `rezept-${randomBytes(4).toString('hex')}`;
+  let candidate = base;
+  let counter = 2;
+  while (recipeStore.some((entry) => entry.id !== currentId && (entry.slug ?? toSlug(entry.title)) === candidate)) {
+    candidate = `${base}-${counter}`;
+    counter += 1;
+  }
+  return candidate;
+}
 
 function jsonResponse(res, statusCode, payload) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
@@ -34,7 +85,11 @@ function withCors(req, res) {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  // `Allow-Credentials: true` is invalid together with a wildcard origin;
+  // only send it when we echo a concrete origin.
+  if (origin !== '*') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
 }
 
 function hashPassword(password, salt) {
@@ -131,13 +186,13 @@ function sanitizeRecipe(recipe) {
   };
 }
 
-async function parseJsonBody(req) {
+async function parseJsonBody(req, maxBytes = 1024 * 1024) {
   let body = '';
 
   for await (const chunk of req) {
     body += chunk;
 
-    if (body.length > 1024 * 1024) {
+    if (body.length > maxBytes) {
       throw new Error('Payload too large');
     }
   }
@@ -177,23 +232,45 @@ function authenticateRequest(req) {
   return findUserById(userId);
 }
 
-function seedDemoUser() {
-  const normalizedEmail = 'demo@chellys-kitchen.local';
+function seedUser({ name, email, role, password }) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  if (users.has(normalizedEmail)) {
+    return;
+  }
   const salt = randomBytes(16).toString('hex');
   const now = new Date().toISOString();
   users.set(normalizedEmail, {
     id: `user_${randomBytes(8).toString('hex')}`,
-    name: 'Demo User',
+    name,
     email: normalizedEmail,
-    role: 'MEMBER',
-    passwordHash: hashPassword('demo1234', salt),
+    role,
+    passwordHash: hashPassword(password, salt),
     salt,
     createdAt: now,
     updatedAt: now,
   });
 }
 
-seedDemoUser();
+function seedDefaultUsers() {
+  seedUser({
+    name: 'Demo User',
+    email: 'demo@chellys-kitchen.local',
+    role: 'MEMBER',
+    password: 'demo1234',
+  });
+  // An admin account is required to reach the admin dashboard. Configurable
+  // via ADMIN_EMAIL / ADMIN_PASSWORD; falls back to a local default.
+  seedUser({
+    name: 'Admin',
+    email: process.env.ADMIN_EMAIL || 'admin@chellys-kitchen.local',
+    role: 'ADMIN',
+    password: process.env.ADMIN_PASSWORD || 'admin1234',
+  });
+}
+
+mkdirSync(UPLOADS_DIR, { recursive: true });
+seedDefaultUsers();
+persist();
 
 const server = createServer(async (req, res) => {
   withCors(req, res);
@@ -218,6 +295,11 @@ const server = createServer(async (req, res) => {
 
     if (requestUrl.pathname === '/api/recipes') {
       const query = Object.fromEntries(requestUrl.searchParams.entries());
+      // Only editors/admins may list non-published recipes.
+      const requester = authenticateRequest(req);
+      if (!hasMinRole(requester, 'EDITOR')) {
+        query.status = 'PUBLISHED';
+      }
       const result = queryRecipes(recipeStore.map((recipe) => sanitizeRecipe(recipe)), query);
       jsonResponse(res, 200, result);
       return;
@@ -272,7 +354,9 @@ const server = createServer(async (req, res) => {
       };
 
       users.set(normalizedEmail, user);
-      jsonResponse(res, 201, createSession(user));
+      const session = createSession(user);
+      persist();
+      jsonResponse(res, 201, session);
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -291,7 +375,9 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      jsonResponse(res, 200, createSession(user));
+      const session = createSession(user);
+      persist();
+      jsonResponse(res, 200, session);
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -310,7 +396,9 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      jsonResponse(res, 200, createSession(user));
+      const session = createSession(user);
+      persist();
+      jsonResponse(res, 200, session);
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -323,6 +411,7 @@ const server = createServer(async (req, res) => {
 
     if (token) {
       sessions.delete(token);
+      persist();
     }
 
     res.writeHead(204);
@@ -373,7 +462,7 @@ const server = createServer(async (req, res) => {
 
       const newRecipe = {
         id: `r_${randomBytes(8).toString('hex')}`,
-        slug: toSlug(title),
+        slug: uniqueSlug(title),
         title: String(title).trim(),
         shortDescription: String(shortDescription).trim(),
         description: String(payload.description ?? '').trim() || undefined,
@@ -386,6 +475,7 @@ const server = createServer(async (req, res) => {
         img: String(img ?? 'https://picsum.photos/800/450?random=50'),
         ingredients: Array.isArray(ingredients) ? ingredients : [],
         steps: Array.isArray(steps) ? steps : [],
+        nutritionalValues: payload.nutritionalValues ?? undefined,
         status: 'PUBLISHED',
         createdBy: { id: user.id, name: user.name },
         createdAt: new Date().toISOString(),
@@ -394,6 +484,7 @@ const server = createServer(async (req, res) => {
       };
 
       recipeStore.unshift(newRecipe);
+      persist();
       jsonResponse(res, 201, sanitizeRecipe(newRecipe));
       return;
     } catch (error) {
@@ -453,6 +544,7 @@ const server = createServer(async (req, res) => {
         ? allRatings.reduce((sum, r) => sum + r.stars, 0) / allRatings.length
         : 0;
 
+      persist();
       jsonResponse(res, 200, {
         rating: recipeRatings.get(user.id),
         averageRating: Math.round(averageRating * 10) / 10,
@@ -526,6 +618,7 @@ const server = createServer(async (req, res) => {
       }
 
       recipeRatings.delete(user.id);
+      persist();
       jsonResponse(res, 204, null);
       return;
     } catch (error) {
@@ -580,6 +673,7 @@ const server = createServer(async (req, res) => {
       };
 
       categoriesStore.push(newCategory);
+      persist();
       jsonResponse(res, 201, newCategory);
       return;
     } catch (error) {
@@ -618,6 +712,7 @@ const server = createServer(async (req, res) => {
       if (icon !== undefined) category.icon = icon || null;
       category.updatedAt = new Date().toISOString();
 
+      persist();
       jsonResponse(res, 200, category);
       return;
     } catch (error) {
@@ -646,6 +741,7 @@ const server = createServer(async (req, res) => {
       }
 
       categoriesStore.splice(categoryIndex, 1);
+      persist();
       jsonResponse(res, 204, null);
       return;
     } catch (error) {
@@ -654,9 +750,277 @@ const server = createServer(async (req, res) => {
     }
   }
 
+  // ============================================================================
+  // Recipe mutation Endpoints (update / delete / publish / archive)
+  // ============================================================================
+
+  // PATCH /api/recipes/:id/publish
+  if (req.method === 'PATCH' && req.url?.match(/^\/api\/recipes\/[^/]+\/publish$/)) {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'EDITOR')) {
+      jsonResponse(res, 403, { error: 'Nur Editoren oder Admins dürfen Rezepte veröffentlichen.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    recipe.status = 'PUBLISHED';
+    recipe.publishedAt = new Date().toISOString();
+    recipe.updatedAt = new Date().toISOString();
+    persist();
+    jsonResponse(res, 200, sanitizeRecipe(recipe));
+    return;
+  }
+
+  // PATCH /api/recipes/:id/archive
+  if (req.method === 'PATCH' && req.url?.match(/^\/api\/recipes\/[^/]+\/archive$/)) {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'EDITOR')) {
+      jsonResponse(res, 403, { error: 'Nur Editoren oder Admins dürfen Rezepte archivieren.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    recipe.status = 'ARCHIVED';
+    recipe.updatedAt = new Date().toISOString();
+    persist();
+    jsonResponse(res, 200, sanitizeRecipe(recipe));
+    return;
+  }
+
+  // PATCH /api/recipes/:id - Update a recipe (owner or editor/admin)
+  if (req.method === 'PATCH' && req.url?.match(/^\/api\/recipes\/[^/]+$/)) {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    const isOwner = recipe.createdBy?.id && recipe.createdBy.id === user.id;
+    if (!isOwner && !hasMinRole(user, 'EDITOR')) {
+      jsonResponse(res, 403, { error: 'Keine Berechtigung, dieses Rezept zu bearbeiten.' });
+      return;
+    }
+
+    try {
+      const payload = await parseJsonBody(req);
+
+      if (payload.title !== undefined) {
+        recipe.title = String(payload.title).trim();
+        recipe.slug = uniqueSlug(recipe.title, recipe.id);
+      }
+      if (payload.shortDescription !== undefined) recipe.shortDescription = String(payload.shortDescription).trim();
+      if (payload.description !== undefined) recipe.description = String(payload.description ?? '').trim() || undefined;
+      if (payload.category !== undefined) recipe.category = String(payload.category).trim();
+      if (payload.tag !== undefined) recipe.tag = String(payload.tag ?? '').trim() || 'Neu';
+      if (payload.difficulty !== undefined) recipe.difficulty = normalizeDifficulty(payload.difficulty);
+      if (payload.servings !== undefined) recipe.servings = Number(payload.servings);
+      if (payload.preparationTime !== undefined) recipe.preparationTime = Number(payload.preparationTime);
+      if (payload.cookingTime !== undefined) recipe.cookingTime = Number(payload.cookingTime);
+      if (payload.img !== undefined) recipe.img = String(payload.img);
+      if (payload.ingredients !== undefined) recipe.ingredients = Array.isArray(payload.ingredients) ? payload.ingredients : [];
+      if (payload.steps !== undefined) recipe.steps = Array.isArray(payload.steps) ? payload.steps : [];
+      if (payload.nutritionalValues !== undefined) recipe.nutritionalValues = payload.nutritionalValues ?? undefined;
+      if (payload.status !== undefined && hasMinRole(user, 'EDITOR')) {
+        recipe.status = String(payload.status).toUpperCase();
+      }
+      recipe.updatedAt = new Date().toISOString();
+
+      persist();
+      jsonResponse(res, 200, sanitizeRecipe(recipe));
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+  }
+
+  // DELETE /api/recipes/:id - Delete a recipe (owner or admin)
+  if (req.method === 'DELETE' && req.url?.match(/^\/api\/recipes\/[^/]+$/)) {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    const isOwner = recipe.createdBy?.id && recipe.createdBy.id === user.id;
+    if (!isOwner && !hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Keine Berechtigung, dieses Rezept zu löschen.' });
+      return;
+    }
+
+    const index = recipeStore.indexOf(recipe);
+    if (index !== -1) {
+      recipeStore.splice(index, 1);
+    }
+    ratingsStore.delete(recipe.id);
+    persist();
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // ============================================================================
+  // Admin Endpoints
+  // ============================================================================
+
+  // GET /api/admin/users - List all users (admin only)
+  if (req.method === 'GET' && req.url === '/api/admin/users') {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    const data = Array.from(users.values()).map(sanitizeUser);
+    jsonResponse(res, 200, { data, total: data.length });
+    return;
+  }
+
+  // PATCH /api/admin/users/:id/role - Update a user's role (admin only)
+  if (req.method === 'PATCH' && req.url?.match(/^\/api\/admin\/users\/[^/]+\/role$/)) {
+    const actingUser = authenticateRequest(req);
+    if (!hasMinRole(actingUser, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    try {
+      const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+      const targetId = requestUrl.pathname.split('/')[4];
+      const targetUser = findUserById(targetId);
+      if (!targetUser) {
+        jsonResponse(res, 404, { error: 'Benutzer nicht gefunden.' });
+        return;
+      }
+
+      const { role } = await parseJsonBody(req);
+      if (!VALID_ROLES.includes(role)) {
+        jsonResponse(res, 400, { error: 'Ungültige Rolle.' });
+        return;
+      }
+
+      // Prevent an admin from removing the last remaining admin (e.g. themselves).
+      if (targetUser.role === 'ADMIN' && role !== 'ADMIN') {
+        const adminCount = Array.from(users.values()).filter((u) => u.role === 'ADMIN').length;
+        if (adminCount <= 1) {
+          jsonResponse(res, 400, { error: 'Der letzte Admin kann nicht herabgestuft werden.' });
+          return;
+        }
+      }
+
+      targetUser.role = role;
+      targetUser.updatedAt = new Date().toISOString();
+      persist();
+      jsonResponse(res, 200, sanitizeUser(targetUser));
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+  }
+
+  // GET /api/admin/recipes - List all recipes incl. drafts/archived (admin only)
+  if (req.method === 'GET' && req.url === '/api/admin/recipes') {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    const data = recipeStore.map(sanitizeRecipe);
+    jsonResponse(res, 200, { data, total: data.length });
+    return;
+  }
+
+  // ============================================================================
+  // Image upload Endpoints
+  // ============================================================================
+
+  // POST /api/uploads - Upload a base64-encoded image (authenticated)
+  if (req.method === 'POST' && req.url === '/api/uploads') {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+
+    try {
+      const payload = await parseJsonBody(req, Math.ceil(MAX_UPLOAD_BYTES * 1.4) + 1024);
+      const { ext, buffer } = validateImageUpload(payload);
+      const fileName = `${randomBytes(12).toString('hex')}.${ext}`;
+      writeFileSync(join(UPLOADS_DIR, fileName), buffer);
+
+      const proto = (req.headers['x-forwarded-proto'] || 'http').toString().split(',')[0].trim();
+      const host = req.headers.host ?? `localhost:${port}`;
+      jsonResponse(res, 201, { url: `${proto}://${host}/uploads/${fileName}` });
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+  }
+
+  // GET /uploads/:file - Serve an uploaded image
+  if (req.method === 'GET' && req.url?.startsWith('/uploads/')) {
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const fileName = basename(decodeURIComponent(requestUrl.pathname.replace('/uploads/', '')));
+    const filePath = join(UPLOADS_DIR, fileName);
+
+    // basename() strips any path traversal; double-check the resolved path.
+    if (!fileName || !filePath.startsWith(UPLOADS_DIR) || !existsSync(filePath)) {
+      jsonResponse(res, 404, { error: 'Datei nicht gefunden.' });
+      return;
+    }
+
+    const ext = fileName.split('.').pop();
+    res.writeHead(200, {
+      'Content-Type': contentTypeForExt(ext),
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    });
+    createReadStream(filePath).pipe(res);
+    return;
+  }
+
   jsonResponse(res, 404, { error: 'Not Found' });
 });
 
 server.listen(port, () => {
   console.log(`Chellys Kitchen API listening on http://localhost:${port}`);
 });
+
+function shutdown() {
+  try {
+    persister.flush();
+  } finally {
+    server.close(() => process.exit(0));
+  }
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
