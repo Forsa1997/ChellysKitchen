@@ -1,15 +1,9 @@
-databases:
-  - name: chellys-kitchen-db
-    plan: free
-    databaseName: chellys_kitchen
-    user: chellys_kitchen
-
 services:
   - type: web
     name: chellys-kitchen-api
     runtime: node
     rootDir: backend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci
     startCommand: npm run start:render
     plan: free
     healthCheckPath: /health
@@ -20,10 +14,6 @@ services:
         value: 4000
       - key: HOST
         value: 0.0.0.0
-      - key: DATABASE_URL
-        fromDatabase:
-          name: chellys-kitchen-db
-          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET

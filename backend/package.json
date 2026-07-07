@@ -46,7 +46,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node dist/prisma/seed.js",
     "start": "node dist/server.js",
-    "start:render": "prisma migrate deploy && node dist/server.js",
+    "start:render": "node server.mjs",
     "test": "tsx --test src/application/recipes/index.test.ts"
   },
   "version": "1.0.0"

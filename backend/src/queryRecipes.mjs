@@ -1,5 +1,5 @@
 const ALLOWED_SORTS = new Set(['newest', 'oldest', 'title_asc', 'title_desc']);
-const ALLOWED_DIFFICULTIES = new Set(['Einfach', 'Mittel', 'Schwer']);
+const ALLOWED_DIFFICULTIES = new Set(['EINFACH', 'MITTEL', 'SCHWER', 'Einfach', 'Mittel', 'Schwer']);
 
 function toPositiveInt(value, fallback) {
   const parsed = Number.parseInt(String(value ?? ''), 10);
@@ -11,14 +11,24 @@ function normalizeSort(sort) {
 }
 
 function normalizeDifficulty(difficulty) {
-  return ALLOWED_DIFFICULTIES.has(difficulty) ? difficulty : 'all';
+  if (!ALLOWED_DIFFICULTIES.has(difficulty)) {
+    return 'all';
+  }
+
+  const normalized = String(difficulty).toLowerCase();
+
+  if (normalized === 'einfach') return 'EINFACH';
+  if (normalized === 'mittel') return 'MITTEL';
+  if (normalized === 'schwer') return 'SCHWER';
+
+  return difficulty;
 }
 
 function sortRecipes(recipes, sort) {
   const copied = [...recipes];
 
   if (sort === 'oldest') {
-    copied.sort((a, b) => new Date(a.creationDate).getTime() - new Date(b.creationDate).getTime());
+    copied.sort((a, b) => new Date(a.createdAt ?? a.creationDate).getTime() - new Date(b.createdAt ?? b.creationDate).getTime());
     return copied;
   }
 
@@ -32,7 +42,7 @@ function sortRecipes(recipes, sort) {
     return copied;
   }
 
-  copied.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
+  copied.sort((a, b) => new Date(b.createdAt ?? b.creationDate).getTime() - new Date(a.createdAt ?? a.creationDate).getTime());
   return copied;
 }
 
@@ -42,7 +52,9 @@ export function queryRecipes(recipes, queryParams = {}) {
   const page = toPositiveInt(queryParams.page, 1);
   const pageSize = Math.min(toPositiveInt(queryParams.pageSize, 6), 24);
   const sort = normalizeSort(String(queryParams.sort ?? 'newest'));
-  const difficulty = normalizeDifficulty(String(queryParams.difficulty ?? 'all').trim());
+  const requestedDifficulty = String(queryParams.difficulty ?? 'all').trim();
+  const difficulty = normalizeDifficulty(requestedDifficulty);
+  const difficultyMeta = difficulty === 'all' ? 'all' : requestedDifficulty;
   const maxTotalMinutesInput = toPositiveInt(queryParams.maxTotalMinutes, 0);
   const maxTotalMinutes = maxTotalMinutesInput > 0 ? maxTotalMinutesInput : null;
 
@@ -52,7 +64,8 @@ export function queryRecipes(recipes, queryParams = {}) {
       recipe.title.toLowerCase().includes(q) ||
       recipe.shortDescription.toLowerCase().includes(q);
     const matchesCategory = category === 'all' || recipe.category === category;
-    const matchesDifficulty = difficulty === 'all' || recipe.difficulty === difficulty;
+    const recipeDifficulty = normalizeDifficulty(String(recipe.difficulty ?? 'all').trim());
+    const matchesDifficulty = difficulty === 'all' || recipeDifficulty === difficulty;
     const totalMinutes = Number(recipe.preparationTime ?? 0) + Number(recipe.cookingTime ?? 0);
     const matchesMaxTotalMinutes = maxTotalMinutes == null || totalMinutes <= maxTotalMinutes;
 
@@ -76,7 +89,7 @@ export function queryRecipes(recipes, queryParams = {}) {
       q,
       category,
       sort,
-      difficulty,
+      difficulty: difficultyMeta,
       maxTotalMinutes,
     },
   };

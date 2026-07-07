@@ -9,6 +9,7 @@ const allowedOrigin = process.env.CORS_ORIGIN;
 
 const users = new Map();
 const sessions = new Map();
+const refreshSessions = new Map();
 const recipeStore = [...recipes];
 const ratingsStore = new Map(); // Store ratings by recipeId -> Map<userId, rating>
 const categoriesStore = [
@@ -51,6 +52,41 @@ function sanitizeUser(user) {
     name: user.name,
     email: user.email,
     role: user.role,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
+function toSlug(value) {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function normalizeDifficulty(value) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+
+  if (normalized === 'einfach') return 'EINFACH';
+  if (normalized === 'mittel') return 'MITTEL';
+  if (normalized === 'schwer') return 'SCHWER';
+
+  return ['EINFACH', 'MITTEL', 'SCHWER'].includes(value) ? value : 'MITTEL';
+}
+
+function createSession(user) {
+  const accessToken = randomBytes(24).toString('hex');
+  const refreshToken = randomBytes(24).toString('hex');
+  sessions.set(accessToken, user.id);
+  refreshSessions.set(refreshToken, user.id);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: sanitizeUser(user),
   };
 }
 
@@ -67,7 +103,29 @@ function sanitizeRecipe(recipe) {
   }
 
   return {
-    ...recipe,
+    id: recipe.id,
+    slug: recipe.slug ?? toSlug(recipe.title || recipe.id),
+    title: recipe.title,
+    shortDescription: recipe.shortDescription,
+    description: recipe.description,
+    img: recipe.img,
+    tag: recipe.tag,
+    difficulty: normalizeDifficulty(recipe.difficulty),
+    servings: Number(recipe.servings ?? 2),
+    preparationTime: Number(recipe.preparationTime ?? 0),
+    cookingTime: Number(recipe.cookingTime ?? 0),
+    category: recipe.category ?? 'Cooking',
+    status: recipe.status ?? 'PUBLISHED',
+    ingredients: recipe.ingredients ?? [],
+    steps: recipe.steps ?? [],
+    nutritionalValues: recipe.nutritionalValues,
+    createdBy: recipe.createdBy ?? {
+      id: recipe.createdById ?? 'demo-author',
+      name: recipe.authors?.[0]?.name ?? 'Chellys Kitchen',
+    },
+    createdAt: recipe.createdAt ?? recipe.creationDate ?? new Date().toISOString(),
+    updatedAt: recipe.updatedAt ?? recipe.creationDate ?? new Date().toISOString(),
+    publishedAt: recipe.publishedAt ?? recipe.creationDate ?? new Date().toISOString(),
     averageRating: Math.round(averageRating * 10) / 10,
     totalRatings,
   };
@@ -122,13 +180,16 @@ function authenticateRequest(req) {
 function seedDemoUser() {
   const normalizedEmail = 'demo@chellys-kitchen.local';
   const salt = randomBytes(16).toString('hex');
+  const now = new Date().toISOString();
   users.set(normalizedEmail, {
     id: `user_${randomBytes(8).toString('hex')}`,
     name: 'Demo User',
     email: normalizedEmail,
-    role: 'member',
+    role: 'MEMBER',
     passwordHash: hashPassword('demo1234', salt),
     salt,
+    createdAt: now,
+    updatedAt: now,
   });
 }
 
@@ -144,7 +205,11 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/health') {
-    jsonResponse(res, 200, { status: 'ok' });
+    jsonResponse(res, 200, {
+      status: 'ok',
+      database: 'in-memory',
+      timestamp: new Date().toISOString(),
+    });
     return;
   }
 
@@ -161,16 +226,21 @@ const server = createServer(async (req, res) => {
 
   if (req.method === 'GET' && req.url?.startsWith('/api/recipes/')) {
     const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const recipeId = requestUrl.pathname.replace('/api/recipes/', '');
-    const recipe = recipeStore.find((entry) => entry.id === recipeId);
 
-    if (!recipe) {
-      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+    if (!/^\/api\/recipes\/[^/]+$/.test(requestUrl.pathname)) {
+      // Let nested recipe routes such as /api/recipes/:slug/rating continue below.
+    } else {
+      const recipeSlug = requestUrl.pathname.replace('/api/recipes/', '');
+      const recipe = recipeStore.find((entry) => entry.id === recipeSlug || (entry.slug ?? toSlug(entry.title)) === recipeSlug);
+
+      if (!recipe) {
+        jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+        return;
+      }
+
+      jsonResponse(res, 200, sanitizeRecipe(recipe));
       return;
     }
-
-    jsonResponse(res, 200, { data: sanitizeRecipe(recipe) });
-    return;
   }
 
   if (req.method === 'POST' && req.url === '/api/auth/register') {
@@ -189,19 +259,20 @@ const server = createServer(async (req, res) => {
       }
 
       const salt = randomBytes(16).toString('hex');
+      const now = new Date().toISOString();
       const user = {
         id: `user_${randomBytes(8).toString('hex')}`,
         name: String(name).trim(),
         email: normalizedEmail,
-        role: 'member',
+        role: 'MEMBER',
         passwordHash: hashPassword(String(password), salt),
         salt,
+        createdAt: now,
+        updatedAt: now,
       };
 
       users.set(normalizedEmail, user);
-      const token = randomBytes(24).toString('hex');
-      sessions.set(token, user.id);
-      jsonResponse(res, 201, { token, user: sanitizeUser(user) });
+      jsonResponse(res, 201, createSession(user));
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -220,14 +291,43 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      const token = randomBytes(24).toString('hex');
-      sessions.set(token, user.id);
-      jsonResponse(res, 200, { token, user: sanitizeUser(user) });
+      jsonResponse(res, 200, createSession(user));
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
       return;
     }
+  }
+
+  if (req.method === 'POST' && req.url === '/api/auth/refresh') {
+    try {
+      const { refreshToken } = await parseJsonBody(req);
+      const userId = refreshSessions.get(String(refreshToken ?? ''));
+      const user = userId ? findUserById(userId) : null;
+
+      if (!user) {
+        jsonResponse(res, 401, { error: 'Ungültiger Refresh Token.' });
+        return;
+      }
+
+      jsonResponse(res, 200, createSession(user));
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+  }
+
+  if (req.method === 'POST' && req.url === '/api/auth/logout') {
+    const token = getBearerToken(req);
+
+    if (token) {
+      sessions.delete(token);
+    }
+
+    res.writeHead(204);
+    res.end();
+    return;
   }
 
   if (req.method === 'GET' && req.url === '/api/auth/me') {
@@ -273,23 +373,28 @@ const server = createServer(async (req, res) => {
 
       const newRecipe = {
         id: `r_${randomBytes(8).toString('hex')}`,
+        slug: toSlug(title),
         title: String(title).trim(),
         shortDescription: String(shortDescription).trim(),
+        description: String(payload.description ?? '').trim() || undefined,
         category: String(category).trim(),
         tag: String(tag ?? 'Neu').trim() || 'Neu',
-        difficulty: String(difficulty ?? 'Einfach').trim() || 'Einfach',
+        difficulty: normalizeDifficulty(difficulty),
         servings: Number(servings ?? 2),
         preparationTime: Number(preparationTime ?? 10),
         cookingTime: Number(cookingTime ?? 20),
         img: String(img ?? 'https://picsum.photos/800/450?random=50'),
         ingredients: Array.isArray(ingredients) ? ingredients : [],
         steps: Array.isArray(steps) ? steps : [],
-        authors: [{ name: user.name, avatar: '/static/images/avatar/1.jpg' }],
-        creationDate: new Date().toISOString(),
+        status: 'PUBLISHED',
+        createdBy: { id: user.id, name: user.name },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
       };
 
       recipeStore.unshift(newRecipe);
-      jsonResponse(res, 201, { data: sanitizeRecipe(newRecipe) });
+      jsonResponse(res, 201, sanitizeRecipe(newRecipe));
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -443,7 +548,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/categories') {
     const user = authenticateRequest(req);
 
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'ADMIN') {
       jsonResponse(res, 403, { error: 'Nur Admins können Kategorien erstellen.' });
       return;
     }
@@ -487,7 +592,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'PATCH' && req.url?.match(/^\/api\/categories\/[^/]+$/)) {
     const user = authenticateRequest(req);
 
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'ADMIN') {
       jsonResponse(res, 403, { error: 'Nur Admins können Kategorien bearbeiten.' });
       return;
     }
@@ -525,7 +630,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'DELETE' && req.url?.match(/^\/api\/categories\/[^/]+$/)) {
     const user = authenticateRequest(req);
 
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'ADMIN') {
       jsonResponse(res, 403, { error: 'Nur Admins können Kategorien löschen.' });
       return;
     }
