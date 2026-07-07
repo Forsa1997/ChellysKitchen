@@ -21,17 +21,18 @@ import {
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import CasinoIcon from '@mui/icons-material/Casino';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import TuneIcon from '@mui/icons-material/Tune';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Link as RouterLink } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { useCategories } from '../hooks/useCategories';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
-import { formatCategoryLabel } from './homePageViewModel';
+import { formatCategoryLabel, selectRandomRecipe } from './homePageViewModel';
 import { normalizeRecipeListParams } from './recipeListQueryParams';
 
 const difficultyOptions = ['all', 'Einfach', 'Mittel', 'Schwer'] as const;
@@ -50,6 +51,7 @@ function timePresetLabel(value: string) {
 
 export function HomePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const listParams = normalizeRecipeListParams(searchParams);
   const { recipes, meta, loading, error } = useQueryRecipes(listParams);
@@ -143,6 +145,13 @@ export function HomePage() {
     setSearchParams(new URLSearchParams(), { replace: true });
   };
 
+  const openRandomRecipe = () => {
+    const recipe = selectRandomRecipe(recipes);
+    if (!recipe) return;
+
+    navigate(`/recipes/${recipe.slug}`);
+  };
+
   if (error) {
     return <Alert severity="error">Rezepte konnten nicht geladen werden.</Alert>;
   }
@@ -193,6 +202,14 @@ export function HomePage() {
               </Button>
             </>
           )}
+          <Button
+            variant="outlined"
+            startIcon={<CasinoIcon />}
+            onClick={openRandomRecipe}
+            disabled={recipes.length === 0}
+          >
+            Zufälliges Rezept
+          </Button>
         </Stack>
       </Stack>
 
