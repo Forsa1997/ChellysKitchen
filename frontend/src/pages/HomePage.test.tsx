@@ -123,4 +123,22 @@ describe('HomePage random recipe action', () => {
 
     expect(screen.getByRole('button', { name: 'Zufälliges Rezept' })).toBeDisabled();
   });
+
+  it('keeps the current recipe list visible while filtered results are refreshing', () => {
+    useAuthMock.mockReturnValue({ user: null });
+    useCategoriesMock.mockReturnValue({ data: [] });
+    useQueryRecipesMock.mockReturnValue({
+      recipes,
+      meta: defaultMeta,
+      loading: true,
+      fetching: true,
+      error: null,
+    });
+
+    renderHomePage();
+
+    expect(screen.getByRole('link', { name: /Pasta/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Tomatensuppe/ })).toBeInTheDocument();
+    expect(screen.getByText(/Rezepte werden aktualisiert/)).toBeInTheDocument();
+  });
 });

@@ -11,7 +11,7 @@ function parseIntSafe(value, fallback) {
  */
 export function normalizeRecipeListParams(searchParams) {
   const page = parseIntSafe(searchParams.get('page'), 1);
-  const pageSize = Math.min(parseIntSafe(searchParams.get('pageSize'), 6), 24);
+  const pageSize = Math.min(parseIntSafe(searchParams.get('pageSize'), 12), 24);
   const sort = searchParams.get('sort') ?? 'newest';
   const difficulty = searchParams.get('difficulty') ?? 'all';
   const maxTotalMinutesRaw = parseIntSafe(searchParams.get('maxTotalMinutes'), 0);

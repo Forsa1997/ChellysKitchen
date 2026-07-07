@@ -5,7 +5,7 @@ import { normalizeRecipeListParams } from '../src/pages/recipeListQueryParams.js
 test('normalizeRecipeListParams provides safe defaults', () => {
   const params = normalizeRecipeListParams(new URLSearchParams());
   assert.equal(params.page, 1);
-  assert.equal(params.pageSize, 6);
+  assert.equal(params.pageSize, 12);
   assert.equal(params.sort, 'newest');
   assert.equal(params.category, 'all');
   assert.equal(params.q, '');

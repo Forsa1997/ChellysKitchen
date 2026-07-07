@@ -15,22 +15,27 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
   });
 
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={{ xs: 2, lg: 2.5 }}>
       {recipes.map((recipe) => (
-        <Grid key={recipe.id} size={{ xs: 12, md: 6, lg: 4 }}>
+        <Grid key={recipe.id} size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}>
           <Card
             component={RouterLink}
             to={`/recipes/${recipe.slug}`}
-            sx={{ height: '100%', borderRadius: 3, textDecoration: 'none', overflow: 'hidden' }}
+            sx={{ height: '100%', borderRadius: 2, textDecoration: 'none', overflow: 'hidden' }}
           >
-            <CardMedia image={recipe.img} component="img" height="180" alt={recipe.title} />
-            <CardContent sx={{ p: 2 }}>
-              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+            <CardMedia
+              image={recipe.img}
+              component="img"
+              alt={recipe.title}
+              sx={{ aspectRatio: '16 / 10', height: 'auto', objectFit: 'cover' }}
+            />
+            <CardContent sx={{ p: 2, display: 'flex', minHeight: 190, flexDirection: 'column' }}>
+              <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 1, flexWrap: 'wrap' }}>
                 {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
                 <Chip label={recipe.difficulty} size="small" variant="outlined" />
               </Stack>
               <Typography variant="h6" gutterBottom>{recipe.title}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
                 {recipe.shortDescription}
               </Typography>
               <Typography variant="caption" color="text.secondary">

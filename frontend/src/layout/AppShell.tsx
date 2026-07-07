@@ -9,7 +9,7 @@ export function AppShell({ children }: PropsWithChildren) {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="sticky" color="transparent" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Container>
+        <Container maxWidth="xl">
           <Toolbar
             disableGutters
             sx={{
@@ -64,7 +64,7 @@ export function AppShell({ children }: PropsWithChildren) {
           </Toolbar>
         </Container>
       </AppBar>
-      <Container component="main" sx={{ py: { xs: 3, md: 5 } }}>{children}</Container>
+      <Container component="main" maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>{children}</Container>
     </Box>
   );
 }

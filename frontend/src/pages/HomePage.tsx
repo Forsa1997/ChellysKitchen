@@ -8,6 +8,7 @@ import {
   IconButton,
   InputAdornment,
   InputLabel,
+  LinearProgress,
   MenuItem,
   Pagination,
   Paper,
@@ -54,9 +55,15 @@ export function HomePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const listParams = normalizeRecipeListParams(searchParams);
-  const { recipes, meta, loading, error } = useQueryRecipes(listParams);
+  const { recipes, meta, loading, fetching = false, error } = useQueryRecipes(listParams);
   const { data: categoryData } = useCategories();
-  const [queryInput, setQueryInput] = useState(listParams.q);
+  const [queryDraft, setQueryDraft] = useState({ value: listParams.q, source: listParams.q });
+  let queryInput = queryDraft.value;
+
+  if (queryDraft.source !== listParams.q) {
+    queryInput = listParams.q;
+    setQueryDraft({ value: listParams.q, source: listParams.q });
+  }
 
   const categories = useMemo(() => {
     if (categoryData?.length) {
@@ -93,10 +100,6 @@ export function HomePage() {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
-    setQueryInput(listParams.q);
-  }, [listParams.q]);
-
-  useEffect(() => {
     if (queryInput.trim() === listParams.q) {
       return;
     }
@@ -109,7 +112,7 @@ export function HomePage() {
   }, [queryInput, listParams.q, updateParams]);
 
   const handleQueryChange = (value: string) => {
-    setQueryInput(value);
+    setQueryDraft({ value, source: listParams.q });
   };
 
   const handleCategoryChange = (value: string | null) => {
@@ -136,12 +139,12 @@ export function HomePage() {
   };
 
   const clearQuery = () => {
-    setQueryInput('');
+    setQueryDraft({ value: '', source: listParams.q });
     updateParams({ q: '', page: '1' });
   };
 
   const resetFilters = () => {
-    setQueryInput('');
+    setQueryDraft({ value: '', source: '' });
     setSearchParams(new URLSearchParams(), { replace: true });
   };
 
@@ -156,7 +159,7 @@ export function HomePage() {
     return <Alert severity="error">Rezepte konnten nicht geladen werden.</Alert>;
   }
 
-  if (loading) {
+  if (loading && recipes.length === 0) {
     return (
       <Stack spacing={3}>
         <Stack spacing={1}>
@@ -221,6 +224,14 @@ export function HomePage() {
           bgcolor: 'background.paper',
         }}
       >
+        {fetching && (
+          <Box sx={{ mx: { xs: -2, md: -2.5 }, mt: { xs: -2, md: -2.5 }, mb: 2 }}>
+            <LinearProgress aria-label="Rezepte werden aktualisiert" />
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', px: { xs: 2, md: 2.5 }, pt: 1 }}>
+              Rezepte werden aktualisiert
+            </Typography>
+          </Box>
+        )}
         <Stack spacing={2}>
           <Stack
             direction={{ xs: 'column', md: 'row' }}
@@ -251,6 +262,14 @@ export function HomePage() {
             </Button>
           </Stack>
 
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', lg: 'minmax(360px, 1.15fr) minmax(360px, 1fr)' },
+              alignItems: 'start',
+            }}
+          >
           <TextField
             value={queryInput}
             label="Suche"
@@ -307,10 +326,18 @@ export function HomePage() {
               </ToggleButtonGroup>
             </Box>
           </Box>
+          </Box>
 
           <Divider />
 
-          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: { lg: 'center' } }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: '1fr 1fr minmax(190px, 240px)' },
+              alignItems: 'end',
+            }}
+          >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
                 Schwierigkeit
@@ -378,7 +405,7 @@ export function HomePage() {
                 <MenuItem value="title_desc">{sortLabels.title_desc}</MenuItem>
               </Select>
             </FormControl>
-          </Stack>
+          </Box>
 
           {hasActiveFilters && (
             <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>

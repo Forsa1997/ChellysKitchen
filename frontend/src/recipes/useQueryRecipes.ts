@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiClient, type RecipeListParams } from '../api/client';
 
 const defaultMeta = {
   page: 1,
-  pageSize: 6,
+  pageSize: 12,
   total: 0,
   totalPages: 1,
   q: '',
@@ -14,9 +14,10 @@ const defaultMeta = {
 };
 
 export function useQueryRecipes(params: RecipeListParams) {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['recipes', params],
     queryFn: () => apiClient.getRecipes(params),
+    placeholderData: keepPreviousData,
   });
 
   const recipes = data?.data || [];
@@ -25,7 +26,8 @@ export function useQueryRecipes(params: RecipeListParams) {
   return {
     recipes,
     meta,
-    loading: isLoading,
+    loading: isLoading && !data,
+    fetching: isFetching,
     error: error instanceof Error ? error.message : null,
   };
 }
