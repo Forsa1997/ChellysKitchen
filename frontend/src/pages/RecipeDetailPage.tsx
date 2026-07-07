@@ -1,12 +1,18 @@
-import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, List, ListItem, ListItemText, Paper, Stack, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Paper, Snackbar, Stack, Tooltip, Typography } from '@mui/material';
 import { Link as RouterLink, useParams } from 'react-router';
 import { useState } from 'react';
 import { useRecipe } from '../hooks/useRecipes';
 import { useCreateRating, useDeleteRating } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, WaterDrop } from '@mui/icons-material';
+import { AccessTime, Add, ContentCopy, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, WaterDrop } from '@mui/icons-material';
 import type { ApiError } from '../api/client';
+import type { Ingredient, RecipeStep } from '../types/domain';
+
+const formatAmount = (amount: number) =>
+  new Intl.NumberFormat('de-DE', {
+    maximumFractionDigits: 2,
+  }).format(amount);
 
 export function RecipeDetailPage() {
   const { slug } = useParams();
@@ -15,6 +21,8 @@ export function RecipeDetailPage() {
   const createRating = useCreateRating();
   const deleteRating = useDeleteRating();
   const [userRating, setUserRating] = useState<number>(0);
+  const [servingSelection, setServingSelection] = useState<{ recipeId: string; servings: number } | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const apiError = error as ApiError | null;
   const isNotFound = apiError?.statusCode === 404;
 
@@ -31,6 +39,28 @@ export function RecipeDetailPage() {
       }
     } catch (error) {
       console.error('Failed to update rating:', error);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopyLink = async () => {
+    if (!recipe) return;
+
+    const currentUrl = window.location.href;
+    const recipePath = `/recipes/${recipe.slug}`;
+    const recipeUrl = currentUrl.includes(recipePath)
+      ? currentUrl
+      : new URL(recipePath, window.location.origin).toString();
+
+    try {
+      await navigator.clipboard.writeText(recipeUrl);
+      setCopyStatus('success');
+    } catch (error) {
+      console.error('Failed to copy recipe link:', error);
+      setCopyStatus('error');
     }
   };
 
@@ -70,12 +100,16 @@ export function RecipeDetailPage() {
     );
   }
 
+  const selectedServings = servingSelection?.recipeId === recipe.id
+    ? servingSelection.servings
+    : recipe.servings;
   const totalTime = recipe.preparationTime + recipe.cookingTime;
+  const servingScale = selectedServings / Math.max(recipe.servings, 1);
   const difficultyColor = {
     'EINFACH': 'success',
     'MITTEL': 'warning',
     'SCHWER': 'error'
-  } as const;
+  } as const satisfies Record<typeof recipe.difficulty, 'success' | 'warning' | 'error'>;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -86,11 +120,19 @@ export function RecipeDetailPage() {
           sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}
         >
           <Button component={RouterLink} to="/" variant="text">Zurück zur Übersicht</Button>
-          {user?.id === recipe.createdBy?.id && (
-            <Button variant="outlined" disabled>
-              Bearbeiten (TODO)
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            <Button startIcon={<ContentCopy />} variant="outlined" onClick={handleCopyLink}>
+              Link kopieren
             </Button>
-          )}
+            <Button startIcon={<LocalPrintshop />} variant="outlined" onClick={handlePrint}>
+              Drucken
+            </Button>
+            {user?.id === recipe.createdBy?.id && (
+              <Button variant="outlined" disabled>
+                Bearbeiten (TODO)
+              </Button>
+            )}
+          </Stack>
         </Stack>
 
         {/* Header Section with Image */}
@@ -112,7 +154,7 @@ export function RecipeDetailPage() {
               <Chip
                 label={recipe.difficulty}
                 size="small"
-                color={difficultyColor[recipe.difficulty] as any}
+                color={difficultyColor[recipe.difficulty]}
                 variant="outlined"
               />
               <Chip label={recipe.category} size="small" variant="outlined" />
@@ -166,7 +208,7 @@ export function RecipeDetailPage() {
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <People color="action" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
-                  {recipe.servings} Portionen
+                  {selectedServings} Portionen
                 </Typography>
               </Stack>
             </Stack>
@@ -221,11 +263,46 @@ export function RecipeDetailPage() {
                   Zutaten
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Für {recipe.servings} Portionen
+                  Für {selectedServings} Portionen
                 </Typography>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mb: 2 }}>
+                  <Tooltip title="Portionen verringern">
+                    <span>
+                      <IconButton
+                        aria-label="Portionen verringern"
+                        size="small"
+                        onClick={() => setServingSelection({
+                          recipeId: recipe.id,
+                          servings: Math.max(1, selectedServings - 1),
+                        })}
+                        disabled={selectedServings <= 1}
+                      >
+                        <Remove fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Typography
+                    variant="body2"
+                    sx={{ minWidth: 28, textAlign: 'center', fontWeight: 600 }}
+                  >
+                    {selectedServings}
+                  </Typography>
+                  <Tooltip title="Portionen erhöhen">
+                    <IconButton
+                      aria-label="Portionen erhöhen"
+                      size="small"
+                      onClick={() => setServingSelection({
+                        recipeId: recipe.id,
+                        servings: selectedServings + 1,
+                      })}
+                    >
+                      <Add fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
                 <Divider sx={{ mb: 2 }} />
                 <List dense sx={{ p: 0 }}>
-                  {recipe.ingredients.map((ingredient: any, index: number) => (
+                  {recipe.ingredients.map((ingredient: Ingredient, index: number) => (
                     <ListItem
                       key={`${ingredient.name}-${ingredient.unit}-${index}`}
                       disableGutters
@@ -234,7 +311,7 @@ export function RecipeDetailPage() {
                       <ListItemText
                         primary={
                           <Typography variant="body1">
-                            <strong>{ingredient.amount} {ingredient.unit}</strong> {ingredient.name}
+                            <strong>{formatAmount(ingredient.amount * servingScale)} {ingredient.unit}</strong> {ingredient.name}
                           </Typography>
                         }
                       />
@@ -327,7 +404,7 @@ export function RecipeDetailPage() {
                   Zubereitung
                 </Typography>
                 <Stack spacing={3}>
-                  {recipe.steps.map((step: any, index: number) => (
+                  {recipe.steps.map((step: RecipeStep, index: number) => (
                     <Box key={step.stepNumber}>
                       <Stack direction="row" spacing={3} sx={{ alignItems: 'flex-start' }}>
                         <Box
@@ -397,6 +474,12 @@ export function RecipeDetailPage() {
           </CardContent>
         </Paper>
       </Stack>
+      <Snackbar
+        open={copyStatus !== 'idle'}
+        autoHideDuration={3000}
+        onClose={() => setCopyStatus('idle')}
+        message={copyStatus === 'success' ? 'Link kopiert' : 'Link konnte nicht kopiert werden'}
+      />
     </Container>
   );
 }

@@ -1,5 +1,5 @@
 import { afterEach } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { RecipeDetailPage } from './RecipeDetailPage';
@@ -24,9 +24,34 @@ vi.mock('../hooks/useRatings', () => ({
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe('RecipeDetailPage', () => {
+  const recipe = {
+    id: 'recipe-1',
+    slug: 'pasta',
+    title: 'Pasta',
+    shortDescription: 'Schnell und lecker',
+    description: 'Mit Tomaten und Basilikum',
+    img: 'https://example.com/pasta.jpg',
+    tag: 'abendessen',
+    difficulty: 'EINFACH',
+    servings: 2,
+    preparationTime: 10,
+    cookingTime: 20,
+    category: 'Pasta',
+    status: 'PUBLISHED',
+    ingredients: [{ name: 'Spaghetti', amount: 200, unit: 'g' }],
+    steps: [{ stepNumber: 1, instruction: 'Wasser kochen und Pasta garen.' }],
+    nutritionalValues: {},
+    createdBy: { id: 'u1', name: 'Chris' },
+    createdAt: '2026-04-30T12:00:00.000Z',
+    updatedAt: '2026-04-30T12:00:00.000Z',
+    averageRating: 4.5,
+    totalRatings: 10,
+  };
+
   const renderPage = () => {
     return render(
       <MemoryRouter initialEntries={['/recipes/pasta']}>
@@ -66,29 +91,7 @@ describe('RecipeDetailPage', () => {
 
   it('renders recipe details and owner todo button for owners', () => {
     useRecipeMock.mockReturnValue({
-      data: {
-        id: 'recipe-1',
-        slug: 'pasta',
-        title: 'Pasta',
-        shortDescription: 'Schnell und lecker',
-        description: 'Mit Tomaten und Basilikum',
-        img: 'https://example.com/pasta.jpg',
-        tag: 'abendessen',
-        difficulty: 'EINFACH',
-        servings: 2,
-        preparationTime: 10,
-        cookingTime: 20,
-        category: 'Pasta',
-        status: 'PUBLISHED',
-        ingredients: [{ name: 'Spaghetti', amount: 200, unit: 'g' }],
-        steps: [{ stepNumber: 1, instruction: 'Wasser kochen und Pasta garen.' }],
-        nutritionalValues: {},
-        createdBy: { id: 'u1', name: 'Chris' },
-        createdAt: '2026-04-30T12:00:00.000Z',
-        updatedAt: '2026-04-30T12:00:00.000Z',
-        averageRating: 4.5,
-        totalRatings: 10,
-      },
+      data: recipe,
       isLoading: false,
       error: null,
     });
@@ -103,5 +106,67 @@ describe('RecipeDetailPage', () => {
     expect(screen.getByText('Zutaten')).toBeInTheDocument();
     expect(screen.getByText('Zubereitung')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Bearbeiten (TODO)' })).toBeDisabled();
+  });
+
+  it('scales ingredient amounts when servings are adjusted', () => {
+    useRecipeMock.mockReturnValue({
+      data: recipe,
+      isLoading: false,
+      error: null,
+    });
+    useAuthMock.mockReturnValue({ user: null });
+    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+
+    const screen = renderPage();
+
+    expect(screen.getByText('Für 2 Portionen')).toBeInTheDocument();
+    expect(screen.getByText(/200 g/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Portionen erhöhen' }));
+
+    expect(screen.getByText('Für 3 Portionen')).toBeInTheDocument();
+    expect(screen.getByText(/300 g/)).toBeInTheDocument();
+  });
+
+  it('prints the recipe from the recipe action bar', () => {
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+    useRecipeMock.mockReturnValue({
+      data: recipe,
+      isLoading: false,
+      error: null,
+    });
+    useAuthMock.mockReturnValue({ user: null });
+    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+
+    const screen = renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Drucken' }));
+
+    expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it('copies the recipe link from the recipe action bar', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    useRecipeMock.mockReturnValue({
+      data: recipe,
+      isLoading: false,
+      error: null,
+    });
+    useAuthMock.mockReturnValue({ user: null });
+    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+
+    const screen = renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Link kopieren' }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/recipes/pasta')));
+    expect(screen.getByText('Link kopiert')).toBeInTheDocument();
   });
 });
