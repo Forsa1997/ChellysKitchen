@@ -15,6 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useState, type PropsWithChildren } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
+import SitemarkIcon from '../components/SitemarkIcon';
 
 export function AppShell({ children }: PropsWithChildren) {
   const { user, logout } = useAuth();
@@ -76,20 +77,20 @@ export function AppShell({ children }: PropsWithChildren) {
               gap: 2,
             }}
           >
-            <Typography
+            <Box
               component={RouterLink}
               to="/"
-              variant="h6"
+              aria-label="Chellys Kitchen Startseite"
               onClick={closeMenu}
               sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
                 textDecoration: 'none',
-                color: 'primary.main',
-                fontWeight: 700,
-                fontSize: { xs: '1.15rem', sm: '1.25rem' },
+                flexShrink: 0,
               }}
             >
-              Chellys Kitchen
-            </Typography>
+              <SitemarkIcon />
+            </Box>
 
             {/* Desktop navigation */}
             <Stack

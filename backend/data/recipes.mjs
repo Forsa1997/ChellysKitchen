@@ -1,7 +1,7 @@
 export const recipes = [
   {
     id: 'r1',
-    img: '/recipe-images/pasta-spinat-lachs.svg',
+    img: 'https://source.unsplash.com/1200x800/?salmon,pasta,spinach,cream',
     tag: 'Kochen',
     title: 'Cremige Pasta mit Spinat und Lachs',
     shortDescription:
@@ -28,7 +28,7 @@ export const recipes = [
   },
   {
     id: 'r2',
-    img: '/recipe-images/karottentorte.svg',
+    img: 'https://source.unsplash.com/1200x800/?carrot,cake,cream-cheese,frosting',
     tag: 'Backen',
     title: 'Saftige Karottentorte',
     shortDescription: 'Klassische Karottentorte mit cremigem Frischkäse-Frosting',
@@ -53,7 +53,7 @@ export const recipes = [
   },
   {
     id: 'r3',
-    img: '/recipe-images/bbq-rippchen.svg',
+    img: 'https://source.unsplash.com/1200x800/?bbq,ribs,honey,grill',
     tag: 'Grillen',
     title: 'BBQ Rippchen mit Honig-Glasur',
     shortDescription: 'Zarte Rippchen mit süß-würziger Honig-BBQ-Glasur',
@@ -79,7 +79,7 @@ export const recipes = [
   {
     id: 'r4',
     slug: 'zitronen-haehnchen-vom-blech',
-    img: '/recipe-images/zitronen-haehnchen-blech.svg',
+    img: 'https://source.unsplash.com/1200x800/?lemon,chicken,potatoes,rosemary',
     tag: 'Kochen',
     title: 'Zitronen-Haehnchen vom Blech',
     shortDescription: 'Saftiges Haehnchen mit Kartoffeln, Zitrone und Kraeutern aus dem Ofen',
@@ -109,7 +109,7 @@ export const recipes = [
   {
     id: 'r5',
     slug: 'linsen-kokos-suppe',
-    img: '/recipe-images/linsen-kokos-suppe.svg',
+    img: 'https://source.unsplash.com/1200x800/?red-lentil,coconut,soup,lime',
     tag: 'Suppe',
     title: 'Linsen-Kokos-Suppe',
     shortDescription: 'Cremige rote Linsensuppe mit Kokosmilch, Ingwer und Limette',
@@ -139,7 +139,7 @@ export const recipes = [
   {
     id: 'r6',
     slug: 'sommerlicher-couscous-salat',
-    img: '/recipe-images/couscous-salat.svg',
+    img: 'https://source.unsplash.com/1200x800/?couscous,salad,feta,tomato',
     tag: 'Salat',
     title: 'Sommerlicher Couscous-Salat',
     shortDescription: 'Frischer Couscous-Salat mit Gurke, Tomate, Feta und Minze',
@@ -169,7 +169,7 @@ export const recipes = [
   {
     id: 'r7',
     slug: 'schoko-himbeer-brownies',
-    img: '/recipe-images/schoko-himbeer-brownies.svg',
+    img: 'https://source.unsplash.com/1200x800/?chocolate,brownies,raspberries',
     tag: 'Backen',
     title: 'Schoko-Himbeer-Brownies',
     shortDescription: 'Fudgy Brownies mit dunkler Schokolade und fruchtigen Himbeeren',
@@ -199,7 +199,7 @@ export const recipes = [
   {
     id: 'r8',
     slug: 'mediterrane-gemuese-lasagne',
-    img: '/recipe-images/gemuese-lasagne.svg',
+    img: 'https://source.unsplash.com/1200x800/?vegetable,lasagna,zucchini,tomato',
     tag: 'Vegetarisch',
     title: 'Mediterrane Gemuese-Lasagne',
     shortDescription: 'Ofenlasagne mit Zucchini, Aubergine, Tomaten und cremiger Bechamel',
@@ -229,7 +229,7 @@ export const recipes = [
   {
     id: 'r9',
     slug: 'asia-nudelpfanne-mit-erdnusssauce',
-    img: '/recipe-images/asia-nudelpfanne.svg',
+    img: 'https://source.unsplash.com/1200x800/?asian,noodles,peanut,sauce,vegetables',
     tag: 'Schnell',
     title: 'Asia-Nudelpfanne mit Erdnusssauce',
     shortDescription: 'Schnelle Nudelpfanne mit knackigem Gemuese und cremiger Erdnusssauce',
@@ -259,7 +259,7 @@ export const recipes = [
   {
     id: 'r10',
     slug: 'apfel-zimt-porridge',
-    img: '/recipe-images/apfel-zimt-porridge.svg',
+    img: 'https://source.unsplash.com/1200x800/?apple,cinnamon,porridge,oats',
     tag: 'Fruehstueck',
     title: 'Apfel-Zimt-Porridge',
     shortDescription: 'Cremiges Porridge mit Apfel, Zimt und geroesteten Nuessen',
@@ -289,7 +289,7 @@ export const recipes = [
   {
     id: 'r11',
     slug: 'rauchige-bbq-burger',
-    img: '/recipe-images/bbq-burger.svg',
+    img: 'https://source.unsplash.com/1200x800/?bbq,burger,cheddar,onions',
     tag: 'Grillen',
     title: 'Rauchige BBQ-Burger',
     shortDescription: 'Saftige Burger mit rauchiger Sauce, Cheddar und karamellisierten Zwiebeln',
@@ -319,7 +319,7 @@ export const recipes = [
   {
     id: 'r12',
     slug: 'vanille-panna-cotta-mit-beeren',
-    img: '/recipe-images/panna-cotta-beeren.svg',
+    img: 'https://source.unsplash.com/1200x800/?panna-cotta,berries,vanilla,dessert',
     tag: 'Dessert',
     title: 'Vanille-Panna-Cotta mit Beeren',
     shortDescription: 'Seidige Panna Cotta mit Vanille und frischem Beerenkompott',
