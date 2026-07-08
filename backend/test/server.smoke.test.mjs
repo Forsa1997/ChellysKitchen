@@ -180,6 +180,19 @@ test('image upload stores a file that is served back', async () => {
   assert.equal(fetched.headers.get('content-type'), 'image/png');
 });
 
+test('CORS preflight allows PUT so browsers can set favorites', async () => {
+  const res = await fetch(`${BASE}/api/recipes/irgendwas/favorite`, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'http://localhost:5173',
+      'Access-Control-Request-Method': 'PUT',
+    },
+  });
+  assert.equal(res.status, 204);
+  const allowed = res.headers.get('access-control-allow-methods') ?? '';
+  assert.ok(allowed.includes('PUT'), `PUT missing from allowed methods: ${allowed}`);
+});
+
 test('favorites can be set, filtered and removed', async () => {
   const { token } = await createMember('Fan');
 

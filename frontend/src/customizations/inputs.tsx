@@ -385,6 +385,24 @@ export const inputsCustomizations: Components<Theme> = {
             },
         },
     },
+    // The template removes the notched outline below, so a floating label
+    // would sit on top of the input border. Render labels statically above
+    // the field instead — every TextField/Select label in the app gets this.
+    MuiInputLabel: {
+        styleOverrides: {
+            root: ({ theme }) => ({
+                position: 'static',
+                transform: 'none',
+                transition: 'none',
+                pointerEvents: 'auto',
+                maxWidth: 'none',
+                marginBottom: 6,
+                fontSize: theme.typography.body2.fontSize,
+                fontWeight: 500,
+                color: (theme.vars || theme).palette.text.secondary,
+            }),
+        },
+    },
     MuiOutlinedInput: {
         styleOverrides: {
             input: {
@@ -427,6 +445,11 @@ export const inputsCustomizations: Components<Theme> = {
                         },
                     },
                 ],
+                // The fixed heights above would squash multiline fields
+                // (textarea) down to a single line.
+                '&.MuiInputBase-multiline': {
+                    height: 'auto',
+                },
             }),
             notchedOutline: {
                 border: 'none',
