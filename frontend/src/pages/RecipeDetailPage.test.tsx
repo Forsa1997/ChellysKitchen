@@ -8,9 +8,16 @@ const useRecipeMock = vi.fn();
 const useAuthMock = vi.fn();
 const useCreateRatingMock = vi.fn();
 const useDeleteRatingMock = vi.fn();
+const useRecipeRatingsMock = vi.fn();
+const useDeleteRecipeMock = vi.fn();
+const usePublishRecipeMock = vi.fn();
+const useArchiveRecipeMock = vi.fn();
 
 vi.mock('../hooks/useRecipes', () => ({
   useRecipe: (...args: unknown[]) => useRecipeMock(...args),
+  useDeleteRecipe: () => useDeleteRecipeMock(),
+  usePublishRecipe: () => usePublishRecipeMock(),
+  useArchiveRecipe: () => useArchiveRecipeMock(),
 }));
 
 vi.mock('../auth/AuthContext', () => ({
@@ -20,12 +27,24 @@ vi.mock('../auth/AuthContext', () => ({
 vi.mock('../hooks/useRatings', () => ({
   useCreateRating: () => useCreateRatingMock(),
   useDeleteRating: () => useDeleteRatingMock(),
+  useRecipeRatings: (...args: unknown[]) => useRecipeRatingsMock(...args),
 }));
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
+
+const mockMutation = () => ({ isPending: false, mutateAsync: vi.fn() });
+
+const mockDefaults = () => {
+  useCreateRatingMock.mockReturnValue(mockMutation());
+  useDeleteRatingMock.mockReturnValue(mockMutation());
+  useRecipeRatingsMock.mockReturnValue({ data: null });
+  useDeleteRecipeMock.mockReturnValue(mockMutation());
+  usePublishRecipeMock.mockReturnValue(mockMutation());
+  useArchiveRecipeMock.mockReturnValue(mockMutation());
+};
 
 describe('RecipeDetailPage', () => {
   const recipe = {
@@ -65,8 +84,7 @@ describe('RecipeDetailPage', () => {
   it('shows loading state while recipe is fetched', () => {
     useRecipeMock.mockReturnValue({ data: null, isLoading: true, error: null });
     useAuthMock.mockReturnValue({ user: null });
-    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    mockDefaults();
 
     const screen = renderPage();
 
@@ -80,8 +98,7 @@ describe('RecipeDetailPage', () => {
       error: { statusCode: 404, message: 'Recipe not found' },
     });
     useAuthMock.mockReturnValue({ user: null });
-    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    mockDefaults();
 
     const screen = renderPage();
 
@@ -89,15 +106,14 @@ describe('RecipeDetailPage', () => {
     expect(screen.getByRole('link', { name: 'Zurück zur Übersicht' })).toHaveAttribute('href', '/');
   });
 
-  it('renders recipe details and owner todo button for owners', () => {
+  it('renders recipe details and edit action for owners', () => {
     useRecipeMock.mockReturnValue({
       data: recipe,
       isLoading: false,
       error: null,
     });
-    useAuthMock.mockReturnValue({ user: { id: 'u1' } });
-    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    useAuthMock.mockReturnValue({ user: { id: 'u1', role: 'MEMBER' } });
+    mockDefaults();
 
     const screen = renderPage();
 
@@ -105,7 +121,37 @@ describe('RecipeDetailPage', () => {
     expect(screen.getByText('Schnell und lecker')).toBeInTheDocument();
     expect(screen.getByText('Zutaten')).toBeInTheDocument();
     expect(screen.getByText('Zubereitung')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Bearbeiten (TODO)' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: 'Bearbeiten' })).toHaveAttribute('href', '/recipes/pasta/edit');
+  });
+
+  it('shows the rendered photo together with the SVG illustration for bundled recipes', () => {
+    useRecipeMock.mockReturnValue({
+      data: { ...recipe, img: '/recipe-images/pasta-spinat-lachs.svg' },
+      isLoading: false,
+      error: null,
+    });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    expect(screen.getByAltText('Pasta')).toHaveAttribute('src', '/recipe-images/renders/pasta-spinat-lachs.jpg');
+    expect(screen.getByAltText('Illustration: Pasta')).toHaveAttribute('src', '/recipe-images/pasta-spinat-lachs.svg');
+  });
+
+  it('shows only the original image for uploaded recipe photos', () => {
+    useRecipeMock.mockReturnValue({
+      data: recipe,
+      isLoading: false,
+      error: null,
+    });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    expect(screen.getByAltText('Pasta')).toHaveAttribute('src', 'https://example.com/pasta.jpg');
+    expect(screen.queryByAltText('Illustration: Pasta')).not.toBeInTheDocument();
   });
 
   it('scales ingredient amounts when servings are adjusted', () => {
@@ -115,8 +161,7 @@ describe('RecipeDetailPage', () => {
       error: null,
     });
     useAuthMock.mockReturnValue({ user: null });
-    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    mockDefaults();
 
     const screen = renderPage();
 
@@ -137,8 +182,7 @@ describe('RecipeDetailPage', () => {
       error: null,
     });
     useAuthMock.mockReturnValue({ user: null });
-    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    mockDefaults();
 
     const screen = renderPage();
 
@@ -159,8 +203,7 @@ describe('RecipeDetailPage', () => {
       error: null,
     });
     useAuthMock.mockReturnValue({ user: null });
-    useCreateRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useDeleteRatingMock.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    mockDefaults();
 
     const screen = renderPage();
 

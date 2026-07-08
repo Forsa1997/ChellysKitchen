@@ -76,20 +76,46 @@ export function AppShell({ children }: PropsWithChildren) {
               gap: 2,
             }}
           >
-            <Typography
+            <Stack
               component={RouterLink}
               to="/"
-              variant="h6"
+              direction="row"
+              spacing={1.25}
               onClick={closeMenu}
-              sx={{
-                textDecoration: 'none',
-                color: 'primary.main',
-                fontWeight: 700,
-                fontSize: { xs: '1.15rem', sm: '1.25rem' },
-              }}
+              sx={{ alignItems: 'center', textDecoration: 'none' }}
             >
-              Chellys Kitchen
-            </Typography>
+              <Box
+                component="img"
+                src="/brand/chellys-kitchen-icon.svg"
+                alt="Chellys Kitchen Logo"
+                sx={{ width: { xs: 36, sm: 42 }, height: { xs: 36, sm: 42 } }}
+              />
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'primary.main',
+                    fontWeight: 800,
+                    lineHeight: 1.15,
+                    fontSize: { xs: '1.1rem', sm: '1.2rem' },
+                  }}
+                >
+                  Chellys Kitchen
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    letterSpacing: 2,
+                    textTransform: 'uppercase',
+                    display: { xs: 'none', sm: 'block' },
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Rezepte mit Liebe
+                </Typography>
+              </Box>
+            </Stack>
 
             {/* Desktop navigation */}
             <Stack

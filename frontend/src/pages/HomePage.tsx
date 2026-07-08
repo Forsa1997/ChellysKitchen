@@ -212,13 +212,22 @@ export function HomePage() {
         }}
       >
         <Stack spacing={1}>
-          <Typography
-            variant="overline"
-            color="primary"
-            sx={{ fontWeight: 700, display: { xs: 'none', md: 'block' } }}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: 'center', display: { xs: 'none', md: 'flex' } }}
           >
-            Chellys Kitchen
-          </Typography>
+            <Box
+              component="img"
+              src="/brand/chellys-kitchen-icon.svg"
+              alt=""
+              aria-hidden="true"
+              sx={{ width: 22, height: 22 }}
+            />
+            <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>
+              Chellys Kitchen · Rezepte mit Liebe
+            </Typography>
+          </Stack>
           <Typography variant="h3" sx={{ fontSize: { xs: '2rem', md: '2.625rem' }, fontWeight: 700 }}>
             Rezepte entdecken
           </Typography>

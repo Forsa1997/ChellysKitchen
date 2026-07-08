@@ -2,6 +2,7 @@ import { Box, Card, CardContent, CardMedia, Chip, Grid, Stack, Typography } from
 import { Link as RouterLink } from 'react-router';
 import type { Recipe } from '../types/domain';
 import { totalRecipeMinutes } from './recipeCardViewModel';
+import { recipeRenderImage } from './recipeImages';
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -16,7 +17,9 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
 
   return (
     <Grid container spacing={{ xs: 2, md: 2.5 }}>
-      {recipes.map((recipe) => (
+      {recipes.map((recipe) => {
+        const renderImage = recipeRenderImage(recipe.img);
+        return (
         <Grid key={recipe.id} size={{ xs: 12, sm: 6, lg: 4 }}>
           <Card
             component={RouterLink}
@@ -35,12 +38,33 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
             }}
           >
             {recipe.img ? (
-              <CardMedia
-                image={recipe.img}
-                component="img"
-                alt={recipe.title}
-                sx={{ aspectRatio: '16 / 10', height: 'auto', objectFit: 'cover' }}
-              />
+              <Box sx={{ position: 'relative' }}>
+                <CardMedia
+                  image={renderImage ?? recipe.img}
+                  component="img"
+                  alt={recipe.title}
+                  sx={{ aspectRatio: '16 / 10', height: 'auto', objectFit: 'cover' }}
+                />
+                {renderImage && (
+                  <Box
+                    component="img"
+                    src={recipe.img}
+                    alt={`Illustration: ${recipe.title}`}
+                    sx={{
+                      position: 'absolute',
+                      right: 10,
+                      bottom: 10,
+                      width: 76,
+                      aspectRatio: '16 / 10',
+                      objectFit: 'cover',
+                      borderRadius: 1.5,
+                      border: '2px solid',
+                      borderColor: 'background.paper',
+                      boxShadow: 2,
+                    }}
+                  />
+                )}
+              </Box>
             ) : (
               <Box sx={{ aspectRatio: '16 / 10', bgcolor: 'grey.100' }} />
             )}
@@ -64,7 +88,8 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
             </CardContent>
           </Card>
         </Grid>
-      ))}
+        );
+      })}
     </Grid>
   );
 }

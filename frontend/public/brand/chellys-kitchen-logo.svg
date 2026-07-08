@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" role="img" aria-label="Chellys Kitchen – Rezepte mit Liebe">
+  <defs>
+    <linearGradient id="ckBadgeL" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="hsl(342, 68%, 56%)"/>
+      <stop offset="1" stop-color="hsl(342, 74%, 36%)"/>
+    </linearGradient>
+    <linearGradient id="ckShineL" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- icon: pot with heart-shaped steam -->
+  <g transform="translate(8 8) scale(1.25)">
+    <circle cx="32" cy="32" r="30" fill="url(#ckBadgeL)"/>
+    <circle cx="32" cy="32" r="30" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="1.5"/>
+    <ellipse cx="26" cy="16" rx="18" ry="10" fill="url(#ckShineL)"/>
+    <path
+      d="M32 27.5
+         c -1.2 -3 -4.6 -4.6 -7 -3.2
+         c -2.6 1.5 -3.2 5 -1.2 7.4
+         c 1.8 2.2 5.4 4.6 8.2 6
+         c 2.8 -1.4 6.4 -3.8 8.2 -6
+         c 2 -2.4 1.4 -5.9 -1.2 -7.4
+         c -2.4 -1.4 -5.8 0.2 -7 3.2 z"
+      fill="#ffffff"/>
+    <path d="M22.5 20.5 q -1.6 -2.4 0 -4.6 q 1.4 -1.8 0.2 -3.9" fill="none" stroke="#ffffff" stroke-opacity="0.65" stroke-width="2" stroke-linecap="round"/>
+    <path d="M41.5 20.5 q 1.6 -2.4 0 -4.6 q -1.4 -1.8 -0.2 -3.9" fill="none" stroke="#ffffff" stroke-opacity="0.65" stroke-width="2" stroke-linecap="round"/>
+    <path d="M19 41 h26 a1.6 1.6 0 0 1 1.6 1.8 c -0.5 5.4 -3 9.2 -6.1 10.2 a32 32 0 0 1 -17 0 c -3.1 -1 -5.6 -4.8 -6.1 -10.2 a1.6 1.6 0 0 1 1.6 -1.8 z" fill="#ffffff"/>
+    <rect x="12.5" y="42.6" width="5.5" height="2.6" rx="1.3" fill="#ffffff"/>
+    <rect x="46" y="42.6" width="5.5" height="2.6" rx="1.3" fill="#ffffff"/>
+    <line x1="21" y1="45.4" x2="43" y2="45.4" stroke="hsl(342, 74%, 40%)" stroke-width="1.6" stroke-linecap="round"/>
+  </g>
+
+  <!-- wordmark: two mid-tone colors stay legible on light and dark backgrounds -->
+  <text x="106" y="52" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="38" font-weight="800" letter-spacing="0.5">
+    <tspan fill="hsl(342, 64%, 54%)">Chellys</tspan>
+    <tspan fill="hsl(24, 78%, 52%)" dx="8">Kitchen</tspan>
+  </text>
+  <text x="108" y="78" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="17" font-weight="500" letter-spacing="3" fill="hsl(342, 30%, 55%)">
+    REZEPTE MIT LIEBE
+  </text>
+</svg>

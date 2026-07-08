@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AccessTime, Add, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, WaterDrop } from '@mui/icons-material';
 import type { ApiError } from '../api/client';
 import type { Ingredient, RecipeStep } from '../types/domain';
+import { recipeRenderImage } from '../recipes/recipeImages';
 
 const EDITOR_ROLES = ['EDITOR', 'ADMIN'];
 
@@ -141,6 +142,7 @@ export function RecipeDetailPage() {
     );
   }
 
+  const renderImage = recipeRenderImage(recipe.img);
   const selectedServings = servingSelection?.recipeId === recipe.id
     ? servingSelection.servings
     : recipe.servings;
@@ -203,12 +205,33 @@ export function RecipeDetailPage() {
 
         <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
           {recipe.img && (
-            <CardMedia
-              component="img"
-              image={recipe.img}
-              alt={recipe.title}
-              sx={{ height: { xs: 250, sm: 350, md: 450 }, width: '100%', objectFit: 'cover' }}
-            />
+            <Box sx={{ position: 'relative' }}>
+              <CardMedia
+                component="img"
+                image={renderImage ?? recipe.img}
+                alt={recipe.title}
+                sx={{ height: { xs: 250, sm: 350, md: 450 }, width: '100%', objectFit: 'cover' }}
+              />
+              {renderImage && (
+                <Box
+                  component="img"
+                  src={recipe.img}
+                  alt={`Illustration: ${recipe.title}`}
+                  sx={{
+                    position: 'absolute',
+                    right: { xs: 12, md: 20 },
+                    bottom: { xs: 12, md: 20 },
+                    width: { xs: 104, sm: 140, md: 180 },
+                    aspectRatio: '16 / 10',
+                    objectFit: 'cover',
+                    borderRadius: 2,
+                    border: '3px solid',
+                    borderColor: 'background.paper',
+                    boxShadow: 4,
+                  }}
+                />
+              )}
+            </Box>
           )}
           <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
             <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 2, flexWrap: 'wrap' }}>
