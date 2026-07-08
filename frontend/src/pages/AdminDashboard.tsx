@@ -131,8 +131,8 @@ export function AdminDashboard() {
         </Typography>
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table>
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 720 }}>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
@@ -184,8 +184,8 @@ export function AdminDashboard() {
         </Typography>
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table>
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 720 }}>
           <TableHead>
             <TableRow>
               <TableCell>Titel</TableCell>
