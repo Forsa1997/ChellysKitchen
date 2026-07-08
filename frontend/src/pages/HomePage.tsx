@@ -223,20 +223,24 @@ export function HomePage() {
           </Typography>
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ justifyContent: { md: 'flex-end' } }}>
-          {user ? (
-            <Button component={RouterLink} to="/recipes/new" variant="contained">
-              Rezept erstellen
-            </Button>
-          ) : (
-            <>
-              <Button component={RouterLink} to="/signin" variant="outlined">
-                Anmelden
+          {/* Auth/navigation actions live in the burger menu on mobile, so only
+              show them here from md up to avoid duplication. */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ display: { xs: 'none', md: 'flex' } }}>
+            {user ? (
+              <Button component={RouterLink} to="/recipes/new" variant="contained">
+                Rezept erstellen
               </Button>
-              <Button component={RouterLink} to="/signup" variant="contained">
-                Registrieren
-              </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <Button component={RouterLink} to="/signin" variant="outlined">
+                  Anmelden
+                </Button>
+                <Button component={RouterLink} to="/signup" variant="contained">
+                  Registrieren
+                </Button>
+              </>
+            )}
+          </Stack>
           <Button
             variant="outlined"
             startIcon={<CasinoIcon />}
