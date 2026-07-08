@@ -46,22 +46,19 @@ function sortRecipes(recipes, sort) {
   return copied;
 }
 
-export function queryRecipes(recipes, queryParams = {}) {
+// Shared filter used by the list endpoint and the random-recipe endpoint so
+// both apply identical q/category/difficulty/status/time semantics.
+export function filterRecipes(recipes, queryParams = {}) {
   const q = String(queryParams.q ?? '').trim().toLowerCase();
   const category = String(queryParams.category ?? 'all').trim();
-  const page = toPositiveInt(queryParams.page, 1);
-  const pageSize = Math.min(toPositiveInt(queryParams.pageSize, 6), 24);
-  const sort = normalizeSort(String(queryParams.sort ?? 'newest'));
-  const requestedDifficulty = String(queryParams.difficulty ?? 'all').trim();
-  const difficulty = normalizeDifficulty(requestedDifficulty);
-  const difficultyMeta = difficulty === 'all' ? 'all' : requestedDifficulty;
+  const difficulty = normalizeDifficulty(String(queryParams.difficulty ?? 'all').trim());
   const maxTotalMinutesInput = toPositiveInt(queryParams.maxTotalMinutes, 0);
   const maxTotalMinutes = maxTotalMinutesInput > 0 ? maxTotalMinutesInput : null;
   // Public listing defaults to PUBLISHED only; pass status='all' (or a
   // specific status) to include drafts/archived (used by admin views).
   const status = String(queryParams.status ?? 'PUBLISHED').trim().toUpperCase();
 
-  const filtered = recipes.filter((recipe) => {
+  return recipes.filter((recipe) => {
     const matchesQuery =
       q.length === 0 ||
       recipe.title.toLowerCase().includes(q) ||
@@ -76,7 +73,21 @@ export function queryRecipes(recipes, queryParams = {}) {
 
     return matchesQuery && matchesCategory && matchesDifficulty && matchesStatus && matchesMaxTotalMinutes;
   });
+}
 
+export function queryRecipes(recipes, queryParams = {}) {
+  const q = String(queryParams.q ?? '').trim().toLowerCase();
+  const category = String(queryParams.category ?? 'all').trim();
+  const page = toPositiveInt(queryParams.page, 1);
+  const pageSize = Math.min(toPositiveInt(queryParams.pageSize, 6), 24);
+  const sort = normalizeSort(String(queryParams.sort ?? 'newest'));
+  const requestedDifficulty = String(queryParams.difficulty ?? 'all').trim();
+  const difficulty = normalizeDifficulty(requestedDifficulty);
+  const difficultyMeta = difficulty === 'all' ? 'all' : requestedDifficulty;
+  const maxTotalMinutesInput = toPositiveInt(queryParams.maxTotalMinutes, 0);
+  const maxTotalMinutes = maxTotalMinutesInput > 0 ? maxTotalMinutesInput : null;
+
+  const filtered = filterRecipes(recipes, queryParams);
   const sorted = sortRecipes(filtered, sort);
   const total = sorted.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));

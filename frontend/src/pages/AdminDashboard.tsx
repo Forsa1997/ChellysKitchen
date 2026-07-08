@@ -25,12 +25,13 @@ import {
   InputLabel,
   Snackbar,
 } from '@mui/material';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUsers, useUpdateUserRole, useAdminRecipes } from '../hooks/useAdmin';
 import { usePublishRecipe, useArchiveRecipe, useDeleteRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
-import { type User, type UserRole, type Recipe } from '../api/client';
+import { apiClient, type User, type UserRole, type Recipe } from '../api/client';
 
 type UserWithCounts = User & {
   _count?: {
@@ -46,10 +47,15 @@ export function AdminDashboard() {
   const publishRecipe = usePublishRecipe();
   const archiveRecipe = useArchiveRecipe();
   const deleteRecipe = useDeleteRecipe();
+  const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [newRole, setNewRole] = useState<UserRole>('MEMBER');
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<unknown | null>(null);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const users = usersData?.data || [];
   const recipes = recipesData?.data || [];
@@ -84,6 +90,54 @@ export function AdminDashboard() {
       await action();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : failureMessage);
+    }
+  };
+
+  const handleExportBackup = async () => {
+    setBackupBusy(true);
+    try {
+      const payload = await apiClient.exportBackup();
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `chellys-kitchen-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Backup konnte nicht erstellt werden.');
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const handleImportFileSelected = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      setPendingImport(JSON.parse(await file.text()));
+    } catch {
+      setActionError('Die Datei ist kein gültiges Backup (JSON erwartet).');
+    } finally {
+      // Allow re-selecting the same file after a cancelled or failed import.
+      if (importInputRef.current) importInputRef.current.value = '';
+    }
+  };
+
+  const handleImportConfirm = async () => {
+    if (pendingImport === null) return;
+    setBackupBusy(true);
+    try {
+      const result = await apiClient.importBackup(pendingImport);
+      setPendingImport(null);
+      setActionSuccess(
+        `Backup eingespielt: ${result.recipes} Rezepte, ${result.users} Benutzer, ${result.categories} Kategorien, ${result.uploads} Bilder.`,
+      );
+      queryClient.invalidateQueries();
+    } catch (err) {
+      const message = (err as { message?: string })?.message;
+      setActionError(message || 'Backup konnte nicht eingespielt werden.');
+    } finally {
+      setBackupBusy(false);
     }
   };
 
@@ -265,6 +319,52 @@ export function AdminDashboard() {
         </Table>
       </TableContainer>
 
+      <Box>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          Backup
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          Lade regelmäßig ein Backup herunter — auf dem kostenlosen Hosting gehen alle Daten
+          (Rezepte, Benutzer, Bilder) bei jedem Redeploy verloren. Nach einem Datenverlust
+          kannst du das Backup hier wieder einspielen.
+        </Typography>
+      </Box>
+
+      <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 } }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+          <Button variant="contained" onClick={handleExportBackup} disabled={backupBusy}>
+            Backup herunterladen
+          </Button>
+          <Button variant="outlined" component="label" disabled={backupBusy}>
+            Backup einspielen
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              hidden
+              aria-label="Backup-Datei auswählen"
+              onChange={(event) => handleImportFileSelected(event.target.files?.[0])}
+            />
+          </Button>
+        </Stack>
+      </Paper>
+
+      <Dialog open={pendingImport !== null} onClose={() => setPendingImport(null)}>
+        <DialogTitle>Backup einspielen?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Alle aktuellen Rezepte, Benutzer, Bewertungen und Kategorien werden durch den
+            Stand aus dem Backup ersetzt. Dieser Schritt kann nicht rückgängig gemacht werden.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingImport(null)}>Abbrechen</Button>
+          <Button onClick={handleImportConfirm} variant="contained" color="error" disabled={backupBusy}>
+            Importieren
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)}>
         <DialogTitle>Benutzerrolle ändern</DialogTitle>
         <DialogContent>
@@ -298,6 +398,16 @@ export function AdminDashboard() {
       >
         <Alert severity="error" onClose={() => setActionError(null)} sx={{ width: '100%' }}>
           {actionError}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={actionSuccess !== null}
+        autoHideDuration={6000}
+        onClose={() => setActionSuccess(null)}
+      >
+        <Alert severity="success" onClose={() => setActionSuccess(null)} sx={{ width: '100%' }}>
+          {actionSuccess}
         </Alert>
       </Snackbar>
     </Stack>

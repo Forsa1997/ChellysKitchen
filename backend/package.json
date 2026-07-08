@@ -48,7 +48,7 @@
     "prisma:seed": "node dist/prisma/seed.js",
     "start": "node dist/server.js",
     "start:render": "node server.mjs",
-    "test": "node --test src/persistence.test.mjs src/cors.test.mjs src/uploads.test.mjs src/queryRecipes.test.mjs test/server.smoke.test.mjs"
+    "test": "node --test src/persistence.test.mjs src/cors.test.mjs src/uploads.test.mjs src/queryRecipes.test.mjs src/randomRecipe.test.mjs src/backup.test.mjs test/server.smoke.test.mjs"
   },
   "version": "1.0.0"
 }

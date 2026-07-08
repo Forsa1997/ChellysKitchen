@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { HomePage } from './HomePage';
@@ -6,6 +6,7 @@ import { HomePage } from './HomePage';
 const useAuthMock = vi.fn();
 const useCategoriesMock = vi.fn();
 const useQueryRecipesMock = vi.fn();
+const getRandomRecipeMock = vi.fn();
 
 vi.mock('../auth/AuthContext', () => ({
   useAuth: () => useAuthMock(),
@@ -17,6 +18,12 @@ vi.mock('../hooks/useCategories', () => ({
 
 vi.mock('../recipes/useQueryRecipes', () => ({
   useQueryRecipes: (...args: unknown[]) => useQueryRecipesMock(...args),
+}));
+
+vi.mock('../api/client', () => ({
+  apiClient: {
+    getRandomRecipe: (...args: unknown[]) => getRandomRecipeMock(...args),
+  },
 }));
 
 function LocationProbe() {
@@ -73,9 +80,9 @@ const recipes = [
   },
 ] as const;
 
-function renderHomePage() {
+function renderHomePage(initialEntry = '/') {
   return render(
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <LocationProbe />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -89,10 +96,10 @@ describe('HomePage random recipe action', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    getRandomRecipeMock.mockReset();
   });
 
-  it('navigates to one of the loaded recipes when the random recipe button is clicked', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.75);
+  it('asks the server for a random recipe and navigates to it', async () => {
     useAuthMock.mockReturnValue({ user: null });
     useCategoriesMock.mockReturnValue({ data: [] });
     useQueryRecipesMock.mockReturnValue({
@@ -101,16 +108,18 @@ describe('HomePage random recipe action', () => {
       loading: false,
       error: null,
     });
+    getRandomRecipeMock.mockResolvedValue({ slug: 'tomatensuppe' });
 
     renderHomePage();
 
     fireEvent.click(screen.getByRole('button', { name: 'Zufälliges Rezept' }));
 
-    expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/tomatensuppe');
+    await waitFor(() => {
+      expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/tomatensuppe');
+    });
   });
 
-  it('navigates to a random recipe within the selected random category', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+  it('passes the active filters on to the random request', async () => {
     useAuthMock.mockReturnValue({ user: null });
     useCategoriesMock.mockReturnValue({ data: [] });
     useQueryRecipesMock.mockReturnValue({
@@ -119,18 +128,23 @@ describe('HomePage random recipe action', () => {
       loading: false,
       error: null,
     });
+    getRandomRecipeMock.mockResolvedValue({ slug: 'pasta' });
 
-    renderHomePage();
+    renderHomePage('/?category=Suppe&difficulty=Mittel&maxTotalMinutes=30&q=warm');
 
-    fireEvent.mouseDown(screen.getByLabelText('Zufallskategorie'));
-    fireEvent.click(screen.getByRole('option', { name: 'Suppe' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Eingeschränkt zufällig' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zufälliges Rezept' }));
 
-    expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/tomatensuppe');
+    await waitFor(() => {
+      expect(getRandomRecipeMock).toHaveBeenCalledWith(expect.objectContaining({
+        category: 'Suppe',
+        difficulty: 'Mittel',
+        maxTotalMinutes: 30,
+        q: 'warm',
+      }));
+    });
   });
 
-  it('uses selected recipes as the random pool before the random category', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
+  it('shows a message when no recipe matches the filters', async () => {
     useAuthMock.mockReturnValue({ user: null });
     useCategoriesMock.mockReturnValue({ data: [] });
     useQueryRecipesMock.mockReturnValue({
@@ -139,15 +153,16 @@ describe('HomePage random recipe action', () => {
       loading: false,
       error: null,
     });
+    getRandomRecipeMock.mockRejectedValue({ statusCode: 404, message: 'Kein passendes Rezept gefunden.' });
 
     renderHomePage();
 
-    fireEvent.mouseDown(screen.getByLabelText('Zufallskategorie'));
-    fireEvent.click(screen.getByRole('option', { name: 'Suppe' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Pasta' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Eingeschränkt zufällig' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zufälliges Rezept' }));
 
-    expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/pasta');
+    await waitFor(() => {
+      expect(screen.getByText('Kein passendes Rezept gefunden.')).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText('current-path')).toHaveTextContent('/');
   });
 
   it('disables the random recipe button when no recipe is available', () => {
@@ -163,6 +178,22 @@ describe('HomePage random recipe action', () => {
     renderHomePage();
 
     expect(screen.getByRole('button', { name: 'Zufälliges Rezept' })).toBeDisabled();
+  });
+
+  it('no longer renders the recipe lottery panel', () => {
+    useAuthMock.mockReturnValue({ user: null });
+    useCategoriesMock.mockReturnValue({ data: [] });
+    useQueryRecipesMock.mockReturnValue({
+      recipes,
+      meta: defaultMeta,
+      loading: false,
+      error: null,
+    });
+
+    renderHomePage();
+
+    expect(screen.queryByLabelText('Zufallskategorie')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Eingeschränkt zufällig' })).not.toBeInTheDocument();
   });
 
   it('keeps the current recipe list visible while filtered results are refreshing', () => {

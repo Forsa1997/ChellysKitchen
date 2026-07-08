@@ -5,8 +5,8 @@ import { useRecipe, useDeleteRecipe, usePublishRecipe, useArchiveRecipe } from '
 import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, WaterDrop } from '@mui/icons-material';
-import type { ApiError } from '../api/client';
+import { AccessTime, Add, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, WaterDrop } from '@mui/icons-material';
+import { apiClient, type ApiError } from '../api/client';
 import type { Ingredient, RecipeStep } from '../types/domain';
 import { recipeRenderImage } from '../recipes/recipeImages';
 
@@ -88,6 +88,17 @@ export function RecipeDetailPage() {
     window.print();
   };
 
+  // "Keine Lust auf dieses Rezept" – roll again, without landing on the same one.
+  const handleRollAgain = async () => {
+    if (!recipe) return;
+    try {
+      const next = await apiClient.getRandomRecipe({ exclude: recipe.slug });
+      navigate(`/recipes/${next.slug}`);
+    } catch {
+      setRatingError('Kein weiteres Rezept gefunden.');
+    }
+  };
+
   const handleCopyLink = async () => {
     if (!recipe) return;
 
@@ -164,6 +175,9 @@ export function RecipeDetailPage() {
         >
           <Button component={RouterLink} to="/" variant="text">Zurück zur Übersicht</Button>
           <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            <Button startIcon={<Casino />} variant="outlined" onClick={handleRollAgain}>
+              Nochmal würfeln
+            </Button>
             <Button startIcon={<ContentCopy />} variant="outlined" onClick={handleCopyLink}>
               Link kopieren
             </Button>

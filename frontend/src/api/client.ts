@@ -152,6 +152,21 @@ export interface RecipeListResponse {
   meta: RecipeListMeta;
 }
 
+export interface RandomRecipeParams {
+  q?: string;
+  category?: string;
+  difficulty?: RecipeDifficulty | 'all' | 'Einfach' | 'Mittel' | 'Schwer';
+  maxTotalMinutes?: number | null;
+  exclude?: string;
+}
+
+export interface BackupImportResult {
+  recipes: number;
+  users: number;
+  categories: number;
+  uploads: number;
+}
+
 export interface CreateRecipeRequest {
   title: string;
   shortDescription: string;
@@ -490,6 +505,24 @@ class ApiClient {
   }
 
   /**
+   * GET /api/recipes/random
+   * Get one random recipe from all recipes matching the filters.
+   * `exclude` removes a slug (e.g. the currently shown recipe) from the pool.
+   */
+  async getRandomRecipe(params: RandomRecipeParams = {}): Promise<Recipe> {
+    const queryParams = new URLSearchParams();
+
+    if (params.q) queryParams.append('q', params.q);
+    if (params.category && params.category !== 'all') queryParams.append('category', params.category);
+    if (params.difficulty && params.difficulty !== 'all') queryParams.append('difficulty', params.difficulty);
+    if (params.maxTotalMinutes) queryParams.append('maxTotalMinutes', params.maxTotalMinutes.toString());
+    if (params.exclude) queryParams.append('exclude', params.exclude);
+
+    const queryString = queryParams.toString();
+    return this.request<Recipe>(`/api/recipes/random${queryString ? `?${queryString}` : ''}`);
+  }
+
+  /**
    * GET /api/recipes/:slug
    * Get a single recipe by slug
    */
@@ -665,6 +698,26 @@ class ApiClient {
    */
   async getAdminRecipes(): Promise<AdminRecipeListResponse> {
     return this.request<AdminRecipeListResponse>('/api/admin/recipes');
+  }
+
+  /**
+   * GET /api/admin/export
+   * Download a full backup (recipes, users, ratings, categories, images) as
+   * a JSON document (admin only).
+   */
+  async exportBackup(): Promise<unknown> {
+    return this.request<unknown>('/api/admin/export');
+  }
+
+  /**
+   * POST /api/admin/import
+   * Restore a previously exported backup (admin only).
+   */
+  async importBackup(payload: unknown): Promise<BackupImportResult> {
+    return this.request<BackupImportResult>('/api/admin/import', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   // ============================================================================

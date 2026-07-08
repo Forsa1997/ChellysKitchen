@@ -1,9 +1,11 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer } from 'node:http';
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { recipes } from './data/recipes.mjs';
 import { queryRecipes } from './src/queryRecipes.mjs';
+import { pickRandomRecipe } from './src/randomRecipe.mjs';
+import { createExportPayload, parseImportPayload } from './src/backup.mjs';
 import { resolveCorsOrigin } from './src/cors.mjs';
 import {
   createDebouncedPersister,
@@ -302,6 +304,36 @@ const server = createServer(async (req, res) => {
       }
       const result = queryRecipes(recipeStore.map((recipe) => sanitizeRecipe(recipe)), query);
       jsonResponse(res, 200, result);
+      return;
+    }
+  }
+
+  // GET /api/recipes/random - Pick a random recipe from ALL matching recipes
+  // (the list endpoint is paginated; this one is not). Must be handled before
+  // the generic /api/recipes/:slug route below.
+  if (req.method === 'GET' && req.url?.startsWith('/api/recipes/random')) {
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+
+    if (requestUrl.pathname === '/api/recipes/random') {
+      const query = Object.fromEntries(requestUrl.searchParams.entries());
+      // Same visibility rule as the list: non-editors only see published recipes.
+      const requester = authenticateRequest(req);
+      if (!hasMinRole(requester, 'EDITOR')) {
+        query.status = 'PUBLISHED';
+      }
+
+      const picked = pickRandomRecipe(
+        recipeStore.map((recipe) => sanitizeRecipe(recipe)),
+        query,
+        { excludeSlug: String(query.exclude ?? '') || undefined },
+      );
+
+      if (!picked) {
+        jsonResponse(res, 404, { error: 'Kein passendes Rezept gefunden.' });
+        return;
+      }
+
+      jsonResponse(res, 200, picked);
       return;
     }
   }
@@ -956,6 +988,93 @@ const server = createServer(async (req, res) => {
     const data = recipeStore.map(sanitizeRecipe);
     jsonResponse(res, 200, { data, total: data.length });
     return;
+  }
+
+  // GET /api/admin/export - Download a full backup incl. uploaded images (admin only).
+  // The Render free tier wipes DATA_DIR on every redeploy; this backup plus
+  // the import endpoint below is how data survives a redeploy.
+  if (req.method === 'GET' && req.url === '/api/admin/export') {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    const uploads = [];
+    try {
+      for (const fileName of readdirSync(UPLOADS_DIR)) {
+        try {
+          uploads.push({ fileName, data: readFileSync(join(UPLOADS_DIR, fileName)).toString('base64') });
+        } catch {
+          // Skip unreadable files rather than failing the whole backup.
+        }
+      }
+    } catch {
+      // Missing uploads dir: export without images.
+    }
+
+    const payload = createExportPayload(
+      { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore },
+      uploads,
+    );
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Content-Disposition': `attachment; filename="chellys-kitchen-backup-${new Date().toISOString().slice(0, 10)}.json"`,
+    });
+    res.end(JSON.stringify(payload));
+    return;
+  }
+
+  // POST /api/admin/import - Restore a previously exported backup (admin only).
+  // Replaces recipes, users, ratings and categories; the acting admin's own
+  // account is always kept so the session importing the backup stays valid.
+  if (req.method === 'POST' && req.url === '/api/admin/import') {
+    const actingUser = authenticateRequest(req);
+    if (!hasMinRole(actingUser, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    try {
+      // Backups embed images as base64, so allow far more than the 1 MB
+      // default body limit (images are capped at 5 MB each on upload).
+      const payload = await parseJsonBody(req, 200 * 1024 * 1024);
+      const imported = parseImportPayload(payload);
+
+      users.clear();
+      for (const [email, user] of imported.users) {
+        users.set(email, user);
+      }
+      // Keep the acting admin exactly as-is (id, role, password), even if the
+      // backup contains an older record for the same email — otherwise the
+      // admin could lock themselves out mid-import.
+      users.set(actingUser.email, actingUser);
+
+      recipeStore.splice(0, recipeStore.length, ...imported.recipeStore);
+
+      ratingsStore.clear();
+      for (const [recipeId, userRatings] of imported.ratingsStore) {
+        ratingsStore.set(recipeId, userRatings);
+      }
+
+      categoriesStore.splice(0, categoriesStore.length, ...imported.categoriesStore);
+
+      for (const upload of imported.uploads) {
+        writeFileSync(join(UPLOADS_DIR, upload.fileName), upload.buffer);
+      }
+
+      persist();
+      jsonResponse(res, 200, {
+        recipes: recipeStore.length,
+        users: users.size,
+        categories: categoriesStore.length,
+        uploads: imported.uploads.length,
+      });
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
   }
 
   // ============================================================================

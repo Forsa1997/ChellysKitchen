@@ -170,6 +170,104 @@ test('image upload stores a file that is served back', async () => {
   assert.equal(fetched.headers.get('content-type'), 'image/png');
 });
 
+test('random recipe endpoint picks published recipes and respects filters', async () => {
+  const random = await api('/api/recipes/random');
+  assert.equal(random.status, 200);
+  assert.equal(random.body.status, 'PUBLISHED');
+  assert.ok(random.body.slug, 'random recipe has a slug');
+
+  // Category filter narrows the pool.
+  const baking = await api('/api/recipes/random?category=Baking');
+  assert.equal(baking.status, 200);
+  assert.equal(baking.body.category, 'Baking');
+
+  // No match -> 404 instead of an arbitrary recipe.
+  const none = await api(`/api/recipes/random?q=gibt-es-sicher-nicht-${Date.now()}`);
+  assert.equal(none.status, 404);
+
+  // exclude keeps "roll again" from returning the same recipe.
+  const excluded = await api(`/api/recipes/random?category=Baking&exclude=${baking.body.slug}`);
+  if (excluded.status === 200) {
+    assert.notEqual(excluded.body.slug, baking.body.slug);
+  }
+});
+
+test('admin can export a backup and restore it after data changes', async () => {
+  const adminLogin = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+  const adminToken = adminLogin.body.accessToken;
+
+  // Export the current state.
+  const exported = await api('/api/admin/export', { token: adminToken });
+  assert.equal(exported.status, 200);
+  assert.equal(exported.body.type, 'chellys-kitchen-backup');
+  assert.ok(Array.isArray(exported.body.recipeStore));
+  const recipeCountAtExport = exported.body.recipeStore.length;
+
+  // Mutate state after the export: add a recipe the backup does not contain.
+  const created = await api('/api/recipes', {
+    method: 'POST',
+    token: adminToken,
+    body: {
+      title: `Nach dem Backup ${Date.now()}`,
+      shortDescription: 'sollte nach dem Import verschwinden',
+      category: 'Cooking',
+    },
+  });
+  assert.equal(created.status, 201);
+
+  // Restore the backup -> the extra recipe is gone again.
+  const imported = await api('/api/admin/import', {
+    method: 'POST',
+    token: adminToken,
+    body: exported.body,
+  });
+  assert.equal(imported.status, 200);
+  assert.equal(imported.body.recipes, recipeCountAtExport);
+
+  // The importing admin must still be authenticated afterwards.
+  const me = await api('/api/auth/me', { token: adminToken });
+  assert.equal(me.status, 200);
+  assert.equal(me.body.user.role, 'ADMIN');
+
+  const detail = await api(`/api/recipes/${created.body.slug}`);
+  assert.equal(detail.status, 404);
+});
+
+test('export and import are admin-only', async () => {
+  const member = await api('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'NoAdmin', email: `noadmin_${Date.now()}@test.local`, password: 'secret123' },
+  });
+  const token = member.body.accessToken;
+
+  const exported = await api('/api/admin/export', { token });
+  assert.equal(exported.status, 403);
+
+  const imported = await api('/api/admin/import', {
+    method: 'POST',
+    token,
+    body: { type: 'chellys-kitchen-backup', version: 1, users: [], recipeStore: [] },
+  });
+  assert.equal(imported.status, 403);
+});
+
+test('import rejects files that are not a backup', async () => {
+  const adminLogin = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+
+  const imported = await api('/api/admin/import', {
+    method: 'POST',
+    token: adminLogin.body.accessToken,
+    body: { irgendwas: true },
+  });
+  assert.equal(imported.status, 400);
+});
+
 test('unauthenticated upload is rejected', async () => {
   const upload = await api('/api/uploads', {
     method: 'POST',

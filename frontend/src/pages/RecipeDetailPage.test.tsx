@@ -1,6 +1,6 @@
 import { afterEach } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { RecipeDetailPage } from './RecipeDetailPage';
 
@@ -29,6 +29,19 @@ vi.mock('../hooks/useRatings', () => ({
   useDeleteRating: () => useDeleteRatingMock(),
   useRecipeRatings: (...args: unknown[]) => useRecipeRatingsMock(...args),
 }));
+
+const getRandomRecipeMock = vi.fn();
+
+vi.mock('../api/client', () => ({
+  apiClient: {
+    getRandomRecipe: (...args: unknown[]) => getRandomRecipeMock(...args),
+  },
+}));
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output aria-label="current-path">{location.pathname}</output>;
+}
 
 afterEach(() => {
   cleanup();
@@ -74,6 +87,7 @@ describe('RecipeDetailPage', () => {
   const renderPage = () => {
     return render(
       <MemoryRouter initialEntries={['/recipes/pasta']}>
+        <LocationProbe />
         <Routes>
           <Route path="/recipes/:slug" element={<RecipeDetailPage />} />
         </Routes>
@@ -189,6 +203,26 @@ describe('RecipeDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Drucken' }));
 
     expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it('rolls again for another random recipe, excluding the current one', async () => {
+    useRecipeMock.mockReturnValue({
+      data: recipe,
+      isLoading: false,
+      error: null,
+    });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+    getRandomRecipeMock.mockResolvedValue({ slug: 'tomatensuppe' });
+
+    const screen = renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nochmal würfeln' }));
+
+    expect(getRandomRecipeMock).toHaveBeenCalledWith({ exclude: 'pasta' });
+    await waitFor(() => {
+      expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/tomatensuppe');
+    });
   });
 
   it('copies the recipe link from the recipe action bar', async () => {

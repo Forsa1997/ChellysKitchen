@@ -4,9 +4,7 @@ import {
   Button,
   Chip,
   Divider,
-  Checkbox,
   FormControl,
-  FormControlLabel,
   IconButton,
   InputAdornment,
   LinearProgress,
@@ -16,6 +14,7 @@ import {
   Select,
   SelectChangeEvent,
   Skeleton,
+  Snackbar,
   Stack,
   TextField,
   ToggleButton,
@@ -31,11 +30,12 @@ import TuneIcon from '@mui/icons-material/Tune';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Link as RouterLink } from 'react-router';
+import { apiClient, type ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { useCategories } from '../hooks/useCategories';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
-import { formatCategoryLabel, selectRandomRecipe } from './homePageViewModel';
+import { formatCategoryLabel } from './homePageViewModel';
 import { normalizeRecipeListParams } from './recipeListQueryParams';
 
 const difficultyOptions = ['all', 'Einfach', 'Mittel', 'Schwer'] as const;
@@ -85,8 +85,8 @@ export function HomePage() {
   const { recipes, meta, loading, fetching = false, error } = useQueryRecipes(listParams);
   const { data: categoryData } = useCategories();
   const [queryDraft, setQueryDraft] = useState({ value: listParams.q, source: listParams.q });
-  const [randomCategory, setRandomCategory] = useState('all');
-  const [randomRecipeSlugs, setRandomRecipeSlugs] = useState<string[]>([]);
+  const [randomPending, setRandomPending] = useState(false);
+  const [randomError, setRandomError] = useState<string | null>(null);
   let queryInput = queryDraft.value;
 
   if (queryDraft.source !== listParams.q) {
@@ -177,36 +177,26 @@ export function HomePage() {
     setSearchParams(new URLSearchParams(), { replace: true });
   };
 
-  const selectedRandomRecipes = useMemo(() => {
-    if (randomRecipeSlugs.length > 0) {
-      return recipes.filter((recipe) => randomRecipeSlugs.includes(recipe.slug));
+  // The server picks from ALL matching recipes (the list here is paginated),
+  // honoring the active filters: filter down to "bis 30 Min." and roll.
+  const openRandomRecipe = async () => {
+    setRandomPending(true);
+    try {
+      const recipe = await apiClient.getRandomRecipe({
+        q: listParams.q || undefined,
+        category: listParams.category,
+        difficulty: listParams.difficulty,
+        maxTotalMinutes: listParams.maxTotalMinutes,
+      });
+      navigate(`/recipes/${recipe.slug}`);
+    } catch (err) {
+      const apiError = err as ApiError;
+      setRandomError(apiError.statusCode === 404
+        ? 'Kein passendes Rezept gefunden.'
+        : 'Zufälliges Rezept konnte nicht geladen werden.');
+    } finally {
+      setRandomPending(false);
     }
-
-    if (randomCategory !== 'all') {
-      return recipes.filter((recipe) => recipe.category === randomCategory);
-    }
-
-    return recipes;
-  }, [randomCategory, randomRecipeSlugs, recipes]);
-
-  const openRandomRecipe = () => {
-    const recipe = selectRandomRecipe(recipes);
-    if (!recipe) return;
-
-    navigate(`/recipes/${recipe.slug}`);
-  };
-
-  const openScopedRandomRecipe = () => {
-    const recipe = selectRandomRecipe(selectedRandomRecipes);
-    if (!recipe) return;
-
-    navigate(`/recipes/${recipe.slug}`);
-  };
-
-  const handleRandomRecipeSelection = (slug: string, checked: boolean) => {
-    setRandomRecipeSlugs((current) => (
-      checked ? [...current, slug] : current.filter((entry) => entry !== slug)
-    ));
   };
 
   if (error) {
@@ -287,7 +277,7 @@ export function HomePage() {
             variant="outlined"
             startIcon={<CasinoIcon />}
             onClick={openRandomRecipe}
-            disabled={recipes.length === 0}
+            disabled={meta.total === 0 || randomPending}
           >
             Zufälliges Rezept
           </Button>
@@ -301,81 +291,6 @@ export function HomePage() {
           </Alert>
         )}
       </Stack>
-
-      <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 }, bgcolor: 'background.paper' }}>
-        <Stack spacing={2}>
-          <Box>
-            <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>
-              Zufall eingrenzen
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Rezept-Lotterie nach deinem Geschmack
-            </Typography>
-            <Typography color="text.secondary">
-              Nutze den Schnellbutton oben für ein Rezept aus der aktuellen Liste oder schränke den Zufall hier auf eine Kategorie oder ausgewählte Rezepte ein.
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: 'minmax(220px, 280px) minmax(0, 1fr) auto' },
-              alignItems: 'start',
-            }}
-          >
-            <FormControl size="small" fullWidth>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                Kategorie für Zufall
-              </Typography>
-              <Select
-                aria-label="Zufallskategorie"
-                value={randomCategory}
-                onChange={(event) => {
-                  setRandomCategory(event.target.value);
-                  setRandomRecipeSlugs([]);
-                }}
-              >
-                {categories.map((entry) => (
-                  <MenuItem key={entry} value={entry}>{formatCategoryLabel(entry)}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                Oder einzelne Rezepte auswählen
-              </Typography>
-              <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                {recipes.map((recipe) => (
-                  <FormControlLabel
-                    key={recipe.slug}
-                    control={
-                      <Checkbox
-                        checked={randomRecipeSlugs.includes(recipe.slug)}
-                        onChange={(event) => handleRandomRecipeSelection(recipe.slug, event.target.checked)}
-                        size="small"
-                      />
-                    }
-                    label={recipe.title}
-                    sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, pr: 1.25, m: 0 }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-
-            <Button
-              variant="contained"
-              startIcon={<CasinoIcon />}
-              onClick={openScopedRandomRecipe}
-              disabled={selectedRandomRecipes.length === 0}
-              sx={{ alignSelf: { xs: 'stretch', md: 'end' } }}
-            >
-              Eingeschränkt zufällig
-            </Button>
-          </Box>
-        </Stack>
-      </Paper>
 
       <Paper
         variant="outlined"
@@ -593,6 +508,16 @@ export function HomePage() {
           </Stack>
         </Paper>
       )}
+
+      <Snackbar
+        open={randomError !== null}
+        autoHideDuration={4000}
+        onClose={() => setRandomError(null)}
+      >
+        <Alert severity="info" onClose={() => setRandomError(null)} sx={{ width: '100%' }}>
+          {randomError}
+        </Alert>
+      </Snackbar>
 
       {meta.totalPages > 1 && (
         <Stack
