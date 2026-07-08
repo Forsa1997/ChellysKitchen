@@ -212,7 +212,11 @@ export function HomePage() {
         }}
       >
         <Stack spacing={1}>
-          <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>
+          <Typography
+            variant="overline"
+            color="primary"
+            sx={{ fontWeight: 700, display: { xs: 'none', md: 'block' } }}
+          >
             Chellys Kitchen
           </Typography>
           <Typography variant="h3" sx={{ fontSize: { xs: '2rem', md: '2.625rem' }, fontWeight: 700 }}>
