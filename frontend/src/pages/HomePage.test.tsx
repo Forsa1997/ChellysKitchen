@@ -109,6 +109,47 @@ describe('HomePage random recipe action', () => {
     expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/tomatensuppe');
   });
 
+  it('navigates to a random recipe within the selected random category', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+    useAuthMock.mockReturnValue({ user: null });
+    useCategoriesMock.mockReturnValue({ data: [] });
+    useQueryRecipesMock.mockReturnValue({
+      recipes,
+      meta: defaultMeta,
+      loading: false,
+      error: null,
+    });
+
+    renderHomePage();
+
+    fireEvent.mouseDown(screen.getByLabelText('Zufallskategorie'));
+    fireEvent.click(screen.getByRole('option', { name: 'Suppe' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Eingeschränkt zufällig' }));
+
+    expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/tomatensuppe');
+  });
+
+  it('uses selected recipes as the random pool before the random category', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    useAuthMock.mockReturnValue({ user: null });
+    useCategoriesMock.mockReturnValue({ data: [] });
+    useQueryRecipesMock.mockReturnValue({
+      recipes,
+      meta: defaultMeta,
+      loading: false,
+      error: null,
+    });
+
+    renderHomePage();
+
+    fireEvent.mouseDown(screen.getByLabelText('Zufallskategorie'));
+    fireEvent.click(screen.getByRole('option', { name: 'Suppe' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Pasta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Eingeschränkt zufällig' }));
+
+    expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/pasta');
+  });
+
   it('disables the random recipe button when no recipe is available', () => {
     useAuthMock.mockReturnValue({ user: null });
     useCategoriesMock.mockReturnValue({ data: [] });
