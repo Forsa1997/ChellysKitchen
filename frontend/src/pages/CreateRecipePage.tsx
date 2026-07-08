@@ -15,9 +15,10 @@ export function CreateRecipePage() {
   return (
     <RecipeForm
       heading="Neues Rezept erstellen"
-      subheading="Erfasse die wichtigsten Informationen Schritt für Schritt."
+      subheading="Titel, mindestens eine Zutat und ein Zubereitungsschritt genügen — alles andere ist optional."
       submitLabel="Rezept speichern"
       onSubmit={handleSubmit}
+      onCancel={() => navigate('/')}
       submitting={createRecipe.isPending}
     />
   );

@@ -60,6 +60,7 @@ export function EditRecipePage() {
       submitLabel="Änderungen speichern"
       submitting={updateRecipe.isPending}
       onSubmit={handleSubmit}
+      onCancel={() => navigate(`/recipes/${recipe.slug}`)}
       initialValues={{
         title: recipe.title,
         shortDescription: recipe.shortDescription,
