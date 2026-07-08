@@ -7,7 +7,6 @@ import {
   FormControl,
   IconButton,
   InputAdornment,
-  InputLabel,
   LinearProgress,
   MenuItem,
   Pagination,
@@ -21,6 +20,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CasinoIcon from '@mui/icons-material/Casino';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -49,6 +49,31 @@ const sortLabels: Record<string, string> = {
 function timePresetLabel(value: string) {
   return value === 'all' ? 'Alle' : `bis ${value} Min.`;
 }
+
+// Shared styling so every filter group (category, difficulty, time) looks and
+// behaves identically: standalone rounded buttons that wrap onto new lines,
+// without the theme's default group container box (visible in dark mode).
+const filterToggleGroupSx: SxProps<Theme> = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 1,
+  // Override the theme's grouped-toggle container (a bordered/filled box that
+  // is applied with high specificity in dark mode) so the buttons read as
+  // standalone chips, consistent across light and dark.
+  backgroundColor: 'transparent !important',
+  border: 'none !important',
+  borderRadius: 0,
+  p: 0,
+  '& .MuiToggleButtonGroup-grouped': {
+    m: 0,
+    border: '1px solid',
+    borderColor: 'divider',
+    borderRadius: '8px !important',
+    minHeight: 40,
+    px: 2,
+    whiteSpace: 'nowrap',
+  },
+};
 
 export function HomePage() {
   const { user } = useAuth();
@@ -312,33 +337,19 @@ export function HomePage() {
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
               Kategorie
             </Typography>
-            <Box sx={{ overflowX: 'auto', pb: 0.5 }}>
-              <ToggleButtonGroup
-                value={listParams.category}
-                exclusive
-                onChange={(_event, value) => handleCategoryChange(value)}
-                size="small"
-                sx={{
-                  display: 'inline-flex',
-                  flexWrap: { xs: 'nowrap', md: 'wrap' },
-                  gap: 1,
-                  '& .MuiToggleButtonGroup-grouped': {
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: '8px !important',
-                    minHeight: 40,
-                    px: 2,
-                    whiteSpace: 'nowrap',
-                  },
-                }}
-              >
-                {categories.map((entry) => (
-                  <ToggleButton key={entry} value={entry}>
-                    {formatCategoryLabel(entry)}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Box>
+            <ToggleButtonGroup
+              value={listParams.category}
+              exclusive
+              onChange={(_event, value) => handleCategoryChange(value)}
+              size="small"
+              sx={filterToggleGroupSx}
+            >
+              {categories.map((entry) => (
+                <ToggleButton key={entry} value={entry}>
+                  {formatCategoryLabel(entry)}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </Box>
           </Box>
 
@@ -348,11 +359,11 @@ export function HomePage() {
             sx={{
               display: 'grid',
               gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: '1fr 1fr minmax(190px, 240px)' },
-              alignItems: 'end',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr minmax(200px, 240px)' },
+              alignItems: 'start',
             }}
           >
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ minWidth: 0 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
                 Schwierigkeit
               </Typography>
@@ -361,17 +372,7 @@ export function HomePage() {
                 exclusive
                 onChange={handleDifficultyChange}
                 size="small"
-                sx={{
-                  flexWrap: 'wrap',
-                  gap: 1,
-                  '& .MuiToggleButtonGroup-grouped': {
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: '8px !important',
-                    minHeight: 40,
-                    px: 2,
-                  },
-                }}
+                sx={filterToggleGroupSx}
               >
                 {difficultyOptions.map((entry) => (
                   <ToggleButton key={entry} value={entry}>
@@ -381,7 +382,7 @@ export function HomePage() {
               </ToggleButtonGroup>
             </Box>
 
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ minWidth: 0 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
                 Zeit
               </Typography>
@@ -390,17 +391,7 @@ export function HomePage() {
                 exclusive
                 onChange={handleTimePresetChange}
                 size="small"
-                sx={{
-                  flexWrap: 'wrap',
-                  gap: 1,
-                  '& .MuiToggleButtonGroup-grouped': {
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: '8px !important',
-                    minHeight: 40,
-                    px: 2,
-                  },
-                }}
+                sx={filterToggleGroupSx}
               >
                 {timePresets.map((entry) => (
                   <ToggleButton key={entry} value={entry}>
@@ -410,15 +401,24 @@ export function HomePage() {
               </ToggleButtonGroup>
             </Box>
 
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', lg: 190 } }}>
-              <InputLabel id="sort-label">Sortieren nach</InputLabel>
-              <Select labelId="sort-label" label="Sortieren nach" value={listParams.sort} onChange={handleSortChange}>
-                <MenuItem value="newest">{sortLabels.newest}</MenuItem>
-                <MenuItem value="oldest">{sortLabels.oldest}</MenuItem>
-                <MenuItem value="title_asc">{sortLabels.title_asc}</MenuItem>
-                <MenuItem value="title_desc">{sortLabels.title_desc}</MenuItem>
-              </Select>
-            </FormControl>
+            <Box sx={{ gridColumn: { sm: '1 / -1', lg: 'auto' }, minWidth: 0 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+                Sortierung
+              </Typography>
+              <FormControl size="small" fullWidth>
+                <Select
+                  aria-label="Sortieren nach"
+                  value={listParams.sort}
+                  onChange={handleSortChange}
+                  sx={{ minHeight: 40 }}
+                >
+                  <MenuItem value="newest">{sortLabels.newest}</MenuItem>
+                  <MenuItem value="oldest">{sortLabels.oldest}</MenuItem>
+                  <MenuItem value="title_asc">{sortLabels.title_asc}</MenuItem>
+                  <MenuItem value="title_desc">{sortLabels.title_desc}</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
           </Box>
 
           {hasActiveFilters && (
