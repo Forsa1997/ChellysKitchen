@@ -11,7 +11,10 @@ Die App läuft auf Render, konfiguriert über `render.yaml` (Blueprint):
 1. Auf render.com „New → Blueprint" und dieses Repository wählen.
 2. Env-Variablen setzen:
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — Pflicht, sonst gibt es keinen Admin.
-   - `INVITE_CODE` — empfohlen, damit sich nur die Familie registrieren kann.
+   - `SEED_USERS` — optional, legt weitere Konten an (JSON-Array mit
+     `name`, `email`, `password`, optional `role`). Eine öffentliche
+     Registrierung gibt es nicht; Konten entstehen nur hierüber oder im
+     Admin-Dashboard.
    - `CORS_ORIGIN` — URL der Web-App (z. B. `https://chellys-kitchen-web.onrender.com`).
    - `VITE_API_BASE_URL` (Frontend) — URL der API.
 3. Optional in GitHub die Secrets `RENDER_BACKEND_DEPLOY_HOOK_URL` und

@@ -45,14 +45,9 @@ export function AppShell({ children }: PropsWithChildren) {
       </Button>
     </>
   ) : (
-    <>
-      <Button component={RouterLink} to="/signin">
-        Anmelden
-      </Button>
-      <Button component={RouterLink} to="/signup" variant="contained">
-        Registrieren
-      </Button>
-    </>
+    <Button component={RouterLink} to="/signin" variant="contained">
+      Anmelden
+    </Button>
   );
 
   return (
@@ -177,14 +172,9 @@ export function AppShell({ children }: PropsWithChildren) {
                 </Button>
               </>
             ) : (
-              <>
-                <Button component={RouterLink} to="/signin" variant="outlined" fullWidth onClick={closeMenu}>
-                  Anmelden
-                </Button>
-                <Button component={RouterLink} to="/signup" variant="contained" fullWidth onClick={closeMenu}>
-                  Registrieren
-                </Button>
-              </>
+              <Button component={RouterLink} to="/signin" variant="contained" fullWidth onClick={closeMenu}>
+                Anmelden
+              </Button>
             )}
           </Stack>
         </Box>

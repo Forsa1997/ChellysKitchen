@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { apiClient } from '../api/client';
 import type { User } from '../types/domain';
-import { useLogin, useRegister, useLogout, useMe } from '../hooks/useAuth';
+import { useLogin, useLogout, useMe } from '../hooks/useAuth';
 
 interface AuthContextValue {
   user: User | null;
@@ -10,7 +10,6 @@ interface AuthContextValue {
   loading: boolean;
   error: Error | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, inviteCode?: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -23,7 +22,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   // React Query hooks
   const loginMutation = useLogin();
-  const registerMutation = useRegister();
   const logoutMutation = useLogout();
   const meQuery = useMe();
 
@@ -37,7 +35,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     meQuery.refetch();
   }, [token]);
 
-  // Update token state when apiClient tokens change (login/register/logout/refresh)
+  // Update token state when apiClient tokens change (login/logout/refresh)
   useEffect(() => {
     const unsubscribe = apiClient.onTokenChange(() => {
       setToken(apiClient.getAccessToken());
@@ -67,25 +65,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
           throw err;
         }
       },
-      async register(name: string, email: string, password: string, inviteCode?: string) {
-        try {
-          setError(null);
-          const result = await registerMutation.mutateAsync({ name, email, password, inviteCode });
-          setToken(result.accessToken);
-          // Invalidate and refetch me query
-          meQuery.refetch();
-        } catch (err) {
-          setError(err instanceof Error ? err : new Error('Registrierung fehlgeschlagen'));
-          throw err;
-        }
-      },
       logout() {
         logoutMutation.mutate();
         setToken(null);
         setError(null);
       },
     }),
-    [user, token, loading, error, loginMutation, registerMutation, logoutMutation, meQuery],
+    [user, token, loading, error, loginMutation, logoutMutation, meQuery],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

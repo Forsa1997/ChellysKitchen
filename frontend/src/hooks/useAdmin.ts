@@ -1,6 +1,6 @@
 // React Query Hooks for Admin
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, type UpdateUserRoleRequest } from '../api/client';
+import { apiClient, type CreateUserRequest, type UpdateUserRoleRequest } from '../api/client';
 
 export function useUsers() {
   return useQuery({
@@ -15,6 +15,17 @@ export function useUpdateUserRole() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserRoleRequest }) =>
       apiClient.updateUserRole(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateUserRequest) => apiClient.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },

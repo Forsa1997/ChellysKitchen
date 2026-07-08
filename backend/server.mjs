@@ -29,9 +29,6 @@ import {
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigin = process.env.CORS_ORIGIN;
 const isProduction = process.env.NODE_ENV === 'production';
-// When INVITE_CODE is set, public registration requires it — the app is a
-// private family space, not an open platform.
-const inviteCode = process.env.INVITE_CODE;
 
 const DATA_DIR = process.env.DATA_DIR ?? './.data';
 const UPLOADS_DIR = resolve(DATA_DIR, 'uploads');
@@ -296,6 +293,36 @@ function seedDefaultUsers() {
   } else if (![...users.values()].some((user) => user.role === 'ADMIN')) {
     console.warn('Kein Admin-Konto vorhanden: ADMIN_EMAIL und ADMIN_PASSWORD setzen.');
   }
+
+  // There is no public registration — besides the admin dashboard, SEED_USERS
+  // is the only way to provision accounts: a JSON array of
+  // { name, email, password, role? } objects, e.g.
+  // SEED_USERS='[{"name":"Chelly","email":"c@example.com","password":"...","role":"EDITOR"}]'
+  if (process.env.SEED_USERS) {
+    let entries;
+    try {
+      entries = JSON.parse(process.env.SEED_USERS);
+    } catch {
+      console.warn('SEED_USERS ist kein gültiges JSON und wird ignoriert.');
+      return;
+    }
+    if (!Array.isArray(entries)) {
+      console.warn('SEED_USERS muss ein JSON-Array sein und wird ignoriert.');
+      return;
+    }
+    for (const entry of entries) {
+      if (!entry || !entry.email || !entry.password) {
+        console.warn('SEED_USERS-Eintrag ohne email/password übersprungen.');
+        continue;
+      }
+      seedUser({
+        name: String(entry.name ?? entry.email).trim(),
+        email: entry.email,
+        role: VALID_ROLES.includes(entry.role) ? entry.role : 'MEMBER',
+        password: entry.password,
+      });
+    }
+  }
 }
 
 mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -387,52 +414,6 @@ const server = createServer(async (req, res) => {
       }
 
       jsonResponse(res, 200, sanitizeRecipe(recipe, authenticateRequest(req)));
-      return;
-    }
-  }
-
-  if (req.method === 'POST' && req.url === '/api/auth/register') {
-    try {
-      const body = await parseJsonBody(req);
-      const { name, email, password } = body;
-
-      if (!name || !email || !password) {
-        jsonResponse(res, 400, { error: 'Name, E-Mail und Passwort sind erforderlich.' });
-        return;
-      }
-
-      if (inviteCode && String(body.inviteCode ?? '') !== inviteCode) {
-        jsonResponse(res, 403, { error: 'Ungültiger Einladungscode.' });
-        return;
-      }
-
-      const normalizedEmail = String(email).trim().toLowerCase();
-      if (users.has(normalizedEmail)) {
-        jsonResponse(res, 409, { error: 'E-Mail ist bereits registriert.' });
-        return;
-      }
-
-      const credential = hashPassword(String(password));
-      const now = new Date().toISOString();
-      const user = {
-        id: `user_${randomBytes(8).toString('hex')}`,
-        name: String(name).trim(),
-        email: normalizedEmail,
-        role: 'MEMBER',
-        passwordHash: credential.hash,
-        salt: credential.salt,
-        algo: credential.algo,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      users.set(normalizedEmail, user);
-      const session = createSession(user);
-      persist();
-      jsonResponse(res, 201, session);
-      return;
-    } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
       return;
     }
   }
@@ -1064,6 +1045,60 @@ const server = createServer(async (req, res) => {
     const data = Array.from(users.values()).map(sanitizeUser);
     jsonResponse(res, 200, { data, total: data.length });
     return;
+  }
+
+  // POST /api/admin/users - Create a user (admin only). There is no public
+  // registration; accounts exist only via this endpoint or the SEED_USERS /
+  // ADMIN_EMAIL environment variables.
+  if (req.method === 'POST' && req.url === '/api/admin/users') {
+    const actingUser = authenticateRequest(req);
+    if (!hasMinRole(actingUser, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    try {
+      const { name, email, password, role } = await parseJsonBody(req);
+
+      if (!name || !email || !password) {
+        jsonResponse(res, 400, { error: 'Name, E-Mail und Passwort sind erforderlich.' });
+        return;
+      }
+
+      const resolvedRole = role ?? 'MEMBER';
+      if (!VALID_ROLES.includes(resolvedRole)) {
+        jsonResponse(res, 400, { error: 'Ungültige Rolle.' });
+        return;
+      }
+
+      const normalizedEmail = String(email).trim().toLowerCase();
+      if (users.has(normalizedEmail)) {
+        jsonResponse(res, 409, { error: 'E-Mail ist bereits vergeben.' });
+        return;
+      }
+
+      const credential = hashPassword(String(password));
+      const now = new Date().toISOString();
+      const user = {
+        id: `user_${randomBytes(8).toString('hex')}`,
+        name: String(name).trim(),
+        email: normalizedEmail,
+        role: resolvedRole,
+        passwordHash: credential.hash,
+        salt: credential.salt,
+        algo: credential.algo,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      users.set(normalizedEmail, user);
+      persist();
+      jsonResponse(res, 201, sanitizeUser(user));
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
   }
 
   // PATCH /api/admin/users/:id/role - Update a user's role (admin only)

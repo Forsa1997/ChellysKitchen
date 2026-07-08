@@ -98,13 +98,6 @@ export interface Category {
 // ============================================================================
 
 // Auth Types
-export interface RegisterRequest {
-  email: string;
-  name: string;
-  password: string;
-  inviteCode?: string;
-}
-
 export interface LoginRequest {
   email: string;
   password: string;
@@ -234,6 +227,13 @@ export interface UpdateUserRoleRequest {
   role: UserRole;
 }
 
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
 export interface AdminRecipeListResponse {
   data: Recipe[];
   total: number;
@@ -321,7 +321,7 @@ class ApiClient {
   }
 
   /**
-   * Subscribe to access-token changes (login/register/logout/refresh).
+   * Subscribe to access-token changes (login/logout/refresh).
    * Returns an unsubscribe function. Lets consumers react without polling.
    */
   public onTokenChange(listener: () => void): () => void {
@@ -418,19 +418,6 @@ class ApiClient {
   // ============================================================================
   // Auth Endpoints
   // ============================================================================
-
-  /**
-   * POST /api/auth/register
-   * Register a new user
-   */
-  async register(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    this.saveTokens(response.accessToken, response.refreshToken);
-    return response;
-  }
 
   /**
    * POST /api/auth/login
@@ -722,6 +709,17 @@ class ApiClient {
    */
   async getUsers(): Promise<UserListResponse> {
     return this.request<UserListResponse>('/api/admin/users');
+  }
+
+  /**
+   * POST /api/admin/users
+   * Create a new user (admin only) — there is no public registration.
+   */
+  async createUser(data: CreateUserRequest): Promise<User> {
+    return this.request<User>('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   /**

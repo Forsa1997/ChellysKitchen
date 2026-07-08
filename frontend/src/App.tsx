@@ -11,7 +11,6 @@ import { EditRecipePage } from './pages/EditRecipePage';
 import { HomePage } from './pages/HomePage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { SignInPage } from './pages/SignInPage';
-import { SignUpPage } from './pages/SignUpPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 function App() {
@@ -53,7 +52,6 @@ function App() {
                   )}
                 />
                 <Route path="/signin" element={<SignInPage />} />
-                <Route path="/signup" element={<SignUpPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </AppShell>

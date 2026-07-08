@@ -269,14 +269,9 @@ export function HomePage() {
                 Rezept erstellen
               </Button>
             ) : (
-              <>
-                <Button component={RouterLink} to="/signin" variant="outlined">
-                  Anmelden
-                </Button>
-                <Button component={RouterLink} to="/signup" variant="contained">
-                  Registrieren
-                </Button>
-              </>
+              <Button component={RouterLink} to="/signin" variant="contained">
+                Anmelden
+              </Button>
             )}
           </Stack>
           <Button

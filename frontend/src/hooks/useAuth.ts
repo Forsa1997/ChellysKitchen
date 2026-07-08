@@ -1,17 +1,6 @@
 // React Query Hooks for Auth
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, type RegisterRequest, type LoginRequest } from '../api/client';
-
-export function useRegister() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: RegisterRequest) => apiClient.register(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['me'] });
-    },
-  });
-}
+import { apiClient, type LoginRequest } from '../api/client';
 
 export function useLogin() {
   const queryClient = useQueryClient();

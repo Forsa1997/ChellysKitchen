@@ -30,6 +30,30 @@ async function api(path, { token, method = 'GET', body } = {}) {
   return { status: res.status, body: json, res };
 }
 
+// Public registration no longer exists — the admin provisions every account.
+async function createMember(name) {
+  const adminLogin = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+  assert.equal(adminLogin.status, 200);
+
+  const email = `${name.toLowerCase()}_${Date.now()}@test.local`;
+  const created = await api('/api/admin/users', {
+    method: 'POST',
+    token: adminLogin.body.accessToken,
+    body: { name, email, password: 'secret123' },
+  });
+  assert.equal(created.status, 201);
+
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: 'secret123' },
+  });
+  assert.equal(login.status, 200);
+  return { token: login.body.accessToken, user: created.body, email };
+}
+
 async function waitForReady(timeoutMs = 10000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -59,28 +83,18 @@ after(() => {
   if (dataDir) rmSync(dataDir, { recursive: true, force: true });
 });
 
-test('register logs the user in immediately (me returns the user)', async () => {
-  const email = `user_${Date.now()}@test.local`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Tester', email, password: 'secret123' },
-  });
-  assert.equal(reg.status, 201);
-  assert.ok(reg.body.accessToken, 'accessToken returned');
-  assert.ok(reg.body.refreshToken, 'refreshToken returned');
+test('admin-created user can log in (me returns the user)', async () => {
+  const { token, email } = await createMember('Tester');
 
-  const me = await api('/api/auth/me', { token: reg.body.accessToken });
+  const me = await api('/api/auth/me', { token });
   assert.equal(me.status, 200);
   assert.equal(me.body.user.email, email);
 });
 
 test('recipe create -> update -> publish flow and admin role update', async () => {
   // Member creates a recipe
-  const member = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Cook', email: `cook_${Date.now()}@test.local`, password: 'secret123' },
-  });
-  const token = member.body.accessToken;
+  const member = await createMember('Cook');
+  const token = member.token;
 
   const created = await api('/api/recipes', {
     method: 'POST',
@@ -123,7 +137,7 @@ test('recipe create -> update -> publish flow and admin role update', async () =
   assert.equal(typeof usersList.body.total, 'number');
 
   // Promote the member to EDITOR
-  const memberId = member.body.user.id;
+  const memberId = member.user.id;
   const roleUpdate = await api(`/api/admin/users/${memberId}/role`, {
     method: 'PATCH',
     token: adminToken,
@@ -147,11 +161,7 @@ test('recipe create -> update -> publish flow and admin role update', async () =
 });
 
 test('image upload stores a file that is served back', async () => {
-  const uploader = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Up', email: `up_${Date.now()}@test.local`, password: 'secret123' },
-  });
-  const token = uploader.body.accessToken;
+  const { token } = await createMember('Up');
 
   const pngDataUrl =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
@@ -171,11 +181,7 @@ test('image upload stores a file that is served back', async () => {
 });
 
 test('favorites can be set, filtered and removed', async () => {
-  const member = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Fan', email: `fan_${Date.now()}@test.local`, password: 'secret123' },
-  });
-  const token = member.body.accessToken;
+  const { token } = await createMember('Fan');
 
   const list = await api('/api/recipes?pageSize=2');
   const target = list.body.data[0];
@@ -209,11 +215,7 @@ test('favorites can be set, filtered and removed', async () => {
 });
 
 test('any member can update the shared notes of a recipe', async () => {
-  const member = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Notiz', email: `notiz_${Date.now()}@test.local`, password: 'secret123' },
-  });
-  const token = member.body.accessToken;
+  const { token } = await createMember('Notiz');
 
   const list = await api('/api/recipes?pageSize=1');
   const target = list.body.data[0];
@@ -303,11 +305,7 @@ test('admin can export a backup and restore it after data changes', async () => 
 });
 
 test('export and import are admin-only', async () => {
-  const member = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'NoAdmin', email: `noadmin_${Date.now()}@test.local`, password: 'secret123' },
-  });
-  const token = member.body.accessToken;
+  const { token } = await createMember('NoAdmin');
 
   const exported = await api('/api/admin/export', { token });
   assert.equal(exported.status, 403);

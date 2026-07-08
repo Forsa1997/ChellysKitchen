@@ -30,8 +30,9 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
-      # When set, new registrations must supply this code (family-only signup).
-      - key: INVITE_CODE
+      # Optional additional accounts (there is no public registration):
+      # a JSON array of { name, email, password, role? } objects.
+      - key: SEED_USERS
         sync: false
       # Directory for the JSON data store and uploaded images.
       # On Render's free tier the filesystem is ephemeral: data survives

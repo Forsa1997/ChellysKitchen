@@ -24,11 +24,12 @@ import {
   FormControl,
   InputLabel,
   Snackbar,
+  TextField,
 } from '@mui/material';
 import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useUsers, useUpdateUserRole, useAdminRecipes } from '../hooks/useAdmin';
+import { useUsers, useUpdateUserRole, useCreateUser, useAdminRecipes } from '../hooks/useAdmin';
 import { usePublishRecipe, useArchiveRecipe, useDeleteRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
 import { apiClient, type User, type UserRole, type Recipe } from '../api/client';
@@ -44,6 +45,7 @@ export function AdminDashboard() {
   const { data: usersData, isLoading, error } = useUsers();
   const { data: recipesData } = useAdminRecipes();
   const updateUserRole = useUpdateUserRole();
+  const createUser = useCreateUser();
   const publishRecipe = usePublishRecipe();
   const archiveRecipe = useArchiveRecipe();
   const deleteRecipe = useDeleteRecipe();
@@ -51,6 +53,8 @@ export function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [newRole, setNewRole] = useState<UserRole>('MEMBER');
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'MEMBER' as UserRole });
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<unknown | null>(null);
@@ -82,6 +86,26 @@ export function AdminDashboard() {
       setSelectedUser(null);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Rolle konnte nicht geändert werden.');
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.password) {
+      return;
+    }
+
+    try {
+      const created = await createUser.mutateAsync({
+        name: newUser.name.trim(),
+        email: newUser.email.trim(),
+        password: newUser.password,
+        role: newUser.role,
+      });
+      setCreateDialogOpen(false);
+      setNewUser({ name: '', email: '', password: '', role: 'MEMBER' });
+      setActionSuccess(`Benutzer ${created.name} wurde angelegt.`);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Benutzer konnte nicht angelegt werden.');
     }
   };
 
@@ -176,14 +200,23 @@ export function AdminDashboard() {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Admin Dashboard
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-          Verwalte Benutzerrollen und Berechtigungen.
-        </Typography>
-      </Box>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ justifyContent: 'space-between', alignItems: { sm: 'flex-end' } }}
+      >
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            Admin Dashboard
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+            Lege Benutzer an und verwalte ihre Rollen — eine öffentliche Registrierung gibt es nicht.
+          </Typography>
+        </Box>
+        <Button variant="contained" onClick={() => setCreateDialogOpen(true)} sx={{ flexShrink: 0 }}>
+          Benutzer anlegen
+        </Button>
+      </Stack>
 
       <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table sx={{ minWidth: 720 }}>
@@ -361,6 +394,57 @@ export function AdminDashboard() {
           <Button onClick={() => setPendingImport(null)}>Abbrechen</Button>
           <Button onClick={handleImportConfirm} variant="contained" color="error" disabled={backupBusy}>
             Importieren
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Benutzer anlegen</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Name"
+              required
+              value={newUser.name}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, name: event.target.value }))}
+              autoComplete="off"
+            />
+            <TextField
+              label="E-Mail"
+              type="email"
+              required
+              value={newUser.email}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, email: event.target.value }))}
+              autoComplete="off"
+            />
+            <TextField
+              label="Passwort"
+              type="password"
+              required
+              value={newUser.password}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, password: event.target.value }))}
+              autoComplete="new-password"
+            />
+            <FormControl fullWidth>
+              <InputLabel id="create-role-select-label">Rolle</InputLabel>
+              <Select
+                labelId="create-role-select-label"
+                label="Rolle"
+                value={newUser.role}
+                onChange={(event) => setNewUser((prev) => ({ ...prev, role: event.target.value as UserRole }))}
+              >
+                <MenuItem value="GUEST">Gast</MenuItem>
+                <MenuItem value="MEMBER">Mitglied</MenuItem>
+                <MenuItem value="EDITOR">Editor</MenuItem>
+                <MenuItem value="ADMIN">Admin</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateDialogOpen(false)}>Abbrechen</Button>
+          <Button onClick={handleCreateUser} variant="contained" disabled={createUser.isPending}>
+            Anlegen
           </Button>
         </DialogActions>
       </Dialog>

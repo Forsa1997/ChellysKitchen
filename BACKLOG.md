@@ -13,7 +13,9 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 - [x] „Nochmal würfeln" auf der Detailseite (ohne Wiederholung)
 
 ### 3. Sicherheit
-- [x] Registrierung per Einladungscode (`INVITE_CODE`, optional)
+- [x] Registrierung per Einladungscode (`INVITE_CODE`, optional) — inzwischen
+      abgelöst: öffentliche Registrierung komplett entfernt, Konten entstehen
+      nur noch über das Admin-Dashboard oder `SEED_USERS`/`ADMIN_EMAIL`
 - [x] Demo-User/-Banner und Default-Admin nur noch in Entwicklung
 - [x] Passwort-Hashing auf scrypt umgestellt (Alt-Hashes migrieren beim Login)
 - [x] Session-TTL (Access 1 Tag, Refresh 30 Tage) + Refresh-Token-Rotation
@@ -38,6 +40,7 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 
 ## Ideen für später (bewusst zurückgestellt)
 
+- Zutaten in die Bring!-Einkaufsliste exportieren (nächster geplanter Schritt)
 - Persistent Disk bei Render (kostenpflichtig) statt manuellem Backup
 - Wochenplaner / „Was kochen wir diese Woche?"
 - Rezept-Import von fremden Webseiten

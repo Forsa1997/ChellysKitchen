@@ -70,7 +70,7 @@ End-to-end smoke tests in `backend/test/` spawn the real server against a temp `
 **Authentication Flow**
 - Opaque bearer tokens (not JWT) stored in persisted session maps with expiry
 - `authenticateRequest(req)` resolves the user; role ranks: GUEST < MEMBER < EDITOR < ADMIN
-- Registration requires `inviteCode` when the `INVITE_CODE` env var is set
+- There is no public registration: accounts are created via the admin dashboard (`POST /api/admin/users`) or the `ADMIN_EMAIL`/`SEED_USERS` env vars (`SEED_USERS` = JSON array of `{ name, email, password, role? }`)
 - Production (`NODE_ENV=production`) seeds no demo user and no default admin — `ADMIN_EMAIL`/`ADMIN_PASSWORD` are required
 
 **Recipe Management**
