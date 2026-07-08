@@ -29,3 +29,40 @@ test('recipes without an explicit status count as PUBLISHED', () => {
   const result = queryRecipes(legacy, {});
   assert.equal(result.meta.total, 1);
 });
+
+test('text search also matches ingredient names', () => {
+  const withIngredients = [
+    {
+      id: 'lachs',
+      title: 'Cremige Pasta',
+      shortDescription: 'x',
+      status: 'PUBLISHED',
+      ingredients: [{ name: 'Lachs', amount: 400, unit: 'g' }],
+      createdAt: '2026-01-01',
+    },
+    {
+      id: 'kuchen',
+      title: 'Karottenkuchen',
+      shortDescription: 'x',
+      status: 'PUBLISHED',
+      ingredients: [{ name: 'Karotten', amount: 300, unit: 'g' }],
+      createdAt: '2026-01-02',
+    },
+  ];
+
+  const result = queryRecipes(withIngredients, { q: 'lachs' });
+  assert.deepEqual(result.data.map((r) => r.id), ['lachs']);
+});
+
+test('favorites=true keeps only recipes flagged as favorite', () => {
+  const flagged = [
+    { id: 'a', title: 'Alpha', shortDescription: 'x', status: 'PUBLISHED', isFavorite: true, createdAt: '2026-01-01' },
+    { id: 'b', title: 'Beta', shortDescription: 'x', status: 'PUBLISHED', isFavorite: false, createdAt: '2026-01-02' },
+  ];
+
+  const result = queryRecipes(flagged, { favorites: 'true' });
+  assert.deepEqual(result.data.map((r) => r.id), ['a']);
+
+  const all = queryRecipes(flagged, {});
+  assert.equal(all.meta.total, 2);
+});

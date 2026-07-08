@@ -25,5 +25,6 @@ export function normalizeRecipeListParams(searchParams) {
     sort: ALLOWED_SORTS.has(sort) ? sort : 'newest',
     difficulty: ALLOWED_DIFFICULTIES.has(difficulty) ? difficulty : 'all',
     maxTotalMinutes,
+    favorites: searchParams.get('favorites') === 'true',
   };
 }

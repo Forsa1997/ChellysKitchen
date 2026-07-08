@@ -1,43 +1,39 @@
-# Chellys Kitchen Backend (Prototype)
+# Chellys Kitchen Backend
+
+Ein bewusst schlanker Node.js-HTTP-Server ohne npm-Abhängigkeiten
+(`server.mjs`). Persistenz: JSON-Datei unter `DATA_DIR` (Standard `./.data`),
+Bilder daneben in `uploads/`.
 
 ## Start
 
 ```bash
-npm run dev
+npm run dev    # mit --watch
+npm start      # Produktion
+npm test       # node:test inkl. End-to-End-Smoke-Tests
 ```
 
-Server default: `http://localhost:4000`
+Server-Standard: `http://localhost:4000`
 
-## Endpoints
+## Endpunkte (Auszug)
 
 - `GET /health`
-- `GET /api/recipes`
+- `POST /api/auth/register|login|refresh|logout`, `GET /api/auth/me`
+- `GET /api/recipes` (Suche/Filter/Pagination), `GET /api/recipes/random`
+- `GET|POST|PATCH|DELETE /api/recipes/:idOrSlug` (+ `/publish`, `/archive`)
+- `PUT|DELETE /api/recipes/:slug/favorite`, `PATCH /api/recipes/:slug/notes`
+- `GET|POST|DELETE /api/recipes/:slug/rating`
+- `GET|POST|PATCH|DELETE /api/categories`
+- `GET /api/admin/users|recipes`, `PATCH /api/admin/users/:id/role`
+- `GET /api/admin/export`, `POST /api/admin/import` (Backup)
+- `POST /api/uploads`, `GET /uploads/:file`
 
-## Hosting note
+## Umgebungsvariablen
 
-GitHub Pages can only host static files (like the frontend build), not this Node.js backend and not a database.
-
-Typical backend hosting options:
-
-- Render (Web Service)
-- Railway
-- Fly.io
-- Northflank
-- AWS App Runner / ECS / Lambda
-- Google Cloud Run
-- Azure Container Apps
-
-Typical managed database options (PostgreSQL focus):
-
-- Neon
-- Supabase (managed Postgres + extras)
-- Railway Postgres
-- Render Postgres
-- Aiven for PostgreSQL
-- AWS RDS (PostgreSQL)
-- Google Cloud SQL (PostgreSQL)
-- Azure Database for PostgreSQL
-
-For a concrete free-start recommendation and exact setup steps, see `docs/free-hosting-guide.md`.
-For Render-specific CI/CD setup with GitHub Actions, see `docs/render-github-actions-setup.md`.
-For reproducible Render service settings, see `render.yaml`.
+| Variable | Bedeutung |
+| --- | --- |
+| `PORT` | Port, Standard 4000 |
+| `DATA_DIR` | Datenablage, Standard `./.data` |
+| `CORS_ORIGIN` | Erlaubter Frontend-Origin |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
+| `INVITE_CODE` | Wenn gesetzt: Registrierung nur mit Code |
+| `NODE_ENV` | `production` deaktiviert Demo-/Default-Zugänge |

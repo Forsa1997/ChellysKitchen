@@ -170,6 +170,72 @@ test('image upload stores a file that is served back', async () => {
   assert.equal(fetched.headers.get('content-type'), 'image/png');
 });
 
+test('favorites can be set, filtered and removed', async () => {
+  const member = await api('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'Fan', email: `fan_${Date.now()}@test.local`, password: 'secret123' },
+  });
+  const token = member.body.accessToken;
+
+  const list = await api('/api/recipes?pageSize=2');
+  const target = list.body.data[0];
+
+  // Mark as favorite
+  const marked = await api(`/api/recipes/${target.slug}/favorite`, { method: 'PUT', token });
+  assert.equal(marked.status, 200);
+  assert.equal(marked.body.isFavorite, true);
+
+  // The favorites filter returns exactly the marked recipe.
+  const favorites = await api('/api/recipes?favorites=true', { token });
+  assert.equal(favorites.status, 200);
+  assert.deepEqual(favorites.body.data.map((r) => r.id), [target.id]);
+
+  // The random endpoint honors the favorites pool.
+  const random = await api('/api/recipes/random?favorites=true', { token });
+  assert.equal(random.status, 200);
+  assert.equal(random.body.id, target.id);
+
+  // Unmark again
+  const unmarked = await api(`/api/recipes/${target.slug}/favorite`, { method: 'DELETE', token });
+  assert.equal(unmarked.status, 200);
+  assert.equal(unmarked.body.isFavorite, false);
+
+  const empty = await api('/api/recipes?favorites=true', { token });
+  assert.equal(empty.body.data.length, 0);
+
+  // Unauthenticated favorite calls are rejected.
+  const anonymous = await api(`/api/recipes/${target.slug}/favorite`, { method: 'PUT' });
+  assert.equal(anonymous.status, 401);
+});
+
+test('any member can update the shared notes of a recipe', async () => {
+  const member = await api('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'Notiz', email: `notiz_${Date.now()}@test.local`, password: 'secret123' },
+  });
+  const token = member.body.accessToken;
+
+  const list = await api('/api/recipes?pageSize=1');
+  const target = list.body.data[0];
+
+  const updated = await api(`/api/recipes/${target.slug}/notes`, {
+    method: 'PATCH',
+    token,
+    body: { notes: 'Nächstes Mal weniger Salz.' },
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.notes, 'Nächstes Mal weniger Salz.');
+
+  const detail = await api(`/api/recipes/${target.slug}`);
+  assert.equal(detail.body.notes, 'Nächstes Mal weniger Salz.');
+
+  const anonymous = await api(`/api/recipes/${target.slug}/notes`, {
+    method: 'PATCH',
+    body: { notes: 'x' },
+  });
+  assert.equal(anonymous.status, 401);
+});
+
 test('random recipe endpoint picks published recipes and respects filters', async () => {
   const random = await api('/api/recipes/random');
   assert.equal(random.status, 200);

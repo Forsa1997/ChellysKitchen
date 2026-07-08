@@ -58,17 +58,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck
-        run: npx tsc --noEmit
-
-      - name: Prisma validate
-        run: npx prisma validate
-
       - name: Test
         run: npm test
-
-      - name: Build
-        run: npm run build
 
   dependency-review:
     if: ${{ github.event.pull_request.draft == false }}

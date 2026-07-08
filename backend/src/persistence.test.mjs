@@ -22,7 +22,8 @@ function sampleState() {
     ['r1', new Map([['u2', { id: 'rt1', userId: 'u2', recipeId: 'r1', stars: 4 }]])],
   ]);
   const categoriesStore = [{ id: 'cat_1', name: 'Cooking', slug: 'cooking' }];
-  return { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore };
+  const favoritesStore = new Map([['u2', new Set(['r1'])]]);
+  return { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore };
 }
 
 test('serialize/deserialize round-trips all collections', () => {
@@ -36,6 +37,7 @@ test('serialize/deserialize round-trips all collections', () => {
   assert.equal(restored.recipeStore.length, 1);
   assert.equal(restored.ratingsStore.get('r1').get('u2').stars, 4);
   assert.equal(restored.categoriesStore[0].slug, 'cooking');
+  assert.ok(restored.favoritesStore.get('u2').has('r1'));
 });
 
 test('deserialize tolerates missing fields', () => {
@@ -43,6 +45,14 @@ test('deserialize tolerates missing fields', () => {
   assert.equal(restored.users.size, 0);
   assert.equal(restored.recipeStore.length, 0);
   assert.equal(restored.ratingsStore.size, 0);
+  assert.equal(restored.favoritesStore.size, 0);
+});
+
+test('serialize tolerates state without a favorites store (older callers)', () => {
+  const state = sampleState();
+  delete state.favoritesStore;
+  const restored = deserializeState(JSON.parse(JSON.stringify(serializeState(state))));
+  assert.equal(restored.favoritesStore.size, 0);
 });
 
 test('store persists to disk and reloads', () => {

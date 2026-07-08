@@ -1,11 +1,11 @@
-import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Paper, Snackbar, Stack, Tooltip, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Paper, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
-import { useRecipe, useDeleteRecipe, usePublishRecipe, useArchiveRecipe } from '../hooks/useRecipes';
+import { useRecipe, useDeleteRecipe, usePublishRecipe, useArchiveRecipe, useToggleFavorite, useUpdateRecipeNotes } from '../hooks/useRecipes';
 import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, WaterDrop } from '@mui/icons-material';
+import { AccessTime, Add, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
 import { apiClient, type ApiError } from '../api/client';
 import type { Ingredient, RecipeStep } from '../types/domain';
 import { recipeRenderImage } from '../recipes/recipeImages';
@@ -28,12 +28,16 @@ export function RecipeDetailPage() {
   const deleteRecipe = useDeleteRecipe();
   const publishRecipe = usePublishRecipe();
   const archiveRecipe = useArchiveRecipe();
+  const toggleFavorite = useToggleFavorite();
+  const updateNotes = useUpdateRecipeNotes();
   // The user's own rating comes from the server; a local override reflects
   // clicks immediately without an effect syncing state.
   const [ratingOverride, setRatingOverride] = useState<number | null>(null);
   const userRating = ratingOverride ?? existingRating?.stars ?? 0;
   const [servingSelection, setServingSelection] = useState<{ recipeId: string; servings: number } | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [ingredientsCopyStatus, setIngredientsCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [notesDraft, setNotesDraft] = useState<{ recipeId: string; value: string } | null>(null);
   const [ratingError, setRatingError] = useState<string | null>(null);
   const apiError = error as ApiError | null;
   const isNotFound = apiError?.statusCode === 404;
@@ -86,6 +90,53 @@ export function RecipeDetailPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!recipe) return;
+    try {
+      await toggleFavorite.mutateAsync({ slug: recipe.slug, isFavorite: !!recipe.isFavorite });
+    } catch {
+      setRatingError('Favorit konnte nicht gespeichert werden.');
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    if (!recipe) return;
+    const value = notesDraft?.recipeId === recipe.id ? notesDraft.value : (recipe.notes ?? '');
+    try {
+      await updateNotes.mutateAsync({ slug: recipe.slug, notes: value });
+    } catch {
+      setRatingError('Notiz konnte nicht gespeichert werden.');
+    }
+  };
+
+  // Shopping helper: put the scaled ingredient list on the phone's share
+  // sheet (if available) or the clipboard.
+  const handleCopyIngredients = async () => {
+    if (!recipe) return;
+
+    const currentServings = servingSelection?.recipeId === recipe.id
+      ? servingSelection.servings
+      : recipe.servings;
+    const scale = currentServings / Math.max(recipe.servings, 1);
+    const lines = [
+      `${recipe.title} – Zutaten für ${currentServings} Portionen`,
+      ...recipe.ingredients.map((ingredient: Ingredient) =>
+        `- ${formatAmount(ingredient.amount * scale)} ${ingredient.unit} ${ingredient.name}`),
+    ];
+    const text = lines.join('\n');
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: recipe.title, text });
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setIngredientsCopyStatus('success');
+    } catch {
+      setIngredientsCopyStatus('error');
+    }
   };
 
   // "Keine Lust auf dieses Rezept" – roll again, without landing on the same one.
@@ -175,6 +226,17 @@ export function RecipeDetailPage() {
         >
           <Button component={RouterLink} to="/" variant="text">Zurück zur Übersicht</Button>
           <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            {user && (
+              <Button
+                startIcon={recipe.isFavorite ? <Favorite color="error" /> : <FavoriteBorder />}
+                variant="outlined"
+                onClick={handleToggleFavorite}
+                disabled={toggleFavorite.isPending}
+                aria-label={recipe.isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
+              >
+                {recipe.isFavorite ? 'Favorit' : 'Merken'}
+              </Button>
+            )}
             <Button startIcon={<Casino />} variant="outlined" onClick={handleRollAgain}>
               Nochmal würfeln
             </Button>
@@ -399,6 +461,16 @@ export function RecipeDetailPage() {
                     </IconButton>
                   </Tooltip>
                 </Stack>
+                <Button
+                  startIcon={<ShoppingCartOutlined />}
+                  variant="outlined"
+                  size="small"
+                  onClick={handleCopyIngredients}
+                  sx={{ mb: 2 }}
+                  fullWidth
+                >
+                  Zutaten kopieren
+                </Button>
                 <Divider sx={{ mb: 2 }} />
                 <List dense sx={{ p: 0 }}>
                   {recipe.ingredients.map((ingredient: Ingredient, index: number) => (
@@ -542,6 +614,43 @@ export function RecipeDetailPage() {
           </Grid>
         </Grid>
 
+        {(user || recipe.notes) && (
+          <Paper variant="outlined">
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                Notizen
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Gemeinsame Merkzettel für die Familie – z.&nbsp;B. „nächstes Mal weniger Salz".
+              </Typography>
+              {user ? (
+                <Stack spacing={1.5}>
+                  <TextField
+                    label="Notizen"
+                    multiline
+                    minRows={2}
+                    fullWidth
+                    value={notesDraft?.recipeId === recipe.id ? notesDraft.value : (recipe.notes ?? '')}
+                    onChange={(event) => setNotesDraft({ recipeId: recipe.id, value: event.target.value })}
+                  />
+                  <Box>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={handleSaveNotes}
+                      disabled={updateNotes.isPending}
+                    >
+                      Notiz speichern
+                    </Button>
+                  </Box>
+                </Stack>
+              ) : (
+                <Typography sx={{ whiteSpace: 'pre-line' }}>{recipe.notes}</Typography>
+              )}
+            </CardContent>
+          </Paper>
+        )}
+
         <Paper variant="outlined">
           <CardContent sx={{ p: 3 }}>
             <Stack
@@ -576,6 +685,12 @@ export function RecipeDetailPage() {
         autoHideDuration={3000}
         onClose={() => setCopyStatus('idle')}
         message={copyStatus === 'success' ? 'Link kopiert' : 'Link konnte nicht kopiert werden'}
+      />
+      <Snackbar
+        open={ingredientsCopyStatus !== 'idle'}
+        autoHideDuration={3000}
+        onClose={() => setIngredientsCopyStatus('idle')}
+        message={ingredientsCopyStatus === 'success' ? 'Zutaten kopiert' : 'Zutaten konnten nicht kopiert werden'}
       />
       <Snackbar
         open={ratingError !== null}

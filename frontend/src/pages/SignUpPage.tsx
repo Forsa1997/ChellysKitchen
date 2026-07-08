@@ -9,6 +9,7 @@ export function SignUpPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,7 +19,7 @@ export function SignUpPage() {
     setError(null);
 
     try {
-      await register(name, email, password);
+      await register(name, email, password, inviteCode || undefined);
       navigate('/');
     } catch (requestError) {
       const errorMessage = requestError instanceof Error ? requestError.message : 'Registrierung fehlgeschlagen';
@@ -66,6 +67,13 @@ export function SignUpPage() {
               onChange={(event) => setPassword(event.target.value)}
               disabled={isLoading}
               autoComplete="new-password"
+            />
+            <TextField
+              label="Einladungscode"
+              value={inviteCode}
+              onChange={(event) => setInviteCode(event.target.value)}
+              disabled={isLoading}
+              helperText="Frag die Familie nach dem Code."
             />
             <Button
               type="submit"

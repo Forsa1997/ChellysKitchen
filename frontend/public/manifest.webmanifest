@@ -1,0 +1,24 @@
+{
+  "name": "Chellys Kitchen",
+  "short_name": "Chellys Kitchen",
+  "description": "Rezepte mit Liebe – die Rezeptsammlung der Familie.",
+  "lang": "de",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f4511e",
+  "icons": [
+    {
+      "src": "/brand/chellys-kitchen-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/chellys-kitchen-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

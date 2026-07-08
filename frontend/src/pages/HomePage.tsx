@@ -24,6 +24,8 @@ import {
 import type { SxProps, Theme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CasinoIcon from '@mui/icons-material/Casino';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -33,6 +35,7 @@ import { Link as RouterLink } from 'react-router';
 import { apiClient, type ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { useCategories } from '../hooks/useCategories';
+import { useToggleFavorite } from '../hooks/useRecipes';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
 import { formatCategoryLabel } from './homePageViewModel';
@@ -87,6 +90,7 @@ export function HomePage() {
   const [queryDraft, setQueryDraft] = useState({ value: listParams.q, source: listParams.q });
   const [randomPending, setRandomPending] = useState(false);
   const [randomError, setRandomError] = useState<string | null>(null);
+  const toggleFavorite = useToggleFavorite();
   let queryInput = queryDraft.value;
 
   if (queryDraft.source !== listParams.q) {
@@ -110,6 +114,7 @@ export function HomePage() {
     listParams.difficulty !== 'all' ? listParams.difficulty : '',
     listParams.maxTotalMinutes ? String(listParams.maxTotalMinutes) : '',
     listParams.sort !== 'newest' ? listParams.sort : '',
+    listParams.favorites ? 'favorites' : '',
   ].filter(Boolean).length;
   const hasActiveFilters = activeFilterCount > 0;
 
@@ -187,6 +192,7 @@ export function HomePage() {
         category: listParams.category,
         difficulty: listParams.difficulty,
         maxTotalMinutes: listParams.maxTotalMinutes,
+        favorites: listParams.favorites || undefined,
       });
       navigate(`/recipes/${recipe.slug}`);
     } catch (err) {
@@ -284,14 +290,6 @@ export function HomePage() {
         </Stack>
       </Box>
 
-      <Stack spacing={1.5}>
-        {!user && (
-          <Alert severity="info">
-            Melde dich an, um eigene Rezepte zu erstellen. Demo-Zugang: demo@chellys-kitchen.local / demo1234
-          </Alert>
-        )}
-      </Stack>
-
       <Paper
         variant="outlined"
         sx={{
@@ -325,16 +323,27 @@ export function HomePage() {
               </Box>
             </Stack>
 
-            <Button
-              variant="text"
-              size="small"
-              startIcon={<RestartAltIcon />}
-              onClick={resetFilters}
-              disabled={!hasActiveFilters}
-              sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
-            >
-              Zurücksetzen
-            </Button>
+            <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}>
+              {user && (
+                <Button
+                  variant={listParams.favorites ? 'contained' : 'outlined'}
+                  size="small"
+                  startIcon={listParams.favorites ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                  onClick={() => updateParams({ favorites: listParams.favorites ? '' : 'true', page: '1' })}
+                >
+                  Nur Favoriten
+                </Button>
+              )}
+              <Button
+                variant="text"
+                size="small"
+                startIcon={<RestartAltIcon />}
+                onClick={resetFilters}
+                disabled={!hasActiveFilters}
+              >
+                Zurücksetzen
+              </Button>
+            </Stack>
           </Stack>
 
           <Box
@@ -488,13 +497,25 @@ export function HomePage() {
                   size="small"
                 />
               )}
+              {listParams.favorites && (
+                <Chip
+                  label="Nur Favoriten"
+                  onDelete={() => updateParams({ favorites: '', page: '1' })}
+                  size="small"
+                />
+              )}
             </Stack>
           )}
         </Stack>
       </Paper>
 
       {recipes.length > 0 ? (
-        <RecipeGrid recipes={recipes} />
+        <RecipeGrid
+          recipes={recipes}
+          onToggleFavorite={user
+            ? (recipe) => toggleFavorite.mutate({ slug: recipe.slug, isFavorite: !!recipe.isFavorite })
+            : undefined}
+        />
       ) : (
         <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, textAlign: 'center' }}>
           <Stack spacing={1.5} sx={{ alignItems: 'center' }}>

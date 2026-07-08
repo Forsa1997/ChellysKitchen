@@ -19,6 +19,7 @@ function sampleState() {
     recipeStore: [{ id: 'r1', slug: 'pasta', title: 'Pasta' }],
     ratingsStore,
     categoriesStore: [{ id: 'cat_1', name: 'Cooking', slug: 'cooking' }],
+    favoritesStore: new Map([['user_1', new Set(['r1'])]]),
   };
 }
 
@@ -35,6 +36,7 @@ test('export -> import round-trips users, recipes, ratings and categories', () =
   assert.equal(parsed.recipeStore[0].slug, 'pasta');
   assert.equal(parsed.ratingsStore.get('r1').get('user_1').stars, 5);
   assert.equal(parsed.categoriesStore[0].slug, 'cooking');
+  assert.ok(parsed.favoritesStore.get('user_1').has('r1'));
   assert.equal(parsed.uploads.length, 1);
   assert.equal(parsed.uploads[0].fileName, 'abc123.png');
   assert.equal(parsed.uploads[0].buffer.toString(), 'fake-image');

@@ -1,7 +1,27 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { RecipeGrid } from './RecipeGrid';
+import type { Recipe } from '../types/domain';
+
+const favoriteRecipe: Recipe = {
+  id: 'recipe-1',
+  slug: 'pasta',
+  title: 'Pasta',
+  shortDescription: 'Schnell und lecker',
+  difficulty: 'EINFACH',
+  servings: 2,
+  preparationTime: 10,
+  cookingTime: 20,
+  category: 'Pasta',
+  status: 'PUBLISHED',
+  ingredients: [],
+  steps: [],
+  isFavorite: false,
+  createdBy: { id: 'u1', name: 'Chris' },
+  createdAt: '2026-04-30T12:00:00.000Z',
+  updatedAt: '2026-04-30T12:00:00.000Z',
+};
 
 describe('RecipeGrid', () => {
   it('renders card metadata and links to detail page', () => {
@@ -36,6 +56,39 @@ describe('RecipeGrid', () => {
     expect(screen.getByText('30 Minuten · 2 Portionen')).toBeInTheDocument();
     expect(screen.getByText(/Chris/)).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveAttribute('href', '/recipes/pasta');
+  });
+
+  it('shows no favorite button without an onToggleFavorite handler', () => {
+    const screen = render(
+      <MemoryRouter>
+        <RecipeGrid recipes={[{ ...favoriteRecipe }]} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('button', { name: /Favorit/ })).not.toBeInTheDocument();
+  });
+
+  it('toggles a favorite via the heart button without navigating', () => {
+    const onToggleFavorite = vi.fn();
+    const screen = render(
+      <MemoryRouter>
+        <RecipeGrid recipes={[{ ...favoriteRecipe }]} onToggleFavorite={onToggleFavorite} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Als Favorit markieren' }));
+
+    expect(onToggleFavorite).toHaveBeenCalledWith(expect.objectContaining({ slug: 'pasta', isFavorite: false }));
+  });
+
+  it('labels the heart button for removal when the recipe is already a favorite', () => {
+    const screen = render(
+      <MemoryRouter>
+        <RecipeGrid recipes={[{ ...favoriteRecipe, isFavorite: true }]} onToggleFavorite={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Favorit entfernen' })).toBeInTheDocument();
   });
 
   it('shows the rendered photo together with the SVG illustration for bundled recipes', () => {

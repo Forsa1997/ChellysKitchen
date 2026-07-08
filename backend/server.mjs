@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
@@ -16,9 +16,22 @@ import {
   MAX_UPLOAD_BYTES,
   validateImageUpload,
 } from './src/uploads.mjs';
+import { hashPassword, verifyPassword } from './src/passwords.mjs';
+import {
+  ACCESS_TTL_MS,
+  REFRESH_TTL_MS,
+  createSessionEntry,
+  normalizeSessionMap,
+  pruneExpiredSessions,
+  resolveSession,
+} from './src/sessions.mjs';
 
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigin = process.env.CORS_ORIGIN;
+const isProduction = process.env.NODE_ENV === 'production';
+// When INVITE_CODE is set, public registration requires it — the app is a
+// private family space, not an open platform.
+const inviteCode = process.env.INVITE_CODE;
 
 const DATA_DIR = process.env.DATA_DIR ?? './.data';
 const UPLOADS_DIR = resolve(DATA_DIR, 'uploads');
@@ -42,10 +55,11 @@ const refreshSessions = loadedState?.refreshSessions ?? new Map();
 const recipeStore = loadedState?.recipeStore ?? [...recipes];
 const ratingsStore = loadedState?.ratingsStore ?? new Map(); // recipeId -> Map<userId, rating>
 const categoriesStore = loadedState?.categoriesStore ?? [...DEFAULT_CATEGORIES];
+const favoritesStore = loadedState?.favoritesStore ?? new Map(); // userId -> Set<recipeId>
 
 const persister = createDebouncedPersister(
   store,
-  () => ({ users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore }),
+  () => ({ users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore }),
   200,
 );
 const persist = () => persister.schedule();
@@ -94,15 +108,6 @@ function withCors(req, res) {
   }
 }
 
-function hashPassword(password, salt) {
-  return createHash('sha256').update(`${salt}:${password}`).digest('hex');
-}
-
-function verifyPassword(password, salt, hash) {
-  const calculatedHash = hashPassword(password, salt);
-  return timingSafeEqual(Buffer.from(calculatedHash), Buffer.from(hash));
-}
-
 function sanitizeUser(user) {
   return {
     id: user.id,
@@ -135,10 +140,14 @@ function normalizeDifficulty(value) {
 }
 
 function createSession(user) {
+  // Cheap housekeeping on every login so the persisted maps stay bounded.
+  pruneExpiredSessions(sessions);
+  pruneExpiredSessions(refreshSessions);
+
   const accessToken = randomBytes(24).toString('hex');
   const refreshToken = randomBytes(24).toString('hex');
-  sessions.set(accessToken, user.id);
-  refreshSessions.set(refreshToken, user.id);
+  sessions.set(accessToken, createSessionEntry(user.id, Date.now(), ACCESS_TTL_MS));
+  refreshSessions.set(refreshToken, createSessionEntry(user.id, Date.now(), REFRESH_TTL_MS));
 
   return {
     accessToken,
@@ -147,7 +156,7 @@ function createSession(user) {
   };
 }
 
-function sanitizeRecipe(recipe) {
+function sanitizeRecipe(recipe, requester) {
   // Calculate average rating for this recipe
   const recipeRatings = ratingsStore.get(recipe.id);
   let averageRating = 0;
@@ -185,6 +194,8 @@ function sanitizeRecipe(recipe) {
     publishedAt: recipe.publishedAt ?? recipe.creationDate ?? new Date().toISOString(),
     averageRating: Math.round(averageRating * 10) / 10,
     totalRatings,
+    notes: recipe.notes ?? '',
+    isFavorite: !!(requester && favoritesStore.get(requester.id)?.has(recipe.id)),
   };
 }
 
@@ -225,13 +236,12 @@ function findUserById(userId) {
 
 function authenticateRequest(req) {
   const token = getBearerToken(req);
-
-  if (!token || !sessions.has(token)) {
+  if (!token) {
     return null;
   }
 
-  const userId = sessions.get(token);
-  return findUserById(userId);
+  const userId = resolveSession(sessions, token);
+  return userId ? findUserById(userId) : null;
 }
 
 function seedUser({ name, email, role, password }) {
@@ -239,38 +249,62 @@ function seedUser({ name, email, role, password }) {
   if (users.has(normalizedEmail)) {
     return;
   }
-  const salt = randomBytes(16).toString('hex');
+  const credential = hashPassword(password);
   const now = new Date().toISOString();
   users.set(normalizedEmail, {
     id: `user_${randomBytes(8).toString('hex')}`,
     name,
     email: normalizedEmail,
     role,
-    passwordHash: hashPassword(password, salt),
-    salt,
+    passwordHash: credential.hash,
+    salt: credential.salt,
+    algo: credential.algo,
     createdAt: now,
     updatedAt: now,
   });
 }
 
 function seedDefaultUsers() {
-  seedUser({
-    name: 'Demo User',
-    email: 'demo@chellys-kitchen.local',
-    role: 'MEMBER',
-    password: 'demo1234',
-  });
-  // An admin account is required to reach the admin dashboard. Configurable
-  // via ADMIN_EMAIL / ADMIN_PASSWORD; falls back to a local default.
-  seedUser({
-    name: 'Admin',
-    email: process.env.ADMIN_EMAIL || 'admin@chellys-kitchen.local',
-    role: 'ADMIN',
-    password: process.env.ADMIN_PASSWORD || 'admin1234',
-  });
+  // Well-known demo credentials are a development convenience only — never
+  // create them on a public deployment.
+  if (!isProduction) {
+    seedUser({
+      name: 'Demo User',
+      email: 'demo@chellys-kitchen.local',
+      role: 'MEMBER',
+      password: 'demo1234',
+    });
+  }
+
+  // An admin account is required to reach the admin dashboard. In production
+  // it must be configured explicitly; the well-known local fallback would
+  // otherwise be an open door.
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    seedUser({
+      name: 'Admin',
+      email: process.env.ADMIN_EMAIL,
+      role: 'ADMIN',
+      password: process.env.ADMIN_PASSWORD,
+    });
+  } else if (!isProduction) {
+    seedUser({
+      name: 'Admin',
+      email: 'admin@chellys-kitchen.local',
+      role: 'ADMIN',
+      password: 'admin1234',
+    });
+  } else if (![...users.values()].some((user) => user.role === 'ADMIN')) {
+    console.warn('Kein Admin-Konto vorhanden: ADMIN_EMAIL und ADMIN_PASSWORD setzen.');
+  }
 }
 
 mkdirSync(UPLOADS_DIR, { recursive: true });
+// Stores persisted before the TTL change hold plain userId strings; upgrade
+// them once so every session entry carries an expiry.
+normalizeSessionMap(sessions, Date.now(), ACCESS_TTL_MS);
+normalizeSessionMap(refreshSessions, Date.now(), REFRESH_TTL_MS);
+pruneExpiredSessions(sessions);
+pruneExpiredSessions(refreshSessions);
 seedDefaultUsers();
 persist();
 
@@ -302,7 +336,7 @@ const server = createServer(async (req, res) => {
       if (!hasMinRole(requester, 'EDITOR')) {
         query.status = 'PUBLISHED';
       }
-      const result = queryRecipes(recipeStore.map((recipe) => sanitizeRecipe(recipe)), query);
+      const result = queryRecipes(recipeStore.map((recipe) => sanitizeRecipe(recipe, requester)), query);
       jsonResponse(res, 200, result);
       return;
     }
@@ -323,7 +357,7 @@ const server = createServer(async (req, res) => {
       }
 
       const picked = pickRandomRecipe(
-        recipeStore.map((recipe) => sanitizeRecipe(recipe)),
+        recipeStore.map((recipe) => sanitizeRecipe(recipe, requester)),
         query,
         { excludeSlug: String(query.exclude ?? '') || undefined },
       );
@@ -352,17 +386,23 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      jsonResponse(res, 200, sanitizeRecipe(recipe));
+      jsonResponse(res, 200, sanitizeRecipe(recipe, authenticateRequest(req)));
       return;
     }
   }
 
   if (req.method === 'POST' && req.url === '/api/auth/register') {
     try {
-      const { name, email, password } = await parseJsonBody(req);
+      const body = await parseJsonBody(req);
+      const { name, email, password } = body;
 
       if (!name || !email || !password) {
         jsonResponse(res, 400, { error: 'Name, E-Mail und Passwort sind erforderlich.' });
+        return;
+      }
+
+      if (inviteCode && String(body.inviteCode ?? '') !== inviteCode) {
+        jsonResponse(res, 403, { error: 'Ungültiger Einladungscode.' });
         return;
       }
 
@@ -372,15 +412,16 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      const salt = randomBytes(16).toString('hex');
+      const credential = hashPassword(String(password));
       const now = new Date().toISOString();
       const user = {
         id: `user_${randomBytes(8).toString('hex')}`,
         name: String(name).trim(),
         email: normalizedEmail,
         role: 'MEMBER',
-        passwordHash: hashPassword(String(password), salt),
-        salt,
+        passwordHash: credential.hash,
+        salt: credential.salt,
+        algo: credential.algo,
         createdAt: now,
         updatedAt: now,
       };
@@ -401,10 +442,21 @@ const server = createServer(async (req, res) => {
       const { email, password } = await parseJsonBody(req);
       const normalizedEmail = String(email ?? '').trim().toLowerCase();
       const user = users.get(normalizedEmail);
+      const result = user ? verifyPassword(user, String(password ?? '')) : { valid: false };
 
-      if (!user || !verifyPassword(String(password ?? ''), user.salt, user.passwordHash)) {
+      if (!result.valid) {
         jsonResponse(res, 401, { error: 'Ungültige Anmeldedaten.' });
         return;
+      }
+
+      // Accounts from before the scrypt switch still carry SHA-256 hashes;
+      // upgrade them transparently while the plaintext password is at hand.
+      if (result.needsRehash) {
+        const credential = hashPassword(String(password ?? ''));
+        user.passwordHash = credential.hash;
+        user.salt = credential.salt;
+        user.algo = credential.algo;
+        user.updatedAt = new Date().toISOString();
       }
 
       const session = createSession(user);
@@ -420,7 +472,8 @@ const server = createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/auth/refresh') {
     try {
       const { refreshToken } = await parseJsonBody(req);
-      const userId = refreshSessions.get(String(refreshToken ?? ''));
+      const token = String(refreshToken ?? '');
+      const userId = resolveSession(refreshSessions, token);
       const user = userId ? findUserById(userId) : null;
 
       if (!user) {
@@ -428,6 +481,8 @@ const server = createServer(async (req, res) => {
         return;
       }
 
+      // Rotate: a refresh token is single-use.
+      refreshSessions.delete(token);
       const session = createSession(user);
       persist();
       jsonResponse(res, 200, session);
@@ -440,12 +495,21 @@ const server = createServer(async (req, res) => {
 
   if (req.method === 'POST' && req.url === '/api/auth/logout') {
     const token = getBearerToken(req);
-
     if (token) {
       sessions.delete(token);
-      persist();
     }
 
+    // Also invalidate the refresh token when the client sends it along.
+    try {
+      const { refreshToken } = await parseJsonBody(req);
+      if (refreshToken) {
+        refreshSessions.delete(String(refreshToken));
+      }
+    } catch {
+      // Body is optional for logout.
+    }
+
+    persist();
     res.writeHead(204);
     res.end();
     return;
@@ -517,7 +581,7 @@ const server = createServer(async (req, res) => {
 
       recipeStore.unshift(newRecipe);
       persist();
-      jsonResponse(res, 201, sanitizeRecipe(newRecipe));
+      jsonResponse(res, 201, sanitizeRecipe(newRecipe, user));
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -652,6 +716,71 @@ const server = createServer(async (req, res) => {
       recipeRatings.delete(user.id);
       persist();
       jsonResponse(res, 204, null);
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+  }
+
+  // ============================================================================
+  // Favorite Endpoints
+  // ============================================================================
+
+  // PUT/DELETE /api/recipes/:slug/favorite - Mark or unmark a personal favorite
+  if ((req.method === 'PUT' || req.method === 'DELETE') && req.url?.match(/^\/api\/recipes\/[^/]+\/favorite$/)) {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    if (!favoritesStore.has(user.id)) {
+      favoritesStore.set(user.id, new Set());
+    }
+    const userFavorites = favoritesStore.get(user.id);
+
+    if (req.method === 'PUT') {
+      userFavorites.add(recipe.id);
+    } else {
+      userFavorites.delete(recipe.id);
+    }
+
+    persist();
+    jsonResponse(res, 200, sanitizeRecipe(recipe, user));
+    return;
+  }
+
+  // PATCH /api/recipes/:slug/notes - Update the shared family notes.
+  // Deliberately open to every signed-in member (not just the owner):
+  // "beim nächsten Mal weniger Salz" is family knowledge.
+  if (req.method === 'PATCH' && req.url?.match(/^\/api\/recipes\/[^/]+\/notes$/)) {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    try {
+      const { notes } = await parseJsonBody(req);
+      recipe.notes = String(notes ?? '').slice(0, 2000);
+      recipe.updatedAt = new Date().toISOString();
+      persist();
+      jsonResponse(res, 200, sanitizeRecipe(recipe, user));
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -805,7 +934,7 @@ const server = createServer(async (req, res) => {
     recipe.publishedAt = new Date().toISOString();
     recipe.updatedAt = new Date().toISOString();
     persist();
-    jsonResponse(res, 200, sanitizeRecipe(recipe));
+    jsonResponse(res, 200, sanitizeRecipe(recipe, user));
     return;
   }
 
@@ -827,7 +956,7 @@ const server = createServer(async (req, res) => {
     recipe.status = 'ARCHIVED';
     recipe.updatedAt = new Date().toISOString();
     persist();
-    jsonResponse(res, 200, sanitizeRecipe(recipe));
+    jsonResponse(res, 200, sanitizeRecipe(recipe, user));
     return;
   }
 
@@ -877,7 +1006,7 @@ const server = createServer(async (req, res) => {
       recipe.updatedAt = new Date().toISOString();
 
       persist();
-      jsonResponse(res, 200, sanitizeRecipe(recipe));
+      jsonResponse(res, 200, sanitizeRecipe(recipe, user));
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
@@ -911,6 +1040,9 @@ const server = createServer(async (req, res) => {
       recipeStore.splice(index, 1);
     }
     ratingsStore.delete(recipe.id);
+    for (const userFavorites of favoritesStore.values()) {
+      userFavorites.delete(recipe.id);
+    }
     persist();
     res.writeHead(204);
     res.end();
@@ -985,7 +1117,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const data = recipeStore.map(sanitizeRecipe);
+    const data = recipeStore.map((recipe) => sanitizeRecipe(recipe, user));
     jsonResponse(res, 200, { data, total: data.length });
     return;
   }
@@ -1014,7 +1146,7 @@ const server = createServer(async (req, res) => {
     }
 
     const payload = createExportPayload(
-      { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore },
+      { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore },
       uploads,
     );
     res.writeHead(200, {
@@ -1058,6 +1190,11 @@ const server = createServer(async (req, res) => {
       }
 
       categoriesStore.splice(0, categoriesStore.length, ...imported.categoriesStore);
+
+      favoritesStore.clear();
+      for (const [userId, recipeIds] of imported.favoritesStore) {
+        favoritesStore.set(userId, recipeIds);
+      }
 
       for (const upload of imported.uploads) {
         writeFileSync(join(UPLOADS_DIR, upload.fileName), upload.buffer);

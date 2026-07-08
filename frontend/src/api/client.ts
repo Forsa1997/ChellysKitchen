@@ -70,6 +70,8 @@ export interface Recipe {
   archivedAt?: string;
   averageRating?: number;
   totalRatings?: number;
+  notes?: string;
+  isFavorite?: boolean;
 }
 
 export interface Rating {
@@ -100,6 +102,7 @@ export interface RegisterRequest {
   email: string;
   name: string;
   password: string;
+  inviteCode?: string;
 }
 
 export interface LoginRequest {
@@ -133,6 +136,7 @@ export interface RecipeListParams {
   status?: RecipeStatus;
   sort?: RecipeSort;
   maxTotalMinutes?: number | null;
+  favorites?: boolean;
 }
 
 export interface RecipeListMeta {
@@ -157,6 +161,7 @@ export interface RandomRecipeParams {
   category?: string;
   difficulty?: RecipeDifficulty | 'all' | 'Einfach' | 'Mittel' | 'Schwer';
   maxTotalMinutes?: number | null;
+  favorites?: boolean;
   exclude?: string;
 }
 
@@ -369,7 +374,10 @@ class ApiClient {
         } catch {
           this.clearTokens();
           if (typeof window !== 'undefined') {
-            window.location.href = '/signin';
+            // The app runs with a hash router in production (static host
+            // without SPA rewrites), so the sign-in route lives behind '#'.
+            const routerMode = import.meta.env.VITE_ROUTER_MODE ?? (import.meta.env.PROD ? 'hash' : 'browser');
+            window.location.assign(routerMode === 'hash' ? '/#/signin' : '/signin');
           }
         }
       }
@@ -462,6 +470,8 @@ class ApiClient {
     try {
       await this.request<void>('/api/auth/logout', {
         method: 'POST',
+        // Send the refresh token along so the server can invalidate it too.
+        body: JSON.stringify({ refreshToken: this.refreshToken }),
       });
     } finally {
       this.clearTokens();
@@ -497,6 +507,7 @@ class ApiClient {
     if (params.maxTotalMinutes !== null && params.maxTotalMinutes !== undefined) {
       queryParams.append('maxTotalMinutes', params.maxTotalMinutes.toString());
     }
+    if (params.favorites) queryParams.append('favorites', 'true');
 
     const queryString = queryParams.toString();
     const endpoint = `/api/recipes${queryString ? `?${queryString}` : ''}`;
@@ -516,6 +527,7 @@ class ApiClient {
     if (params.category && params.category !== 'all') queryParams.append('category', params.category);
     if (params.difficulty && params.difficulty !== 'all') queryParams.append('difficulty', params.difficulty);
     if (params.maxTotalMinutes) queryParams.append('maxTotalMinutes', params.maxTotalMinutes.toString());
+    if (params.favorites) queryParams.append('favorites', 'true');
     if (params.exclude) queryParams.append('exclude', params.exclude);
 
     const queryString = queryParams.toString();
@@ -589,6 +601,37 @@ class ApiClient {
     return this.request<Recipe>(`/api/recipes/${id}/archive`, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'ARCHIVED' }),
+    });
+  }
+
+  // ============================================================================
+  // Favorite & Notes Endpoints
+  // ============================================================================
+
+  /**
+   * PUT /api/recipes/:slug/favorite
+   * Mark a recipe as a personal favorite
+   */
+  async setFavorite(slug: string): Promise<Recipe> {
+    return this.request<Recipe>(`/api/recipes/${slug}/favorite`, { method: 'PUT' });
+  }
+
+  /**
+   * DELETE /api/recipes/:slug/favorite
+   * Remove a recipe from the personal favorites
+   */
+  async removeFavorite(slug: string): Promise<Recipe> {
+    return this.request<Recipe>(`/api/recipes/${slug}/favorite`, { method: 'DELETE' });
+  }
+
+  /**
+   * PATCH /api/recipes/:slug/notes
+   * Update the shared family notes of a recipe
+   */
+  async updateRecipeNotes(slug: string, notes: string): Promise<Recipe> {
+    return this.request<Recipe>(`/api/recipes/${slug}/notes`, {
+      method: 'PATCH',
+      body: JSON.stringify({ notes }),
     });
   }
 
@@ -761,209 +804,3 @@ class ApiClient {
 // ============================================================================
 
 export const apiClient = new ApiClient(API_BASE_URL);
-
-// ============================================================================
-// Convenience functions for backward compatibility
-// ============================================================================
-
-/**
- * Fetch recipes with filtering and pagination
- * @deprecated Use apiClient.getRecipes() instead
- */
-export async function fetchRecipes(params: RecipeListParams = {}): Promise<{ data: Recipe[]; meta: RecipeListMeta }> {
-  const result = await apiClient.getRecipes(params);
-  return { data: result.data, meta: result.meta };
-}
-
-/**
- * Fetch a single recipe by slug
- * @deprecated Use apiClient.getRecipeBySlug() instead
- */
-export async function fetchRecipe(slug: string): Promise<Recipe> {
-  return apiClient.getRecipeBySlug(slug);
-}
-
-/**
- * Fetch a single recipe by id
- * @deprecated Use apiClient.getRecipeById() instead
- */
-export async function fetchRecipeById(id: string): Promise<Recipe> {
-  return apiClient.getRecipeById(id);
-}
-
-/**
- * Create a new recipe
- * @deprecated Use apiClient.createRecipe() instead
- */
-export async function createRecipe(data: CreateRecipeRequest): Promise<Recipe> {
-  return apiClient.createRecipe(data);
-}
-
-/**
- * Update an existing recipe
- * @deprecated Use apiClient.updateRecipe() instead
- */
-export async function updateRecipe(id: string, data: UpdateRecipeRequest): Promise<Recipe> {
-  return apiClient.updateRecipe(id, data);
-}
-
-/**
- * Delete a recipe
- * @deprecated Use apiClient.deleteRecipe() instead
- */
-export async function deleteRecipe(id: string): Promise<void> {
-  return apiClient.deleteRecipe(id);
-}
-
-/**
- * Get all categories
- * @deprecated Use apiClient.getCategories() instead
- */
-export async function fetchCategories(): Promise<Category[]> {
-  return apiClient.getCategories();
-}
-
-/**
- * Create or update a rating for a recipe
- * @deprecated Use apiClient.createRating() instead
- */
-export async function createOrUpdateRating(recipeId: string, stars: number): Promise<Rating> {
-  const result = await apiClient.createRating(recipeId, { stars });
-  return result.rating;
-}
-
-/**
- * Get the current user's rating for a recipe
- * @deprecated Use apiClient.getRating() instead
- */
-export async function getUserRating(recipeId: string): Promise<Rating | null> {
-  try {
-    return await apiClient.getRating(recipeId);
-  } catch (error) {
-    // If 404, user hasn't rated this recipe yet
-    if (error instanceof Error && error.message.includes('404')) {
-      return null;
-    }
-    throw error;
-  }
-}
-
-/**
- * Delete the current user's rating for a recipe
- * @deprecated Use apiClient.deleteRating() instead
- */
-export async function deleteRating(recipeId: string): Promise<void> {
-  return apiClient.deleteRating(recipeId);
-}
-
-/**
- * Register a new user
- * @deprecated Use apiClient.register() instead
- */
-export async function register(data: RegisterRequest): Promise<AuthResponse> {
-  return apiClient.register(data);
-}
-
-/**
- * Login with email and password
- * @deprecated Use apiClient.login() instead
- */
-export async function login(data: LoginRequest): Promise<AuthResponse> {
-  return apiClient.login(data);
-}
-
-/**
- * Logout current user
- * @deprecated Use apiClient.logout() instead
- */
-export async function logout(): Promise<void> {
-  return apiClient.logout();
-}
-
-/**
- * Get current user info
- * @deprecated Use apiClient.getMe() instead
- */
-export async function me(): Promise<MeResponse> {
-  return apiClient.getMe();
-}
-
-/**
- * Refresh access token
- * @deprecated Use apiClient.refreshAccessToken() instead
- */
-export async function refreshAccessToken(): Promise<AuthResponse> {
-  return apiClient.refreshAccessToken();
-}
-
-/**
- * Publish a recipe
- * @deprecated Use apiClient.publishRecipe() instead
- */
-export async function publishRecipe(id: string): Promise<Recipe> {
-  return apiClient.publishRecipe(id);
-}
-
-/**
- * Archive a recipe
- * @deprecated Use apiClient.archiveRecipe() instead
- */
-export async function archiveRecipe(id: string): Promise<Recipe> {
-  return apiClient.archiveRecipe(id);
-}
-
-/**
- * Create a new category (admin only)
- * @deprecated Use apiClient.createCategory() instead
- */
-export async function createCategory(data: CreateCategoryRequest): Promise<Category> {
-  return apiClient.createCategory(data);
-}
-
-/**
- * Update a category (admin only)
- * @deprecated Use apiClient.updateCategory() instead
- */
-export async function updateCategory(id: string, data: UpdateCategoryRequest): Promise<Category> {
-  return apiClient.updateCategory(id, data);
-}
-
-/**
- * Delete a category (admin only)
- * @deprecated Use apiClient.deleteCategory() instead
- */
-export async function deleteCategory(id: string): Promise<void> {
-  return apiClient.deleteCategory(id);
-}
-
-/**
- * Get all users (admin only)
- * @deprecated Use apiClient.getUsers() instead
- */
-export async function getUsers(): Promise<UserListResponse> {
-  return apiClient.getUsers();
-}
-
-/**
- * Update user role (admin only)
- * @deprecated Use apiClient.updateUserRole() instead
- */
-export async function updateUserRole(id: string, data: UpdateUserRoleRequest): Promise<User> {
-  return apiClient.updateUserRole(id, data);
-}
-
-/**
- * Get all recipes including drafts (admin only)
- * @deprecated Use apiClient.getAdminRecipes() instead
- */
-export async function getAdminRecipes(): Promise<AdminRecipeListResponse> {
-  return apiClient.getAdminRecipes();
-}
-
-/**
- * Check API health status
- * @deprecated Use apiClient.healthCheck() instead
- */
-export async function healthCheck(): Promise<{ status: string; timestamp: string; database: string; version?: string }> {
-  return apiClient.healthCheck();
-}

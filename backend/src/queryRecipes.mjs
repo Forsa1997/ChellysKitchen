@@ -58,11 +58,15 @@ export function filterRecipes(recipes, queryParams = {}) {
   // specific status) to include drafts/archived (used by admin views).
   const status = String(queryParams.status ?? 'PUBLISHED').trim().toUpperCase();
 
+  const favoritesOnly = String(queryParams.favorites ?? '') === 'true';
+
   return recipes.filter((recipe) => {
     const matchesQuery =
       q.length === 0 ||
       recipe.title.toLowerCase().includes(q) ||
-      recipe.shortDescription.toLowerCase().includes(q);
+      recipe.shortDescription.toLowerCase().includes(q) ||
+      (Array.isArray(recipe.ingredients) &&
+        recipe.ingredients.some((ingredient) => String(ingredient?.name ?? '').toLowerCase().includes(q)));
     const matchesCategory = category === 'all' || recipe.category === category;
     const recipeDifficulty = normalizeDifficulty(String(recipe.difficulty ?? 'all').trim());
     const matchesDifficulty = difficulty === 'all' || recipeDifficulty === difficulty;
@@ -70,8 +74,9 @@ export function filterRecipes(recipes, queryParams = {}) {
     const matchesStatus = status === 'ALL' || recipeStatus === status;
     const totalMinutes = Number(recipe.preparationTime ?? 0) + Number(recipe.cookingTime ?? 0);
     const matchesMaxTotalMinutes = maxTotalMinutes == null || totalMinutes <= maxTotalMinutes;
+    const matchesFavorites = !favoritesOnly || recipe.isFavorite === true;
 
-    return matchesQuery && matchesCategory && matchesDifficulty && matchesStatus && matchesMaxTotalMinutes;
+    return matchesQuery && matchesCategory && matchesDifficulty && matchesStatus && matchesMaxTotalMinutes && matchesFavorites;
   });
 }
 

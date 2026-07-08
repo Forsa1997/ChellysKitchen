@@ -34,66 +34,53 @@ Keep Testing and QA distinct: Testing defines what must be proven before code; Q
 
 ## Project Overview
 
-Chellys Kitchen is a recipe management application with a TypeScript backend (Fastify + Prisma + PostgreSQL) and a React frontend (Vite + Material UI).
+Chellys Kitchen is a family recipe app with a deliberately slim, dependency-free Node.js backend (`backend/server.mjs`, JSON file store) and a React frontend (Vite + Material UI). There is no database and no ORM.
 
 ## Development Commands
 
 ### Backend (in `backend/` directory)
-- `npm run dev` - Start development server (http://localhost:4000)
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm run start` - Run production build
-- `npm run prisma:migrate` - Run database migrations
-- `npm run prisma:generate` - Generate Prisma client
-- `npm run prisma:seed` - Seed database with initial data
+- `npm run dev` - Start development server with --watch (http://localhost:4000)
+- `npm run start` - Run the server (same entry point, `server.mjs`)
+- `npm test` - Run all backend tests (node:test, incl. end-to-end smoke tests that boot the real server)
 
 ### Frontend (in `frontend/` directory)
 - `npm run dev` - Start Vite dev server
 - `npm run build` - Build for production
 - `npm run lint` - Run ESLint
+- `npm test` - Run Vitest suite
 
 ## Architecture
 
-### Backend - Domain-Driven Design
+### Backend - Single-file server with extracted modules
 
-The backend follows a layered architecture:
+`backend/server.mjs` is a plain `node:http` server (no npm dependencies). Testable logic lives in `backend/src/*.mjs` modules, each with a sibling `*.test.mjs`:
 
-**Domain Layer** (`backend/src/domain/`)
-- `entities/` - Core domain models (Recipe, Category, User)
-- `services/` - Business logic (PasswordService, SlugService, RatingService, RecipeService)
-- `validators/` - Zod schemas for input validation
+- `queryRecipes.mjs` - shared list filtering (q incl. ingredients, category, difficulty, status, maxTotalMinutes, favorites) + pagination/sorting
+- `randomRecipe.mjs` - random pick over ALL matching recipes (`GET /api/recipes/random`, `exclude` param)
+- `persistence.mjs` - JSON store serialization, debounced disk writes to `DATA_DIR/store.json`
+- `backup.mjs` - full export/import payloads incl. uploaded images (admin endpoints)
+- `passwords.mjs` - scrypt hashing, transparent migration of legacy SHA-256 hashes on login
+- `sessions.mjs` - token maps with TTL (access 1d, refresh 30d, rotation on refresh)
+- `uploads.mjs`, `cors.mjs` - image upload validation, CORS origin resolution
 
-**Application Layer** (`backend/src/application/`)
-- Use cases that orchestrate domain logic (AuthUseCases, RecipeUseCases, UserUseCases)
-
-**Infrastructure Layer** (`backend/src/infrastructure/`)
-- `database/` - Prisma client singleton with connection management
-- `storage/` - File upload handling (StorageService)
-- `auth/` - JWT token generation and verification
-
-**API Layer** (`backend/src/api/`)
-- Route handlers organized by resource (auth, recipes, categories, ratings, admin, health)
-- Each route file exports a function that registers routes with Fastify
-
-**Middleware** (`backend/src/middleware/`)
-- `auth.ts` - Authentication and authorization middleware (requireAuth, requireRole, requireMinRole, optionalAuth)
+End-to-end smoke tests in `backend/test/` spawn the real server against a temp `DATA_DIR`.
 
 ### Key Patterns
 
 **Authentication Flow**
-- JWT-based auth with access and refresh tokens
-- Middleware attaches decoded user payload to `request.user`
-- Role-based access control: GUEST < MEMBER < EDITOR < ADMIN
+- Opaque bearer tokens (not JWT) stored in persisted session maps with expiry
+- `authenticateRequest(req)` resolves the user; role ranks: GUEST < MEMBER < EDITOR < ADMIN
+- Registration requires `inviteCode` when the `INVITE_CODE` env var is set
+- Production (`NODE_ENV=production`) seeds no demo user and no default admin — `ADMIN_EMAIL`/`ADMIN_PASSWORD` are required
 
 **Recipe Management**
 - Recipes have slugs for URL-friendly identifiers
-- Status workflow: DRAFT → PUBLISHED → ARCHIVED
-- Only EDITOR/ADMIN can publish/archive recipes
-- Recipe ownership checked on update/delete operations
+- New recipes publish immediately (deliberate decision for family use; DRAFT exists in the status enum but has no UI flow). EDITOR/ADMIN can archive/publish via admin dashboard
+- Recipe ownership checked on update/delete; favorites are per user; notes are shared and writable by any member
 
-**Database**
-- Prisma ORM with PostgreSQL
-- Schema defined in `backend/prisma/schema.prisma`
-- JSONB fields for flexible data (ingredients, steps, nutritionalValues)
+**Persistence**
+- Everything (users, recipes, ratings, categories, favorites, sessions) lives in one JSON file under `DATA_DIR` (default `./.data`); uploaded images next to it
+- Render free tier wipes `DATA_DIR` on redeploy — the admin backup export/import endpoints are the safety net
 
 ### Frontend Architecture
 
@@ -114,8 +101,9 @@ The backend follows a layered architecture:
 
 ## Important Notes
 
-- Backend runs on port 4000 by default
-- Database URL configured via `DATABASE_URL` environment variable
-- Passwords hashed with bcrypt (10 salt rounds)
+- Backend runs on port 4000 by default; data location via `DATA_DIR` (default `./.data`)
+- Passwords hashed with scrypt (`node:crypto`); legacy SHA-256 hashes migrate on login
 - Recipe slugs auto-generated from titles with collision handling
 - Ratings are 1-5 stars, one per user per recipe (upsert behavior)
+- Production runs with the hash router (`/#/...`) because the static host has no SPA rewrites
+- Deferred ideas and decisions live in `BACKLOG.md`

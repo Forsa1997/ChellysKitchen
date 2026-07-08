@@ -25,9 +25,13 @@ services:
       - key: CORS_ORIGIN
         sync: false
       # Initial admin account (needed to reach the admin dashboard).
+      # Required in production: without these no admin account is created.
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
+        sync: false
+      # When set, new registrations must supply this code (family-only signup).
+      - key: INVITE_CODE
         sync: false
       # Directory for the JSON data store and uploaded images.
       # On Render's free tier the filesystem is ephemeral: data survives

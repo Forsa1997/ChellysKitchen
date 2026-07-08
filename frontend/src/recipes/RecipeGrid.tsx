@@ -1,4 +1,6 @@
-import { Box, Card, CardContent, CardMedia, Chip, Grid, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, CardMedia, Chip, Grid, IconButton, Stack, Typography } from '@mui/material';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { Link as RouterLink } from 'react-router';
 import type { Recipe } from '../types/domain';
 import { totalRecipeMinutes } from './recipeCardViewModel';
@@ -6,9 +8,11 @@ import { recipeRenderImage } from './recipeImages';
 
 interface RecipeGridProps {
   recipes: Recipe[];
+  /** When provided (i.e. the viewer is signed in), each card shows a heart button. */
+  onToggleFavorite?: (recipe: Recipe) => void;
 }
 
-export function RecipeGrid({ recipes }: RecipeGridProps) {
+export function RecipeGrid({ recipes, onToggleFavorite }: RecipeGridProps) {
   const dateFormatter = new Intl.DateTimeFormat('de-DE', {
     day: '2-digit',
     month: '2-digit',
@@ -69,9 +73,26 @@ export function RecipeGrid({ recipes }: RecipeGridProps) {
               <Box sx={{ aspectRatio: '16 / 10', bgcolor: 'grey.100' }} />
             )}
             <CardContent sx={{ p: 2.25, display: 'flex', minHeight: 188, flexDirection: 'column' }}>
-              <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 1, flexWrap: 'wrap' }}>
+              <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                 {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
                 <Chip label={recipe.difficulty} size="small" variant="outlined" />
+                {onToggleFavorite && (
+                  <IconButton
+                    aria-label={recipe.isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
+                    size="small"
+                    sx={{ ml: 'auto', border: 'none' }}
+                    onClick={(event) => {
+                      // The whole card is a link; the heart must not navigate.
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onToggleFavorite(recipe);
+                    }}
+                  >
+                    {recipe.isFavorite
+                      ? <FavoriteIcon fontSize="small" color="error" />
+                      : <FavoriteBorderIcon fontSize="small" />}
+                  </IconButton>
+                )}
               </Stack>
               <Typography variant="h6" sx={{ mb: 0.75 }}>
                 {recipe.title}

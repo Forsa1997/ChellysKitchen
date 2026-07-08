@@ -13,11 +13,16 @@ const useDeleteRecipeMock = vi.fn();
 const usePublishRecipeMock = vi.fn();
 const useArchiveRecipeMock = vi.fn();
 
+const useToggleFavoriteMock = vi.fn();
+const useUpdateRecipeNotesMock = vi.fn();
+
 vi.mock('../hooks/useRecipes', () => ({
   useRecipe: (...args: unknown[]) => useRecipeMock(...args),
   useDeleteRecipe: () => useDeleteRecipeMock(),
   usePublishRecipe: () => usePublishRecipeMock(),
   useArchiveRecipe: () => useArchiveRecipeMock(),
+  useToggleFavorite: () => useToggleFavoriteMock(),
+  useUpdateRecipeNotes: () => useUpdateRecipeNotesMock(),
 }));
 
 vi.mock('../auth/AuthContext', () => ({
@@ -57,6 +62,8 @@ const mockDefaults = () => {
   useDeleteRecipeMock.mockReturnValue(mockMutation());
   usePublishRecipeMock.mockReturnValue(mockMutation());
   useArchiveRecipeMock.mockReturnValue(mockMutation());
+  useToggleFavoriteMock.mockReturnValue(mockMutation());
+  useUpdateRecipeNotesMock.mockReturnValue(mockMutation());
 };
 
 describe('RecipeDetailPage', () => {
@@ -203,6 +210,75 @@ describe('RecipeDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Drucken' }));
 
     expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it('copies the scaled ingredient list as a shopping helper', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    // Scale up to 3 servings first, then copy: amounts must be scaled.
+    fireEvent.click(screen.getByRole('button', { name: 'Portionen erhöhen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zutaten kopieren' }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    const copied = writeText.mock.calls[0][0];
+    expect(copied).toContain('Pasta');
+    expect(copied).toContain('300 g Spaghetti');
+    expect(screen.getByText('Zutaten kopiert')).toBeInTheDocument();
+  });
+
+  it('lets signed-in members mark a recipe as favorite', () => {
+    const toggleMutation = mockMutation();
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: { id: 'u2', role: 'MEMBER' } });
+    mockDefaults();
+    useToggleFavoriteMock.mockReturnValue(toggleMutation);
+
+    const screen = renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Als Favorit markieren' }));
+
+    expect(toggleMutation.mutateAsync).toHaveBeenCalledWith({ slug: 'pasta', isFavorite: false });
+  });
+
+  it('lets signed-in members save shared notes', async () => {
+    const notesMutation = mockMutation();
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: { id: 'u2', role: 'MEMBER' } });
+    mockDefaults();
+    useUpdateRecipeNotesMock.mockReturnValue(notesMutation);
+
+    const screen = renderPage();
+
+    fireEvent.change(screen.getByLabelText('Notizen'), { target: { value: 'Weniger Salz.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Notiz speichern' }));
+
+    await waitFor(() => {
+      expect(notesMutation.mutateAsync).toHaveBeenCalledWith({ slug: 'pasta', notes: 'Weniger Salz.' });
+    });
+  });
+
+  it('shows existing notes to visitors without an edit form', () => {
+    useRecipeMock.mockReturnValue({
+      data: { ...recipe, notes: 'Nächstes Mal weniger Salz.' },
+      isLoading: false,
+      error: null,
+    });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    expect(screen.getByText('Nächstes Mal weniger Salz.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Notiz speichern' })).not.toBeInTheDocument();
   });
 
   it('rolls again for another random recipe, excluding the current one', async () => {

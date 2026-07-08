@@ -20,6 +20,12 @@ export function serializeState(state) {
       [...userMap.entries()],
     ]),
     categoriesStore: state.categoriesStore,
+    // userId -> Set<recipeId>, stored as entry arrays. Optional so callers
+    // (and older store files) without favorites keep working.
+    favoritesStore: [...(state.favoritesStore ?? new Map()).entries()].map(([userId, recipeIds]) => [
+      userId,
+      [...recipeIds],
+    ]),
   };
 }
 
@@ -41,7 +47,13 @@ export function deserializeState(raw) {
     ratingsStore.set(recipeId, new Map(entries ?? []));
   }
 
+  const favoritesStore = new Map();
+  for (const [userId, recipeIds] of raw?.favoritesStore ?? []) {
+    favoritesStore.set(userId, new Set(recipeIds ?? []));
+  }
+
   return {
+    favoritesStore,
     users,
     sessions: new Map(raw?.sessions ?? []),
     refreshSessions: new Map(raw?.refreshSessions ?? []),

@@ -77,6 +77,8 @@ export interface Recipe {
   archivedAt?: string;
   averageRating?: number;
   totalRatings?: number;
+  notes?: string;
+  isFavorite?: boolean;
 }
 
 // ============================================================================

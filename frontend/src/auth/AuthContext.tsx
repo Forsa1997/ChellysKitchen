@@ -10,7 +10,7 @@ interface AuthContextValue {
   loading: boolean;
   error: Error | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, inviteCode?: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -67,10 +67,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
           throw err;
         }
       },
-      async register(name: string, email: string, password: string) {
+      async register(name: string, email: string, password: string, inviteCode?: string) {
         try {
           setError(null);
-          const result = await registerMutation.mutateAsync({ name, email, password });
+          const result = await registerMutation.mutateAsync({ name, email, password, inviteCode });
           setToken(result.accessToken);
           // Invalidate and refetch me query
           meQuery.refetch();

@@ -20,6 +20,10 @@ vi.mock('../recipes/useQueryRecipes', () => ({
   useQueryRecipes: (...args: unknown[]) => useQueryRecipesMock(...args),
 }));
 
+vi.mock('../hooks/useRecipes', () => ({
+  useToggleFavorite: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+}));
+
 vi.mock('../api/client', () => ({
   apiClient: {
     getRandomRecipe: (...args: unknown[]) => getRandomRecipeMock(...args),
@@ -178,6 +182,38 @@ describe('HomePage random recipe action', () => {
     renderHomePage();
 
     expect(screen.getByRole('button', { name: 'Zufälliges Rezept' })).toBeDisabled();
+  });
+
+  it('offers a favorites-only filter to signed-in users that updates the URL', () => {
+    useAuthMock.mockReturnValue({ user: { id: 'u1', role: 'MEMBER' } });
+    useCategoriesMock.mockReturnValue({ data: [] });
+    useQueryRecipesMock.mockReturnValue({
+      recipes,
+      meta: defaultMeta,
+      loading: false,
+      error: null,
+    });
+
+    renderHomePage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nur Favoriten' }));
+
+    expect(useQueryRecipesMock).toHaveBeenLastCalledWith(expect.objectContaining({ favorites: true }));
+  });
+
+  it('hides the favorites filter for anonymous visitors', () => {
+    useAuthMock.mockReturnValue({ user: null });
+    useCategoriesMock.mockReturnValue({ data: [] });
+    useQueryRecipesMock.mockReturnValue({
+      recipes,
+      meta: defaultMeta,
+      loading: false,
+      error: null,
+    });
+
+    renderHomePage();
+
+    expect(screen.queryByRole('button', { name: 'Nur Favoriten' })).not.toBeInTheDocument();
   });
 
   it('no longer renders the recipe lottery panel', () => {

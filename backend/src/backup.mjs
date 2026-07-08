@@ -31,6 +31,7 @@ export function createExportPayload(state, uploads = []) {
     recipeStore: serialized.recipeStore,
     ratingsStore: serialized.ratingsStore,
     categoriesStore: serialized.categoriesStore,
+    favoritesStore: serialized.favoritesStore,
     uploads,
   };
 }
@@ -76,6 +77,7 @@ export function parseImportPayload(payload) {
     recipeStore: state.recipeStore,
     ratingsStore: state.ratingsStore,
     categoriesStore: state.categoriesStore,
+    favoritesStore: state.favoritesStore,
     uploads,
   };
 }

@@ -55,6 +55,32 @@ export function useDeleteRecipe() {
   });
 }
 
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ slug, isFavorite }: { slug: string; isFavorite: boolean }) =>
+      (isFavorite ? apiClient.removeFavorite(slug) : apiClient.setFavorite(slug)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe'] });
+    },
+  });
+}
+
+export function useUpdateRecipeNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ slug, notes }: { slug: string; notes: string }) =>
+      apiClient.updateRecipeNotes(slug, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe'] });
+    },
+  });
+}
+
 export function usePublishRecipe() {
   const queryClient = useQueryClient();
 
