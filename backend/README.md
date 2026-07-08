@@ -19,6 +19,7 @@ Server-Standard: `http://localhost:4000`
 - `GET /health`
 - `POST /api/auth/login|refresh|logout`, `GET /api/auth/me` (keine öffentliche Registrierung)
 - `GET /api/recipes` (Suche/Filter/Pagination), `GET /api/recipes/random`
+- `GET /api/recipes/:idOrSlug/bring` (schema.org-Seite für den Bring!-Import, `?servings=` skaliert)
 - `GET|POST|PATCH|DELETE /api/recipes/:idOrSlug` (+ `/publish`, `/archive`)
 - `PUT|DELETE /api/recipes/:slug/favorite`, `PATCH /api/recipes/:slug/notes`
 - `GET|POST|DELETE /api/recipes/:slug/rating`

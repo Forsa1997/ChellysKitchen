@@ -6,6 +6,7 @@ import { recipes } from './data/recipes.mjs';
 import { queryRecipes } from './src/queryRecipes.mjs';
 import { pickRandomRecipe } from './src/randomRecipe.mjs';
 import { createExportPayload, parseImportPayload } from './src/backup.mjs';
+import { renderBringHtml } from './src/bringExport.mjs';
 import { resolveCorsOrigin } from './src/cors.mjs';
 import {
   createDebouncedPersister,
@@ -414,6 +415,28 @@ const server = createServer(async (req, res) => {
       }
 
       jsonResponse(res, 200, sanitizeRecipe(recipe, authenticateRequest(req)));
+      return;
+    }
+  }
+
+  // GET /api/recipes/:idOrSlug/bring - Public schema.org page for the Bring!
+  // shopping-list import. Bring's deeplink API fetches this URL server-side
+  // (unauthenticated) and parses the embedded JSON-LD; ?servings=N scales
+  // the ingredient amounts to the portion count picked in the frontend.
+  if (req.method === 'GET' && req.url?.startsWith('/api/recipes/')) {
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const bringMatch = requestUrl.pathname.match(/^\/api\/recipes\/([^/]+)\/bring$/);
+
+    if (bringMatch) {
+      const recipe = findRecipeByIdOrSlug(decodeURIComponent(bringMatch[1]));
+      if (!recipe) {
+        jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+        return;
+      }
+
+      const html = renderBringHtml(recipe, { servings: requestUrl.searchParams.get('servings') ?? undefined });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
       return;
     }
   }

@@ -59,6 +59,7 @@ Chellys Kitchen is a family recipe app with a deliberately slim, dependency-free
 - `randomRecipe.mjs` - random pick over ALL matching recipes (`GET /api/recipes/random`, `exclude` param)
 - `persistence.mjs` - JSON store serialization, debounced disk writes to `DATA_DIR/store.json`
 - `backup.mjs` - full export/import payloads incl. uploaded images (admin endpoints)
+- `bringExport.mjs` - schema.org/Recipe JSON-LD page for the Bring! shopping-list import (`GET /api/recipes/:slug/bring`, `servings` param scales amounts)
 - `passwords.mjs` - scrypt hashing, transparent migration of legacy SHA-256 hashes on login
 - `sessions.mjs` - token maps with TTL (access 1d, refresh 30d, rotation on refresh)
 - `uploads.mjs`, `cors.mjs` - image upload validation, CORS origin resolution

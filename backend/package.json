@@ -15,7 +15,7 @@
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
     "start:render": "node server.mjs",
-    "test": "node --test src/persistence.test.mjs src/cors.test.mjs src/uploads.test.mjs src/queryRecipes.test.mjs src/randomRecipe.test.mjs src/backup.test.mjs src/passwords.test.mjs src/sessions.test.mjs recipesData.test.mjs uploadRecipes.test.mjs test/server.smoke.test.mjs test/server.invite.test.mjs"
+    "test": "node --test"
   },
   "version": "1.0.0"
 }

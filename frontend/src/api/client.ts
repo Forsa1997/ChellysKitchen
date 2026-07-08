@@ -276,6 +276,11 @@ function inferApiBaseUrl(): string {
 
 const API_BASE_URL = inferApiBaseUrl();
 
+/** Public backend base URL, e.g. for links that must bypass the SPA. */
+export function getApiBaseUrl(): string {
+  return API_BASE_URL;
+}
+
 class ApiClient {
   private baseUrl: string;
   private accessToken: string | null = null;

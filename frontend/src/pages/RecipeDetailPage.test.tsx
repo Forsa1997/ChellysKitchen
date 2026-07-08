@@ -41,6 +41,7 @@ vi.mock('../api/client', () => ({
   apiClient: {
     getRandomRecipe: (...args: unknown[]) => getRandomRecipeMock(...args),
   },
+  getApiBaseUrl: () => 'https://api.example.com',
 }));
 
 function LocationProbe() {
@@ -233,6 +234,23 @@ describe('RecipeDetailPage', () => {
     expect(copied).toContain('Pasta');
     expect(copied).toContain('300 g Spaghetti');
     expect(screen.getByText('Zutaten kopiert')).toBeInTheDocument();
+  });
+
+  it('links the Bring! export with the selected servings', () => {
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    // Scale up first: the deeplink must carry the adjusted portion count.
+    fireEvent.click(screen.getByRole('button', { name: 'Portionen erhöhen' }));
+
+    const link = screen.getByRole('link', { name: 'An Bring! senden' });
+    expect(link).toHaveAttribute('target', '_blank');
+    const href = link.getAttribute('href') ?? '';
+    expect(href).toContain('https://api.getbring.com/rest/bringrecipes/deeplink');
+    expect(decodeURIComponent(href)).toContain('https://api.example.com/api/recipes/pasta/bring?servings=3');
   });
 
   it('lets signed-in members mark a recipe as favorite', () => {

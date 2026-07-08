@@ -5,8 +5,9 @@ import { useRecipe, useDeleteRecipe, usePublishRecipe, useArchiveRecipe, useTogg
 import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
-import { apiClient, type ApiError } from '../api/client';
+import { AccessTime, Add, AddShoppingCart, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
+import { apiClient, getApiBaseUrl, type ApiError } from '../api/client';
+import { buildBringDeeplink } from '../utils/bring';
 import type { Ingredient, RecipeStep } from '../types/domain';
 import { recipeRenderImage } from '../recipes/recipeImages';
 
@@ -461,16 +462,32 @@ export function RecipeDetailPage() {
                     </IconButton>
                   </Tooltip>
                 </Stack>
-                <Button
-                  startIcon={<ShoppingCartOutlined />}
-                  variant="outlined"
-                  size="small"
-                  onClick={handleCopyIngredients}
-                  sx={{ mb: 2 }}
-                  fullWidth
-                >
-                  Zutaten kopieren
-                </Button>
+                <Stack spacing={1} sx={{ mb: 2 }}>
+                  <Button
+                    startIcon={<ShoppingCartOutlined />}
+                    variant="outlined"
+                    size="small"
+                    onClick={handleCopyIngredients}
+                    fullWidth
+                  >
+                    Zutaten kopieren
+                  </Button>
+                  <Button
+                    startIcon={<AddShoppingCart />}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    href={buildBringDeeplink({
+                      apiBaseUrl: getApiBaseUrl(),
+                      slug: recipe.slug,
+                      servings: selectedServings,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    An Bring! senden
+                  </Button>
+                </Stack>
                 <Divider sx={{ mb: 2 }} />
                 <List dense sx={{ p: 0 }}>
                   {recipe.ingredients.map((ingredient: Ingredient, index: number) => (

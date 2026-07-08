@@ -25,6 +25,8 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 - [x] Suche findet auch Zutatennamen
 - [x] Favoriten pro Person + „Nur Favoriten"-Filter (gilt auch für den Zufall)
 - [x] Zutatenliste skaliert kopieren/teilen (Einkaufshilfe)
+- [x] Zutaten an die Bring!-Einkaufsliste senden (Deeplink; das Backend liefert
+      dafür eine öffentliche schema.org-Seite pro Rezept)
 - [x] PWA-Manifest (Homescreen-Installation)
 - [x] Gemeinsame Notizen pro Rezept
 
@@ -40,7 +42,6 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 
 ## Ideen für später (bewusst zurückgestellt)
 
-- Zutaten in die Bring!-Einkaufsliste exportieren (nächster geplanter Schritt)
 - Persistent Disk bei Render (kostenpflichtig) statt manuellem Backup
 - Wochenplaner / „Was kochen wir diese Woche?"
 - Rezept-Import von fremden Webseiten

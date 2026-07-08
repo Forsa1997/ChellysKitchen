@@ -238,6 +238,28 @@ test('any member can update the shared notes of a recipe', async () => {
   assert.equal(anonymous.status, 401);
 });
 
+test('bring export serves schema.org recipe markup with scaled ingredients', async () => {
+  const list = await api('/api/recipes?pageSize=1');
+  const target = list.body.data[0];
+  const doubled = target.servings * 2;
+
+  const res = await fetch(`${BASE}/api/recipes/${target.slug}/bring?servings=${doubled}`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /text\/html/);
+
+  const html = await res.text();
+  const jsonLdMatch = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s);
+  assert.ok(jsonLdMatch, 'page embeds JSON-LD');
+  const jsonLd = JSON.parse(jsonLdMatch[1]);
+  assert.equal(jsonLd['@type'], 'Recipe');
+  assert.equal(jsonLd.name, target.title);
+  assert.equal(jsonLd.recipeYield, String(doubled));
+  assert.ok(jsonLd.recipeIngredient.length > 0, 'ingredients exported');
+
+  const missing = await fetch(`${BASE}/api/recipes/gibt-es-nicht/bring`);
+  assert.equal(missing.status, 404);
+});
+
 test('random recipe endpoint picks published recipes and respects filters', async () => {
   const random = await api('/api/recipes/random');
   assert.equal(random.status, 200);
