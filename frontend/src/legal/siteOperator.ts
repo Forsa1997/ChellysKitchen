@@ -18,7 +18,7 @@ export const siteOperator = {
   postalCode: '30926',
   city: 'Seelze',
   country: 'Deutschland',
-  email: 'chellyzboron@t-online.de',
+  email: 'CrZeRo@web.de',
   // Optional: Telefonnummer (leer lassen, wenn nicht gewünscht).
   phone: '',
 };
