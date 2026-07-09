@@ -32,6 +32,7 @@ export function createExportPayload(state, uploads = []) {
     ratingsStore: serialized.ratingsStore,
     categoriesStore: serialized.categoriesStore,
     favoritesStore: serialized.favoritesStore,
+    weekPlanStore: serialized.weekPlanStore,
     uploads,
   };
 }
@@ -78,6 +79,7 @@ export function parseImportPayload(payload) {
     ratingsStore: state.ratingsStore,
     categoriesStore: state.categoriesStore,
     favoritesStore: state.favoritesStore,
+    weekPlanStore: state.weekPlanStore,
     uploads,
   };
 }

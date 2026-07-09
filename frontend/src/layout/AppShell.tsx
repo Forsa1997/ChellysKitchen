@@ -32,6 +32,9 @@ export function AppShell({ children }: PropsWithChildren) {
       <Button component={RouterLink} to="/recipes/new" variant="contained">
         Rezept erstellen
       </Button>
+      <Button component={RouterLink} to="/wochenplan" variant="outlined">
+        Wochenplan
+      </Button>
       {user.role === 'ADMIN' && (
         <Button component={RouterLink} to="/admin" variant="outlined">
           Admin Dashboard
@@ -161,6 +164,9 @@ export function AppShell({ children }: PropsWithChildren) {
                 </Typography>
                 <Button component={RouterLink} to="/recipes/new" variant="contained" fullWidth onClick={closeMenu}>
                   Rezept erstellen
+                </Button>
+                <Button component={RouterLink} to="/wochenplan" variant="outlined" fullWidth onClick={closeMenu}>
+                  Wochenplan
                 </Button>
                 {user.role === 'ADMIN' && (
                   <Button component={RouterLink} to="/admin" variant="outlined" fullWidth onClick={closeMenu}>

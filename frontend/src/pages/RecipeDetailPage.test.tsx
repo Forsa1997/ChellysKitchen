@@ -35,6 +35,12 @@ vi.mock('../hooks/useRatings', () => ({
   useRecipeRatings: (...args: unknown[]) => useRecipeRatingsMock(...args),
 }));
 
+const addToWeekPlanMock = { isPending: false, mutateAsync: vi.fn().mockResolvedValue({}) };
+
+vi.mock('../hooks/useWeekPlan', () => ({
+  useAddToWeekPlan: () => addToWeekPlanMock,
+}));
+
 const getRandomRecipeMock = vi.fn();
 
 vi.mock('../api/client', () => ({
@@ -251,6 +257,27 @@ describe('RecipeDetailPage', () => {
     const href = link.getAttribute('href') ?? '';
     expect(href).toContain('https://api.getbring.com/rest/bringrecipes/deeplink');
     expect(decodeURIComponent(href)).toContain('https://api.example.com/api/recipes/pasta/bring?servings=3');
+  });
+
+  it('adds the recipe to a week plan day with the selected servings', async () => {
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: { id: 'u2', role: 'MEMBER' } });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    // Scale up first: the planned servings follow the selection.
+    fireEvent.click(screen.getByRole('button', { name: 'Portionen erhöhen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zum Wochenplan' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Montag' }));
+
+    await waitFor(() => {
+      expect(addToWeekPlanMock.mutateAsync).toHaveBeenCalledWith({
+        day: 'monday',
+        recipeId: 'recipe-1',
+        servings: 3,
+      });
+    });
   });
 
   it('lets signed-in members mark a recipe as favorite', () => {

@@ -105,7 +105,8 @@ export function RecipeForm({ heading, subheading, submitLabel, initialValues, on
     initialValues?.ingredients && initialValues.ingredients.length > 0
       ? initialValues.ingredients.map((ingredient) => ({
           ...ingredient,
-          amount: String(ingredient.amount).replace('.', ','),
+          // Amount 0 means "no amount" (e.g. Salz) — show an empty field.
+          amount: ingredient.amount > 0 ? String(ingredient.amount).replace('.', ',') : '',
         }))
       : [{ name: '', amount: '', unit: '' }],
   );
@@ -188,8 +189,9 @@ export function RecipeForm({ heading, subheading, submitLabel, initialValues, on
     setSubmitAttempted(true);
     setError(null);
 
-    // Rows the cook never touched are dropped silently; half-filled rows are
-    // probably mistakes and block the submit instead.
+    // Rows the cook never touched are dropped silently. Only the name is
+    // required — "Salz" has neither amount nor unit. A row with an amount or
+    // unit but no name is probably a mistake and blocks the submit.
     const preparedIngredients: Ingredient[] = [];
     let hasIncompleteIngredient = false;
     for (const ingredient of ingredients) {
@@ -198,8 +200,8 @@ export function RecipeForm({ heading, subheading, submitLabel, initialValues, on
       const amountText = ingredient.amount.trim();
       if (!name && !unit && !amountText) continue;
 
-      const amount = parseAmount(amountText);
-      if (name && unit && Number.isFinite(amount) && amount > 0) {
+      const amount = amountText === '' ? 0 : parseAmount(amountText);
+      if (name && Number.isFinite(amount) && amount >= 0) {
         preparedIngredients.push({ name, amount, unit });
       } else {
         hasIncompleteIngredient = true;
@@ -215,7 +217,7 @@ export function RecipeForm({ heading, subheading, submitLabel, initialValues, on
     if (!title.trim()) missing.push('Titel fehlt.');
     if (!shortDescription.trim()) missing.push('Kurzbeschreibung fehlt.');
     if (!(servings >= 1)) missing.push('Portionen müssen mindestens 1 sein.');
-    if (hasIncompleteIngredient) missing.push('Bitte vervollständige alle angefangenen Zutaten (Menge, Einheit und Name).');
+    if (hasIncompleteIngredient) missing.push('Bitte vervollständige alle angefangenen Zutaten (mindestens der Name fehlt oder die Menge ist ungültig).');
     if (preparedIngredients.length === 0 && !hasIncompleteIngredient) missing.push('Mindestens eine Zutat wird benötigt.');
     if (preparedSteps.length === 0) missing.push('Mindestens ein Zubereitungsschritt wird benötigt.');
 
@@ -371,7 +373,7 @@ export function RecipeForm({ heading, subheading, submitLabel, initialValues, on
         </Stack>
       </Section>
 
-      <Section title="Zutaten" subtitle="Leere Zeilen werden beim Speichern ignoriert. Mengen darfst du mit Komma schreiben (z.B. 1,5).">
+      <Section title="Zutaten" subtitle="Leere Zeilen werden beim Speichern ignoriert. Mengen darfst du mit Komma schreiben (z.B. 1,5); Menge und Einheit sind optional (z.B. „Salz“).">
         <Stack spacing={1.5}>
           {ingredients.map((ingredient, index) => (
             <Grid key={index} container spacing={1.5} sx={{ alignItems: 'center' }}>

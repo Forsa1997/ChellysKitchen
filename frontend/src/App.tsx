@@ -12,6 +12,7 @@ import { HomePage } from './pages/HomePage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { SignInPage } from './pages/SignInPage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { WeekPlanPage } from './pages/WeekPlanPage';
 
 function App() {
   const routerMode = import.meta.env.VITE_ROUTER_MODE ?? (import.meta.env.PROD ? 'hash' : 'browser');
@@ -40,6 +41,14 @@ function App() {
                   element={(
                     <RequireAuth>
                       <EditRecipePage />
+                    </RequireAuth>
+                  )}
+                />
+                <Route
+                  path="/wochenplan"
+                  element={(
+                    <RequireAuth>
+                      <WeekPlanPage />
                     </RequireAuth>
                   )}
                 />

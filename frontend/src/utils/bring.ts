@@ -19,3 +19,11 @@ export function buildBringDeeplink({ apiBaseUrl, slug, servings }: BringDeeplink
   deeplink.searchParams.set('source', 'web');
   return deeplink.toString();
 }
+
+/** Deeplink for the aggregated shopping list of the whole week plan. */
+export function buildWeekPlanBringDeeplink({ apiBaseUrl }: { apiBaseUrl: string }): string {
+  const deeplink = new URL(BRING_DEEPLINK_BASE);
+  deeplink.searchParams.set('url', new URL('/api/weekplan/bring', apiBaseUrl).toString());
+  deeplink.searchParams.set('source', 'web');
+  return deeplink.toString();
+}

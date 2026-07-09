@@ -7,6 +7,16 @@ import { queryRecipes } from './src/queryRecipes.mjs';
 import { pickRandomRecipe } from './src/randomRecipe.mjs';
 import { createExportPayload, parseImportPayload } from './src/backup.mjs';
 import { renderBringHtml } from './src/bringExport.mjs';
+import {
+  WEEK_DAYS,
+  aggregateWeekPlanIngredients,
+  createEmptyWeekPlan,
+} from './src/weekplan.mjs';
+import {
+  extractRecipeJsonLd,
+  isAllowedImportUrl,
+  mapJsonLdToRecipe,
+} from './src/recipeImport.mjs';
 import { resolveCorsOrigin } from './src/cors.mjs';
 import {
   createDebouncedPersister,
@@ -54,10 +64,11 @@ const recipeStore = loadedState?.recipeStore ?? [...recipes];
 const ratingsStore = loadedState?.ratingsStore ?? new Map(); // recipeId -> Map<userId, rating>
 const categoriesStore = loadedState?.categoriesStore ?? [...DEFAULT_CATEGORIES];
 const favoritesStore = loadedState?.favoritesStore ?? new Map(); // userId -> Set<recipeId>
+const weekPlanStore = loadedState?.weekPlanStore ?? createEmptyWeekPlan(); // day -> [{ recipeId, servings }]
 
 const persister = createDebouncedPersister(
   store,
-  () => ({ users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore }),
+  () => ({ users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore, weekPlanStore }),
   200,
 );
 const persist = () => persister.schedule();
@@ -1054,6 +1065,196 @@ const server = createServer(async (req, res) => {
   }
 
   // ============================================================================
+  // Week Plan Endpoints (one shared plan for the whole family)
+  // ============================================================================
+
+  const weekPlanRecipeSummary = (recipe) => ({
+    id: recipe.id,
+    slug: recipe.slug ?? toSlug(recipe.title),
+    title: recipe.title,
+    img: recipe.img,
+    servings: recipe.servings,
+    category: recipe.category,
+  });
+
+  // GET /api/weekplan/bring - Public schema.org page with the aggregated
+  // shopping list of every planned meal. Public like the per-recipe Bring
+  // pages, because Bring's crawler fetches it unauthenticated.
+  if (req.method === 'GET' && req.url?.startsWith('/api/weekplan/bring')) {
+    const entries = [];
+    for (const day of WEEK_DAYS) {
+      for (const entry of weekPlanStore[day]) {
+        const recipe = recipeStore.find((r) => r.id === entry.recipeId);
+        if (recipe) {
+          entries.push({ recipe, servings: entry.servings });
+        }
+      }
+    }
+
+    const ingredients = aggregateWeekPlanIngredients(entries);
+    const html = renderBringHtml(
+      { title: 'Chellys Kitchen – Wochenplan', servings: 1, ingredients },
+      { servings: 1 },
+    );
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(html);
+    return;
+  }
+
+  if (req.url === '/api/weekplan' || req.url?.startsWith('/api/weekplan/')) {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+    if (!hasMinRole(user, 'MEMBER')) {
+      jsonResponse(res, 403, { error: 'Nur Mitglieder können den Wochenplan nutzen.' });
+      return;
+    }
+
+    // GET /api/weekplan - The full plan with recipe summaries. Entries whose
+    // recipe was deleted are pruned on read.
+    if (req.method === 'GET' && req.url === '/api/weekplan') {
+      const days = {};
+      for (const day of WEEK_DAYS) {
+        weekPlanStore[day] = weekPlanStore[day].filter((entry) =>
+          recipeStore.some((recipe) => recipe.id === entry.recipeId));
+        days[day] = weekPlanStore[day].map((entry) => {
+          const recipe = recipeStore.find((r) => r.id === entry.recipeId);
+          return {
+            recipeId: entry.recipeId,
+            servings: entry.servings ?? recipe.servings,
+            recipe: weekPlanRecipeSummary(recipe),
+          };
+        });
+      }
+      jsonResponse(res, 200, { days });
+      return;
+    }
+
+    // POST /api/weekplan/:day - Add a recipe to a day (upsert: re-adding the
+    // same recipe updates the planned servings).
+    if (req.method === 'POST' && req.url?.match(/^\/api\/weekplan\/[^/]+$/)) {
+      try {
+        const day = req.url.split('/')[3];
+        if (!WEEK_DAYS.includes(day)) {
+          jsonResponse(res, 400, { error: 'Unbekannter Wochentag.' });
+          return;
+        }
+
+        const { recipeId, servings } = await parseJsonBody(req);
+        const recipe = findRecipeByIdOrSlug(String(recipeId ?? ''));
+        if (!recipe) {
+          jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+          return;
+        }
+
+        const parsedServings = Number(servings);
+        const entry = {
+          recipeId: recipe.id,
+          servings: Number.isFinite(parsedServings) && parsedServings >= 1
+            ? Math.round(parsedServings)
+            : recipe.servings,
+        };
+
+        const existing = weekPlanStore[day].findIndex((e) => e.recipeId === recipe.id);
+        if (existing >= 0) {
+          weekPlanStore[day][existing] = entry;
+        } else {
+          weekPlanStore[day].push(entry);
+        }
+
+        persist();
+        jsonResponse(res, 200, { day, ...entry });
+        return;
+      } catch (error) {
+        jsonResponse(res, 400, { error: error.message });
+        return;
+      }
+    }
+
+    // DELETE /api/weekplan/:day/:recipeId - Remove one planned meal
+    if (req.method === 'DELETE' && req.url?.match(/^\/api\/weekplan\/[^/]+\/[^/]+$/)) {
+      const [, , , day, recipeId] = req.url.split('/');
+      if (!WEEK_DAYS.includes(day)) {
+        jsonResponse(res, 400, { error: 'Unbekannter Wochentag.' });
+        return;
+      }
+      weekPlanStore[day] = weekPlanStore[day].filter((entry) => entry.recipeId !== decodeURIComponent(recipeId));
+      persist();
+      jsonResponse(res, 200, { ok: true });
+      return;
+    }
+
+    // DELETE /api/weekplan - Clear the whole week
+    if (req.method === 'DELETE' && req.url === '/api/weekplan') {
+      for (const day of WEEK_DAYS) {
+        weekPlanStore[day] = [];
+      }
+      persist();
+      jsonResponse(res, 200, { ok: true });
+      return;
+    }
+  }
+
+  // ============================================================================
+  // Recipe Import (from external websites via schema.org JSON-LD)
+  // ============================================================================
+
+  // POST /api/recipes/import - Fetch a page server-side and map its
+  // schema.org recipe onto our form shape. Nothing is saved; the result
+  // prefills the create form.
+  if (req.method === 'POST' && req.url === '/api/recipes/import') {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+    if (!hasMinRole(user, 'MEMBER')) {
+      jsonResponse(res, 403, { error: 'Nur Mitglieder können Rezepte importieren.' });
+      return;
+    }
+
+    try {
+      const { url } = await parseJsonBody(req);
+      if (typeof url !== 'string' || !isAllowedImportUrl(url)) {
+        jsonResponse(res, 400, { error: 'Bitte gib eine gültige öffentliche Rezept-URL an.' });
+        return;
+      }
+
+      let response;
+      try {
+        response = await fetch(url, {
+          signal: AbortSignal.timeout(10_000),
+          headers: { 'User-Agent': 'ChellysKitchen-RecipeImport/1.0' },
+        });
+      } catch {
+        jsonResponse(res, 422, { error: 'Die Seite konnte nicht geladen werden.' });
+        return;
+      }
+      if (!response.ok) {
+        jsonResponse(res, 422, { error: `Die Seite konnte nicht geladen werden (HTTP ${response.status}).` });
+        return;
+      }
+
+      // Recipe pages are a few hundred KB; anything beyond a few MB is not
+      // a page we want to buffer.
+      const html = (await response.text()).slice(0, 3_000_000);
+      const jsonLd = extractRecipeJsonLd(html);
+      if (!jsonLd) {
+        jsonResponse(res, 422, { error: 'Auf dieser Seite wurde kein Rezept gefunden (kein schema.org-Rezept vorhanden).' });
+        return;
+      }
+
+      jsonResponse(res, 200, { recipe: mapJsonLdToRecipe(jsonLd), source: url });
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+  }
+
+  // ============================================================================
   // Admin Endpoints
   // ============================================================================
 
@@ -1252,6 +1453,10 @@ const server = createServer(async (req, res) => {
       favoritesStore.clear();
       for (const [userId, recipeIds] of imported.favoritesStore) {
         favoritesStore.set(userId, recipeIds);
+      }
+
+      for (const day of WEEK_DAYS) {
+        weekPlanStore[day] = imported.weekPlanStore?.[day] ?? [];
       }
 
       for (const upload of imported.uploads) {

@@ -1,13 +1,15 @@
-import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Paper, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
 import { useRecipe, useDeleteRecipe, usePublishRecipe, useArchiveRecipe, useToggleFavorite, useUpdateRecipeNotes } from '../hooks/useRecipes';
+import { useAddToWeekPlan } from '../hooks/useWeekPlan';
 import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, AddShoppingCart, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
-import { apiClient, getApiBaseUrl, type ApiError } from '../api/client';
+import { AccessTime, Add, AddShoppingCart, CalendarMonth, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
+import { apiClient, getApiBaseUrl, type ApiError, type WeekDay } from '../api/client';
 import { buildBringDeeplink } from '../utils/bring';
+import { WEEK_DAYS } from '../utils/weekdays';
 import type { Ingredient, RecipeStep } from '../types/domain';
 import { recipeRenderImage } from '../recipes/recipeImages';
 
@@ -40,6 +42,9 @@ export function RecipeDetailPage() {
   const [ingredientsCopyStatus, setIngredientsCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [notesDraft, setNotesDraft] = useState<{ recipeId: string; value: string } | null>(null);
   const [ratingError, setRatingError] = useState<string | null>(null);
+  const addToWeekPlan = useAddToWeekPlan();
+  const [weekPlanAnchor, setWeekPlanAnchor] = useState<HTMLElement | null>(null);
+  const [weekPlanSuccess, setWeekPlanSuccess] = useState<string | null>(null);
   const apiError = error as ApiError | null;
   const isNotFound = apiError?.statusCode === 404;
 
@@ -151,6 +156,18 @@ export function RecipeDetailPage() {
     }
   };
 
+  const handlePlanDay = async (day: WeekDay, label: string) => {
+    setWeekPlanAnchor(null);
+    if (!recipe) return;
+    const servings = servingSelection?.recipeId === recipe.id ? servingSelection.servings : recipe.servings;
+    try {
+      await addToWeekPlan.mutateAsync({ day, recipeId: recipe.id, servings });
+      setWeekPlanSuccess(`Für ${label} eingeplant (${servings} Portionen).`);
+    } catch {
+      setRatingError('Rezept konnte nicht eingeplant werden.');
+    }
+  };
+
   const handleCopyLink = async () => {
     if (!recipe) return;
 
@@ -237,6 +254,29 @@ export function RecipeDetailPage() {
               >
                 {recipe.isFavorite ? 'Favorit' : 'Merken'}
               </Button>
+            )}
+            {user && (
+              <>
+                <Button
+                  startIcon={<CalendarMonth />}
+                  variant="outlined"
+                  onClick={(event) => setWeekPlanAnchor(event.currentTarget)}
+                  disabled={addToWeekPlan.isPending}
+                >
+                  Zum Wochenplan
+                </Button>
+                <Menu
+                  anchorEl={weekPlanAnchor}
+                  open={weekPlanAnchor !== null}
+                  onClose={() => setWeekPlanAnchor(null)}
+                >
+                  {WEEK_DAYS.map(({ key, label }) => (
+                    <MenuItem key={key} onClick={() => handlePlanDay(key, label)}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </>
             )}
             <Button startIcon={<Casino />} variant="outlined" onClick={handleRollAgain}>
               Nochmal würfeln
@@ -499,7 +539,10 @@ export function RecipeDetailPage() {
                       <ListItemText
                         primary={
                           <Typography variant="body1">
-                            <strong>{formatAmount(ingredient.amount * servingScale)} {ingredient.unit}</strong> {ingredient.name}
+                            {ingredient.amount > 0 && (
+                              <strong>{formatAmount(ingredient.amount * servingScale)} {ingredient.unit} </strong>
+                            )}
+                            {ingredient.name}
                           </Typography>
                         }
                       />
@@ -708,6 +751,12 @@ export function RecipeDetailPage() {
         autoHideDuration={3000}
         onClose={() => setIngredientsCopyStatus('idle')}
         message={ingredientsCopyStatus === 'success' ? 'Zutaten kopiert' : 'Zutaten konnten nicht kopiert werden'}
+      />
+      <Snackbar
+        open={weekPlanSuccess !== null}
+        autoHideDuration={3000}
+        onClose={() => setWeekPlanSuccess(null)}
+        message={weekPlanSuccess}
       />
       <Snackbar
         open={ratingError !== null}

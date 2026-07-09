@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { normalizeWeekPlan } from './weekplan.mjs';
 
 const STATE_VERSION = 1;
 
@@ -26,6 +27,9 @@ export function serializeState(state) {
       userId,
       [...recipeIds],
     ]),
+    // Plain object (day -> entries), JSON-serializable as-is. Optional so
+    // older store files keep loading.
+    weekPlanStore: state.weekPlanStore ?? {},
   };
 }
 
@@ -60,6 +64,7 @@ export function deserializeState(raw) {
     recipeStore: Array.isArray(raw?.recipeStore) ? raw.recipeStore : [],
     ratingsStore,
     categoriesStore: Array.isArray(raw?.categoriesStore) ? raw.categoriesStore : [],
+    weekPlanStore: normalizeWeekPlan(raw?.weekPlanStore),
   };
 }
 

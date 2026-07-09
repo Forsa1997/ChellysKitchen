@@ -27,6 +27,9 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 - [x] Zutatenliste skaliert kopieren/teilen (Einkaufshilfe)
 - [x] Zutaten an die Bring!-Einkaufsliste senden (Deeplink; das Backend liefert
       dafür eine öffentliche schema.org-Seite pro Rezept)
+- [x] Wochenplaner („Was kochen wir diese Woche?") mit aggregierter
+      Bring!-Einkaufsliste für die ganze Woche
+- [x] Rezept-Import von fremden Webseiten (schema.org-JSON-LD)
 - [x] PWA-Manifest (Homescreen-Installation)
 - [x] Gemeinsame Notizen pro Rezept
 
@@ -43,6 +46,5 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 ## Ideen für später (bewusst zurückgestellt)
 
 - Persistent Disk bei Render (kostenpflichtig) statt manuellem Backup
-- Wochenplaner / „Was kochen wir diese Woche?"
-- Rezept-Import von fremden Webseiten
 - Rate-Limiting für Login-Versuche
+- Rezept duplizieren („Variante anlegen")

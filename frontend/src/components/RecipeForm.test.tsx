@@ -96,16 +96,31 @@ describe('RecipeForm', () => {
     expect(payload.steps).toHaveLength(1);
   });
 
-  it('blocks the submit when an ingredient is only partially filled', async () => {
+  it('blocks the submit when an ingredient has an amount but no name', async () => {
     const { onSubmit } = renderForm();
 
     fillMinimalRecipe();
     fireEvent.click(screen.getByRole('button', { name: 'Zutat hinzufügen' }));
-    fireEvent.change(screen.getAllByLabelText(/^Zutat/)[1], { target: { value: 'Mehl' } });
+    fireEvent.change(screen.getAllByLabelText(/Menge/)[1], { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Rezept speichern' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/vervollständige/i);
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('accepts ingredients without amount or unit, like Salz', async () => {
+    const { onSubmit } = renderForm();
+
+    fillMinimalRecipe();
+    fireEvent.click(screen.getByRole('button', { name: 'Zutat hinzufügen' }));
+    fireEvent.change(screen.getAllByLabelText(/^Zutat/)[1], { target: { value: 'Salz' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Rezept speichern' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].ingredients).toEqual([
+      { name: 'Honig', amount: 1.5, unit: 'EL' },
+      { name: 'Salz', amount: 0, unit: '' },
+    ]);
   });
 
   it('offers German difficulty labels', async () => {

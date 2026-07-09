@@ -239,6 +239,45 @@ export interface AdminRecipeListResponse {
   total: number;
 }
 
+// Week Plan Types
+export type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+export interface WeekPlanRecipeSummary {
+  id: string;
+  slug: string;
+  title: string;
+  img?: string;
+  servings: number;
+  category: string;
+}
+
+export interface WeekPlanEntry {
+  recipeId: string;
+  servings: number;
+  recipe: WeekPlanRecipeSummary;
+}
+
+export interface WeekPlanResponse {
+  days: Record<WeekDay, WeekPlanEntry[]>;
+}
+
+// Recipe Import Types
+export interface ImportedRecipe {
+  title: string;
+  shortDescription: string;
+  servings: number;
+  preparationTime: number;
+  cookingTime: number;
+  img?: string;
+  ingredients: Array<{ name: string; amount: number; unit: string }>;
+  steps: Array<{ stepNumber: number; instruction: string }>;
+}
+
+export interface ImportRecipeResponse {
+  recipe: ImportedRecipe;
+  source: string;
+}
+
 // Error Types
 export interface ApiError {
   message: string;
@@ -594,6 +633,45 @@ class ApiClient {
       method: 'PATCH',
       body: JSON.stringify({ status: 'ARCHIVED' }),
     });
+  }
+
+  /**
+   * POST /api/recipes/import
+   * Fetch an external recipe page server-side and map its schema.org data
+   * onto our recipe shape (nothing is saved).
+   */
+  async importRecipe(url: string): Promise<ImportRecipeResponse> {
+    return this.request<ImportRecipeResponse>('/api/recipes/import', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  }
+
+  // ============================================================================
+  // Week Plan Endpoints
+  // ============================================================================
+
+  /** GET /api/weekplan - The shared family week plan */
+  async getWeekPlan(): Promise<WeekPlanResponse> {
+    return this.request<WeekPlanResponse>('/api/weekplan');
+  }
+
+  /** POST /api/weekplan/:day - Plan a recipe (upserts the servings) */
+  async addToWeekPlan(day: WeekDay, data: { recipeId: string; servings?: number }): Promise<void> {
+    await this.request(`/api/weekplan/${day}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /** DELETE /api/weekplan/:day/:recipeId - Remove one planned meal */
+  async removeFromWeekPlan(day: WeekDay, recipeId: string): Promise<void> {
+    await this.request(`/api/weekplan/${day}/${encodeURIComponent(recipeId)}`, { method: 'DELETE' });
+  }
+
+  /** DELETE /api/weekplan - Clear the whole week */
+  async clearWeekPlan(): Promise<void> {
+    await this.request('/api/weekplan', { method: 'DELETE' });
   }
 
   // ============================================================================
