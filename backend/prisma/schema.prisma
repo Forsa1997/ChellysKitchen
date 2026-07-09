@@ -1,0 +1,77 @@
+// Chellys Kitchen persistence schema. Fixed-shape data (users, sessions,
+// favorites, week plan) gets real columns; free-form documents (recipes,
+// categories, ratings) keep their full object in a Json column plus a few
+// key columns for browsing the database directly.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String  @id
+  email        String  @unique
+  name         String
+  role         String
+  passwordHash String
+  salt         String?
+  algo         String?
+  // ISO strings, exactly as the app produces them (lossless roundtrip).
+  createdAt    String
+  updatedAt    String
+}
+
+model Recipe {
+  id     String  @id
+  slug   String?
+  title  String
+  status String?
+  data   Json
+}
+
+model Category {
+  id   String @id
+  data Json
+}
+
+model Rating {
+  recipeId String
+  userId   String
+  stars    Int
+  data     Json
+
+  @@id([recipeId, userId])
+}
+
+model Favorite {
+  userId   String
+  recipeId String
+
+  @@id([userId, recipeId])
+}
+
+model Session {
+  token     String @id
+  kind      String // ACCESS or REFRESH
+  userId    String
+  expiresAt BigInt // epoch milliseconds
+}
+
+model WeekPlanEntry {
+  day      String
+  recipeId String
+  servings Int?
+
+  @@id([day, recipeId])
+}
+
+// Uploaded recipe photos. They are served from local disk (fast), but the
+// disk is ephemeral on Render — the database is the durable copy and the
+// files are materialized back to disk on boot.
+model Upload {
+  fileName String @id
+  data     Bytes
+}

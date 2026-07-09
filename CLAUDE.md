@@ -34,7 +34,7 @@ Keep Testing and QA distinct: Testing defines what must be proven before code; Q
 
 ## Project Overview
 
-Chellys Kitchen is a family recipe app with a deliberately slim, dependency-free Node.js backend (`backend/server.mjs`, JSON file store) and a React frontend (Vite + Material UI). There is no database and no ORM.
+Chellys Kitchen is a family recipe app with a deliberately slim Node.js backend (`backend/server.mjs`) and a React frontend (Vite + Material UI). The server works on in-memory structures; persistence is pluggable: a JSON file store by default (dev/tests, no database needed) or Postgres via Prisma when `DATABASE_URL` is set (production on Render).
 
 ## Development Commands
 
@@ -57,7 +57,8 @@ Chellys Kitchen is a family recipe app with a deliberately slim, dependency-free
 
 - `queryRecipes.mjs` - shared list filtering (q incl. ingredients, category, difficulty, status, maxTotalMinutes, favorites) + pagination/sorting
 - `randomRecipe.mjs` - random pick over ALL matching recipes (`GET /api/recipes/random`, `exclude` param)
-- `persistence.mjs` - JSON store serialization, debounced disk writes to `DATA_DIR/store.json`
+- `persistence.mjs` - JSON store serialization, debounced writes (sync file store or async Postgres store)
+- `prismaStore.mjs` - Postgres persistence via Prisma (active when `DATABASE_URL` is set): loads the full state at boot, full-replace sync on write, uploads mirrored as `Bytes` and rematerialized to disk on boot; pure row mappers are unit-tested without a DB
 - `backup.mjs` - full export/import payloads incl. uploaded images (admin endpoints)
 - `bringExport.mjs` - schema.org/Recipe JSON-LD page for the Bring! shopping-list import (`GET /api/recipes/:slug/bring`, `servings` param scales amounts)
 - `weekplan.mjs` - shared family week plan (day -> planned recipes + servings) and ingredient aggregation for the weekly Bring! list (`/api/weekplan`, public `/api/weekplan/bring`)
@@ -82,8 +83,9 @@ End-to-end smoke tests in `backend/test/` spawn the real server against a temp `
 - Recipe ownership checked on update/delete; favorites are per user; notes are shared and writable by any member
 
 **Persistence**
-- Everything (users, recipes, ratings, categories, favorites, sessions) lives in one JSON file under `DATA_DIR` (default `./.data`); uploaded images next to it
-- Render free tier wipes `DATA_DIR` on redeploy — the admin backup export/import endpoints are the safety net
+- The server always works on in-memory Maps/arrays; the store behind them is chosen at boot: JSON file under `DATA_DIR` (default `./.data`) without `DATABASE_URL`, Postgres via Prisma (`backend/prisma/schema.prisma`, migrations checked in) with it
+- Production (Render) uses Postgres in Frankfurt — data and uploaded images survive redeploys; `prisma migrate deploy` runs on start
+- The admin backup export/import endpoints remain for moves and extra safety
 
 ### Frontend Architecture
 

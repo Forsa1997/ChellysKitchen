@@ -43,8 +43,15 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 - [x] DRAFT-Entscheidung: Rezepte erscheinen sofort (Familien-App); der
       Status-Workflow bleibt nur fürs Archivieren im Admin-Bereich
 
+### 6. Persistenz
+
+- [x] PostgreSQL via Prisma als Produktions-Persistenz (Render Frankfurt);
+      JSON-Datei-Store bleibt für Entwicklung/Tests — damit ist die
+      „kein externer Datenbank-Anbieter"-Entscheidung aus Punkt 5 bewusst
+      revidiert
+- [x] Hochgeladene Bilder liegen mit in der Datenbank und überleben Redeploys
+
 ## Ideen für später (bewusst zurückgestellt)
 
-- Persistent Disk bei Render (kostenpflichtig) statt manuellem Backup
 - Rate-Limiting für Login-Versuche
 - Rezept duplizieren („Variante anlegen")

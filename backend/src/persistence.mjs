@@ -105,17 +105,24 @@ export function createDebouncedPersister(store, getState, delay = 200) {
   let timer = null;
   let pending = false;
 
+  // Works with sync stores (JSON file) and async stores (Postgres): a
+  // returned promise is awaited on flush and error-swallowed on background
+  // writes — persistence must never take the server down.
   const write = () => {
     timer = null;
     if (!pending) {
-      return;
+      return undefined;
     }
     pending = false;
     try {
-      store.save(getState());
+      const result = store.save(getState());
+      if (result && typeof result.catch === 'function') {
+        return result.catch(() => {});
+      }
     } catch {
-      // Persistence must never take the server down.
+      // swallowed, see above
     }
+    return undefined;
   };
 
   return {
@@ -134,10 +141,7 @@ export function createDebouncedPersister(store, getState, delay = 200) {
         clearTimeout(timer);
         timer = null;
       }
-      if (pending) {
-        pending = false;
-        store.save(getState());
-      }
+      return write();
     },
   };
 }

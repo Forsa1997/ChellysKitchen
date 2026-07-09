@@ -57,6 +57,7 @@ cd frontend && npm test   # Vitest + Testing Library
 | --- | --- |
 | `PORT` | Port, Standard 4000 |
 | `DATA_DIR` | Ablage für JSON-Store und Bilder, Standard `./.data` |
+| `DATABASE_URL` | PostgreSQL-Verbindung — aktiviert die Prisma-Persistenz (Produktion) |
 | `CORS_ORIGIN` | Erlaubter Frontend-Origin |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
 | `ADMIN_NAME` | Anzeigename des Admin-Kontos (Standard `Admin`) |

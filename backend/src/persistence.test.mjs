@@ -85,3 +85,32 @@ test('debounced persister collapses writes and flush forces one', () => {
   persister.flush();
   assert.equal(writes, 1, 'flush is a no-op when nothing pending');
 });
+
+test('the persister awaits async stores on flush', async () => {
+  let saved = 0;
+  const asyncStore = {
+    async save() {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      saved += 1;
+    },
+  };
+  const persister = createDebouncedPersister(asyncStore, () => ({}), 5);
+
+  persister.schedule();
+  await persister.flush();
+  assert.equal(saved, 1, 'flush resolves only after the async save finished');
+
+  await persister.flush();
+  assert.equal(saved, 1, 'flush without pending changes saves nothing');
+});
+
+test('a rejected async save must not crash the persister', async () => {
+  const persister = createDebouncedPersister(
+    { save: () => Promise.reject(new Error('db weg')) },
+    () => ({}),
+    5,
+  );
+
+  persister.schedule();
+  await assert.doesNotReject(() => Promise.resolve(persister.flush()));
+});

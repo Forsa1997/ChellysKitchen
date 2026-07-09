@@ -1,6 +1,6 @@
 {
   "author": "Chellys Kitchen",
-  "description": "Backend API for Chellys Kitchen - dependency-free Node HTTP server with a JSON file store",
+  "description": "Backend API for Chellys Kitchen - slim Node HTTP server; JSON file store by default, Postgres via Prisma when DATABASE_URL is set",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -14,8 +14,14 @@
   "scripts": {
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
-    "start:render": "node server.mjs",
-    "test": "node --test"
+    "start:render": "prisma migrate deploy && node server.mjs",
+    "test": "node --test",
+    "postinstall": "prisma generate"
   },
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "prisma": "^7.8.0"
+  }
 }

@@ -1,11 +1,23 @@
+databases:
+  # Managed Postgres — the durable home of all app data (recipes, users,
+  # ratings, favorites, week plan, uploaded images). Cheapest paid plan;
+  # data survives every deploy and restart.
+  - name: chellys-kitchen-db
+    plan: basic-256mb
+    region: frankfurt
+    postgresMajorVersion: "16"
+
 services:
   - type: web
     name: chellys-kitchen-api
     runtime: node
     rootDir: backend
     buildCommand: npm ci
+    # start:render runs `prisma migrate deploy` before booting the server so
+    # the schema is always up to date.
     startCommand: npm run start:render
     plan: free
+    region: frankfurt
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -14,14 +26,10 @@ services:
         value: 4000
       - key: HOST
         value: 0.0.0.0
-      - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_REFRESH_SECRET
-        generateValue: true
-      - key: JWT_ACCESS_EXPIRY
-        value: 15m
-      - key: JWT_REFRESH_EXPIRY
-        value: 7d
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chellys-kitchen-db
+          property: connectionString
       - key: CORS_ORIGIN
         sync: false
       # Initial admin account (needed to reach the admin dashboard).
@@ -38,17 +46,11 @@ services:
       # a JSON array of { name, email, password, role? } objects.
       - key: SEED_USERS
         sync: false
-      # Directory for the JSON data store and uploaded images.
-      # On Render's free tier the filesystem is ephemeral: data survives
-      # restarts but NOT redeploys. To persist across redeploys, attach a
-      # persistent disk (paid plan) and point DATA_DIR at its mount path,
-      # e.g. set DATA_DIR=/var/data and uncomment the `disk` block below.
+      # Local working directory for uploaded images. With DATABASE_URL set
+      # this is only a cache — the database holds the durable copies and the
+      # server materializes them back to disk on boot.
       - key: DATA_DIR
         value: ./.data
-    # disk:
-    #   name: chellys-kitchen-data
-    #   mountPath: /var/data
-    #   sizeGB: 1
 
   - type: web
     name: chellys-kitchen-web

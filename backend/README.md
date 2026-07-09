@@ -1,8 +1,11 @@
 # Chellys Kitchen Backend
 
-Ein bewusst schlanker Node.js-HTTP-Server ohne npm-Abhängigkeiten
-(`server.mjs`). Persistenz: JSON-Datei unter `DATA_DIR` (Standard `./.data`),
-Bilder daneben in `uploads/`.
+Ein bewusst schlanker Node.js-HTTP-Server (`server.mjs`). Persistenz ist
+steckbar: ohne `DATABASE_URL` eine JSON-Datei unter `DATA_DIR` (Standard
+`./.data`, Bilder daneben in `uploads/`), mit `DATABASE_URL` PostgreSQL
+über Prisma (Schema in `prisma/`, Migrationen eingecheckt; Bilder liegen
+zusätzlich als Bytes in der DB und werden beim Start auf die Platte
+zurückgeschrieben).
 
 ## Start
 
@@ -36,7 +39,8 @@ Server-Standard: `http://localhost:4000`
 | Variable | Bedeutung |
 | --- | --- |
 | `PORT` | Port, Standard 4000 |
-| `DATA_DIR` | Datenablage, Standard `./.data` |
+| `DATA_DIR` | Datenablage, Standard `./.data` (mit Postgres nur Bild-Cache) |
+| `DATABASE_URL` | PostgreSQL-Verbindung — aktiviert die Prisma-Persistenz |
 | `CORS_ORIGIN` | Erlaubter Frontend-Origin |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
 | `ADMIN_NAME` | Anzeigename des Admin-Kontos (Standard `Admin`; benennt auch ein bestehendes Konto um) |

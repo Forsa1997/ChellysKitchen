@@ -22,6 +22,7 @@ import {
   createDebouncedPersister,
   createStore,
 } from './src/persistence.mjs';
+import { createPrismaStore } from './src/prismaStore.mjs';
 import {
   contentTypeForExt,
   MAX_UPLOAD_BYTES,
@@ -43,7 +44,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const DATA_DIR = process.env.DATA_DIR ?? './.data';
 const UPLOADS_DIR = resolve(DATA_DIR, 'uploads');
-const store = createStore(resolve(DATA_DIR, 'store.json'));
+// With DATABASE_URL the state lives in Postgres (Prisma); without it the
+// JSON file store keeps local development and tests dependency-free.
+const store = process.env.DATABASE_URL
+  ? await createPrismaStore(process.env.DATABASE_URL)
+  : createStore(resolve(DATA_DIR, 'store.json'));
 
 const DEFAULT_CATEGORIES = [
   { id: 'cat_1', name: 'Cooking', slug: 'cooking', description: 'Hauptgerichte und Kochrezepte', icon: '🍳' },
@@ -54,9 +59,9 @@ const DEFAULT_CATEGORIES = [
   { id: 'cat_6', name: 'Desserts', slug: 'desserts', description: 'Süße Desserts', icon: '🍰' },
 ];
 
-// Hydrate state from disk (survives restarts); fall back to seed data on
-// first run or an unreadable store file.
-const loadedState = store.load();
+// Hydrate state from the store (survives restarts); fall back to seed data
+// on first run or an unreadable store.
+const loadedState = await store.load();
 const users = loadedState?.users ?? new Map();
 const sessions = loadedState?.sessions ?? new Map();
 const refreshSessions = loadedState?.refreshSessions ?? new Map();
@@ -349,6 +354,16 @@ function seedDefaultUsers() {
 }
 
 mkdirSync(UPLOADS_DIR, { recursive: true });
+// With the Postgres store the disk is just a cache for uploaded images —
+// materialize anything the database has that the (ephemeral) disk lost.
+if (store.loadUploads) {
+  for (const upload of await store.loadUploads()) {
+    const filePath = join(UPLOADS_DIR, basename(upload.fileName));
+    if (!existsSync(filePath)) {
+      writeFileSync(filePath, upload.data);
+    }
+  }
+}
 // Stores persisted before the TTL change hold plain userId strings; upgrade
 // them once so every session entry carries an expiry.
 normalizeSessionMap(sessions, Date.now(), ACCESS_TTL_MS);
@@ -370,7 +385,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     jsonResponse(res, 200, {
       status: 'ok',
-      database: 'in-memory',
+      database: process.env.DATABASE_URL ? 'postgres' : 'json-file',
       timestamp: new Date().toISOString(),
     });
     return;
@@ -1472,6 +1487,9 @@ const server = createServer(async (req, res) => {
 
       for (const upload of imported.uploads) {
         writeFileSync(join(UPLOADS_DIR, upload.fileName), upload.buffer);
+        if (store.saveUpload) {
+          await store.saveUpload(upload.fileName, upload.buffer);
+        }
       }
 
       persist();
@@ -1505,6 +1523,9 @@ const server = createServer(async (req, res) => {
       const { ext, buffer } = validateImageUpload(payload);
       const fileName = `${randomBytes(12).toString('hex')}.${ext}`;
       writeFileSync(join(UPLOADS_DIR, fileName), buffer);
+      if (store.saveUpload) {
+        await store.saveUpload(fileName, buffer);
+      }
 
       const proto = (req.headers['x-forwarded-proto'] || 'http').toString().split(',')[0].trim();
       const host = req.headers.host ?? `localhost:${port}`;
@@ -1545,11 +1566,12 @@ server.listen(port, () => {
 });
 
 function shutdown() {
-  try {
-    persister.flush();
-  } finally {
-    server.close(() => process.exit(0));
-  }
+  // flush() may be async (Postgres store) — wait for the final write before
+  // the process exits.
+  Promise.resolve()
+    .then(() => persister.flush())
+    .catch(() => {})
+    .finally(() => server.close(() => process.exit(0)));
 }
 
 process.on('SIGTERM', shutdown);
