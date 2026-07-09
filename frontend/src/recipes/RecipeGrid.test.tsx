@@ -6,6 +6,25 @@ afterEach(cleanup);
 import { RecipeGrid } from './RecipeGrid';
 import type { Recipe } from '../types/domain';
 
+// MUI's useMediaQuery reads window.matchMedia; make breakpoint queries below
+// `md` (900px) report a match to simulate a phone viewport.
+function mockMobileViewport() {
+  vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({
+    matches: query.includes('max-width') && parseFloat(query.match(/max-width:\s*([\d.]+)px/)?.[1] ?? '0') < 900,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }) as unknown as MediaQueryList);
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 const favoriteRecipe: Recipe = {
   id: 'recipe-1',
   slug: 'pasta',
@@ -176,5 +195,50 @@ describe('RecipeGrid', () => {
 
     expect(screen.getByAltText('Pasta')).toHaveAttribute('src', 'https://example.com/pasta.jpg');
     expect(screen.queryByAltText('Illustration: Pasta')).not.toBeInTheDocument();
+  });
+
+  describe('mobile viewport', () => {
+    it('renders a compact list item with title, difficulty and total minutes', () => {
+      mockMobileViewport();
+      const screen = render(
+        <MemoryRouter>
+          <RecipeGrid recipes={[{ ...favoriteRecipe }]} />
+        </MemoryRouter>,
+      );
+
+      expect(screen.getByText('Pasta')).toBeInTheDocument();
+      expect(screen.getByText('EINFACH')).toBeInTheDocument();
+      expect(screen.getByText('30 Min.')).toBeInTheDocument();
+      expect(screen.getByRole('link')).toHaveAttribute('href', '/recipes/pasta');
+      // The compact card drops description, author and date to save space.
+      expect(screen.queryByText('Schnell und lecker')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Chris/)).not.toBeInTheDocument();
+    });
+
+    it('still toggles favorites from the compact card without navigating', () => {
+      mockMobileViewport();
+      const onToggleFavorite = vi.fn();
+      const screen = render(
+        <MemoryRouter>
+          <RecipeGrid recipes={[{ ...favoriteRecipe }]} onToggleFavorite={onToggleFavorite} />
+        </MemoryRouter>,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Als Favorit markieren' }));
+
+      expect(onToggleFavorite).toHaveBeenCalledWith(expect.objectContaining({ slug: 'pasta', isFavorite: false }));
+    });
+
+    it('uses the rendered photo as the compact thumbnail for bundled recipes', () => {
+      mockMobileViewport();
+      const screen = render(
+        <MemoryRouter>
+          <RecipeGrid recipes={[{ ...favoriteRecipe, slug: 'bbq-burger', title: 'BBQ Burger', img: '/recipe-images/bbq-burger.svg' }]} />
+        </MemoryRouter>,
+      );
+
+      expect(screen.getByAltText('BBQ Burger')).toHaveAttribute('src', '/recipe-images/renders/bbq-burger.jpg');
+      expect(screen.queryByAltText('Illustration: BBQ Burger')).not.toBeInTheDocument();
+    });
   });
 });
