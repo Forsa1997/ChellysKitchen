@@ -59,6 +59,7 @@ cd frontend && npm test   # Vitest + Testing Library
 | `DATA_DIR` | Ablage für JSON-Store und Bilder, Standard `./.data` |
 | `CORS_ORIGIN` | Erlaubter Frontend-Origin |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
+| `ADMIN_NAME` | Anzeigename des Admin-Kontos (Standard `Admin`) |
 | `SEED_USERS` | Optional: JSON-Array weiterer Konten, z. B. `[{"name":"Chelly","email":"c@example.com","password":"…","role":"EDITOR"}]` |
 
 Es gibt keine öffentliche Registrierung — Konten entstehen nur über das

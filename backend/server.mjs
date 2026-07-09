@@ -289,12 +289,23 @@ function seedDefaultUsers() {
   // it must be configured explicitly; the well-known local fallback would
   // otherwise be an open door.
   if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    const adminName = process.env.ADMIN_NAME?.trim() || 'Admin';
     seedUser({
-      name: 'Admin',
+      name: adminName,
       email: process.env.ADMIN_EMAIL,
       role: 'ADMIN',
       password: process.env.ADMIN_PASSWORD,
     });
+    // The env vars manage this account, so an explicitly configured
+    // ADMIN_NAME also renames an already existing admin — otherwise the
+    // change would only take effect after a data wipe.
+    if (process.env.ADMIN_NAME) {
+      const existingAdmin = users.get(String(process.env.ADMIN_EMAIL).trim().toLowerCase());
+      if (existingAdmin && existingAdmin.name !== adminName) {
+        existingAdmin.name = adminName;
+        existingAdmin.updatedAt = new Date().toISOString();
+      }
+    }
   } else if (!isProduction) {
     seedUser({
       name: 'Admin',

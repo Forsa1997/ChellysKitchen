@@ -11,6 +11,8 @@ Die App läuft auf Render, konfiguriert über `render.yaml` (Blueprint):
 1. Auf render.com „New → Blueprint" und dieses Repository wählen.
 2. Env-Variablen setzen:
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — Pflicht, sonst gibt es keinen Admin.
+   - `ADMIN_NAME` — optionaler Anzeigename des Admin-Kontos (Standard
+     `Admin`); eine Änderung benennt das Konto beim nächsten Start um.
    - `SEED_USERS` — optional, legt weitere Konten an (JSON-Array mit
      `name`, `email`, `password`, optional `role`). Eine öffentliche
      Registrierung gibt es nicht; Konten entstehen nur hierüber oder im

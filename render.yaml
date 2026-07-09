@@ -30,6 +30,10 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      # Display name of the admin account (defaults to "Admin"); changing it
+      # renames the existing account on the next boot.
+      - key: ADMIN_NAME
+        sync: false
       # Optional additional accounts (there is no public registration):
       # a JSON array of { name, email, password, role? } objects.
       - key: SEED_USERS

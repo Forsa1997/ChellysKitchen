@@ -67,6 +67,7 @@ before(async () => {
       DATA_DIR: dataDir,
       ADMIN_EMAIL,
       ADMIN_PASSWORD,
+      ADMIN_NAME: 'Christoph',
       SEED_USERS,
     },
     stdio: 'ignore',
@@ -85,6 +86,15 @@ test('public registration endpoint no longer exists', async () => {
     body: { name: 'Fremd', email: 'fremd@test.local', password: 'secret123' },
   });
   assert.equal(reg.status, 404);
+});
+
+test('the admin account carries the configured ADMIN_NAME', async () => {
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+  assert.equal(login.status, 200);
+  assert.equal(login.body.user.name, 'Christoph');
 });
 
 test('users from SEED_USERS are created with their configured role', async () => {

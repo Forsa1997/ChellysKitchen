@@ -39,5 +39,6 @@ Server-Standard: `http://localhost:4000`
 | `DATA_DIR` | Datenablage, Standard `./.data` |
 | `CORS_ORIGIN` | Erlaubter Frontend-Origin |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
+| `ADMIN_NAME` | Anzeigename des Admin-Kontos (Standard `Admin`; benennt auch ein bestehendes Konto um) |
 | `SEED_USERS` | Optional: JSON-Array weiterer Konten (`[{"name":…,"email":…,"password":…,"role":…}]`) |
 | `NODE_ENV` | `production` deaktiviert Demo-/Default-Zugänge |
