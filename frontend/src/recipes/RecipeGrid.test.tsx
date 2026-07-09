@@ -1,6 +1,8 @@
-import { fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+afterEach(cleanup);
 import { RecipeGrid } from './RecipeGrid';
 import type { Recipe } from '../types/domain';
 
@@ -56,6 +58,27 @@ describe('RecipeGrid', () => {
     expect(screen.getByText('30 Minuten · 2 Portionen')).toBeInTheDocument();
     expect(screen.getByText(/Chris/)).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveAttribute('href', '/recipes/pasta');
+  });
+
+  it('shows the average star rating with its count on the card', () => {
+    const screen = render(
+      <MemoryRouter>
+        <RecipeGrid recipes={[{ ...favoriteRecipe, averageRating: 4.5, totalRatings: 3 }]} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('(3)')).toBeInTheDocument();
+    expect(screen.getByLabelText('4.5 Stars')).toBeInTheDocument();
+  });
+
+  it('shows empty stars with a zero count for unrated recipes', () => {
+    const screen = render(
+      <MemoryRouter>
+        <RecipeGrid recipes={[{ ...favoriteRecipe, averageRating: 0, totalRatings: 0 }]} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('(0)')).toBeInTheDocument();
   });
 
   it('shows no favorite button without an onToggleFavorite handler', () => {

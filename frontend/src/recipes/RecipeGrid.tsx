@@ -3,6 +3,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { Link as RouterLink } from 'react-router';
 import type { Recipe } from '../types/domain';
+import { RatingDisplay } from '../components/Rating';
 import { totalRecipeMinutes } from './recipeCardViewModel';
 import { recipeRenderImage } from './recipeImages';
 
@@ -94,9 +95,12 @@ export function RecipeGrid({ recipes, onToggleFavorite }: RecipeGridProps) {
                   </IconButton>
                 )}
               </Stack>
-              <Typography variant="h6" sx={{ mb: 0.75 }}>
+              <Typography variant="h6" sx={{ mb: 0.5 }}>
                 {recipe.title}
               </Typography>
+              <Box sx={{ mb: 0.75 }}>
+                <RatingDisplay value={recipe.averageRating ?? 0} count={recipe.totalRatings ?? 0} size="small" />
+              </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
                 {recipe.shortDescription}
               </Typography>
