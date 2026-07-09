@@ -68,6 +68,17 @@ export function useToggleFavorite() {
   });
 }
 
+export function useDuplicateRecipe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (idOrSlug: string) => apiClient.duplicateRecipe(idOrSlug),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    },
+  });
+}
+
 export function useUpdateRecipeNotes() {
   const queryClient = useQueryClient();
 

@@ -221,6 +221,37 @@ test('clearing the week plan empties every day', async () => {
   assert.ok(Object.values(plan.body.days).every((entries) => entries.length === 0));
 });
 
+test('members can duplicate a recipe as their own variant', async () => {
+  const list = await api('/api/recipes?pageSize=1');
+  const original = list.body.data[0];
+
+  const duplicated = await api(`/api/recipes/${original.slug}/duplicate`, {
+    method: 'POST',
+    token: memberToken,
+  });
+  assert.equal(duplicated.status, 201);
+  assert.equal(duplicated.body.title, `${original.title} (Variante)`);
+  assert.notEqual(duplicated.body.id, original.id);
+  assert.notEqual(duplicated.body.slug, original.slug);
+  assert.equal(duplicated.body.createdBy.name, 'Planer', 'the duplicating member owns the copy');
+  assert.deepEqual(duplicated.body.ingredients, original.ingredients);
+  // Ratings and shared notes belong to the original, not the variant.
+  assert.equal(duplicated.body.totalRatings, 0);
+  assert.equal(duplicated.body.notes, '');
+
+  const detail = await api(`/api/recipes/${duplicated.body.slug}`);
+  assert.equal(detail.status, 200);
+
+  const anonymous = await api(`/api/recipes/${original.slug}/duplicate`, { method: 'POST' });
+  assert.equal(anonymous.status, 401);
+
+  const missing = await api('/api/recipes/gibt-es-nicht/duplicate', {
+    method: 'POST',
+    token: memberToken,
+  });
+  assert.equal(missing.status, 404);
+});
+
 test('recipe import maps a schema.org page onto the recipe form shape', async () => {
   const imported = await api('/api/recipes/import', {
     method: 'POST',

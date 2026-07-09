@@ -17,6 +17,7 @@ import {
   isAllowedImportUrl,
   mapJsonLdToRecipe,
 } from './src/recipeImport.mjs';
+import { createRateLimiter } from './src/rateLimit.mjs';
 import { resolveCorsOrigin } from './src/cors.mjs';
 import {
   createDebouncedPersister,
@@ -77,6 +78,22 @@ const persister = createDebouncedPersister(
   200,
 );
 const persist = () => persister.schedule();
+
+// Login is the only public write endpoint (there is no registration), so
+// failed attempts are rate-limited: per IP+account, plus a wider per-account
+// net against attackers that rotate IPs. In-memory on purpose.
+const LOGIN_MAX_FAILURES = Number(process.env.LOGIN_MAX_FAILURES ?? 8);
+const LOGIN_WINDOW_MS = Number(process.env.LOGIN_WINDOW_MS ?? 10 * 60 * 1000);
+const loginLimiter = createRateLimiter({ maxFailures: LOGIN_MAX_FAILURES, windowMs: LOGIN_WINDOW_MS });
+const accountLimiter = createRateLimiter({ maxFailures: LOGIN_MAX_FAILURES * 3, windowMs: LOGIN_WINDOW_MS });
+
+function clientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return String(forwarded).split(',')[0].trim();
+  }
+  return req.socket?.remoteAddress ?? 'unknown';
+}
 
 const ROLE_RANK = { GUEST: 0, MEMBER: 1, EDITOR: 2, ADMIN: 3 };
 const VALID_ROLES = Object.keys(ROLE_RANK);
@@ -482,13 +499,30 @@ const server = createServer(async (req, res) => {
     try {
       const { email, password } = await parseJsonBody(req);
       const normalizedEmail = String(email ?? '').trim().toLowerCase();
+
+      const ipKey = `${clientIp(req)}|${normalizedEmail}`;
+      const blocked = [loginLimiter.isBlocked(ipKey), accountLimiter.isBlocked(normalizedEmail)]
+        .find((check) => check.blocked);
+      if (blocked) {
+        res.setHeader('Retry-After', String(blocked.retryAfterSeconds));
+        jsonResponse(res, 429, {
+          error: `Zu viele fehlgeschlagene Anmeldeversuche. Bitte warte ${blocked.retryAfterSeconds} Sekunden.`,
+        });
+        return;
+      }
+
       const user = users.get(normalizedEmail);
       const result = user ? verifyPassword(user, String(password ?? '')) : { valid: false };
 
       if (!result.valid) {
+        loginLimiter.recordFailure(ipKey);
+        accountLimiter.recordFailure(normalizedEmail);
         jsonResponse(res, 401, { error: 'Ungültige Anmeldedaten.' });
         return;
       }
+
+      loginLimiter.reset(ipKey);
+      accountLimiter.reset(normalizedEmail);
 
       // Accounts from before the scrypt switch still carry SHA-256 hashes;
       // upgrade them transparently while the plaintext password is at hand.
@@ -762,6 +796,46 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 400, { error: error.message });
       return;
     }
+  }
+
+  // POST /api/recipes/:idOrSlug/duplicate - Copy a recipe as an own variant
+  // ("Variante anlegen"): same content, new owner, fresh ratings/notes.
+  if (req.method === 'POST' && req.url?.match(/^\/api\/recipes\/[^/]+\/duplicate$/)) {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+    if (!hasMinRole(user, 'MEMBER')) {
+      jsonResponse(res, 403, { error: 'Nur Mitglieder können Rezepte duplizieren.' });
+      return;
+    }
+
+    const recipe = findRecipeByIdOrSlug(decodeURIComponent(req.url.split('/')[3]));
+    if (!recipe) {
+      jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const title = `${recipe.title} (Variante)`;
+    const copy = {
+      ...JSON.parse(JSON.stringify(recipe)),
+      id: `r_${randomBytes(8).toString('hex')}`,
+      title,
+      status: 'PUBLISHED',
+      createdBy: { id: user.id, name: user.name },
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: now,
+      notes: '',
+    };
+    copy.slug = uniqueSlug(title, copy.id);
+
+    recipeStore.unshift(copy);
+    persist();
+    jsonResponse(res, 201, sanitizeRecipe(copy, user));
+    return;
   }
 
   // ============================================================================

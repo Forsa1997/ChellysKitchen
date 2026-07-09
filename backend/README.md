@@ -20,13 +20,13 @@ Server-Standard: `http://localhost:4000`
 ## Endpunkte (Auszug)
 
 - `GET /health`
-- `POST /api/auth/login|refresh|logout`, `GET /api/auth/me` (keine öffentliche Registrierung)
+- `POST /api/auth/login|refresh|logout`, `GET /api/auth/me` (keine öffentliche Registrierung; Login-Versuche sind rate-limitiert)
 - `GET /api/recipes` (Suche/Filter/Pagination), `GET /api/recipes/random`
 - `GET /api/recipes/:idOrSlug/bring` (schema.org-Seite für den Bring!-Import, `?servings=` skaliert)
 - `POST /api/recipes/import` (Rezept von fremder Webseite per schema.org-JSON-LD übernehmen)
 - `GET|DELETE /api/weekplan`, `POST /api/weekplan/:day`, `DELETE /api/weekplan/:day/:recipeId`
 - `GET /api/weekplan/bring` (aggregierte Einkaufsliste der Woche für Bring!)
-- `GET|POST|PATCH|DELETE /api/recipes/:idOrSlug` (+ `/publish`, `/archive`)
+- `GET|POST|PATCH|DELETE /api/recipes/:idOrSlug` (+ `/publish`, `/archive`, `/duplicate`)
 - `PUT|DELETE /api/recipes/:slug/favorite`, `PATCH /api/recipes/:slug/notes`
 - `GET|POST|DELETE /api/recipes/:slug/rating`
 - `GET|POST|PATCH|DELETE /api/categories`

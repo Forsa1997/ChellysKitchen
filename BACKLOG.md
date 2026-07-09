@@ -51,7 +51,13 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
       revidiert
 - [x] Hochgeladene Bilder liegen mit in der Datenbank und überleben Redeploys
 
+### 7. Nachzügler
+
+- [x] Rate-Limiting für Login-Versuche (pro IP+Konto und pro Konto,
+      Standard 8 Fehlversuche / 10 Minuten)
+- [x] Rezept duplizieren („Variante anlegen") — Kopie gehört dem
+      Duplizierenden, Bewertungen/Notizen starten leer
+
 ## Ideen für später (bewusst zurückgestellt)
 
-- Rate-Limiting für Login-Versuche
-- Rezept duplizieren („Variante anlegen")
+- (aktuell leer — neue Wünsche hier sammeln)

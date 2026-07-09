@@ -636,6 +636,16 @@ class ApiClient {
   }
 
   /**
+   * POST /api/recipes/:idOrSlug/duplicate
+   * Copy a recipe as an own variant (new owner, fresh ratings/notes)
+   */
+  async duplicateRecipe(idOrSlug: string): Promise<Recipe> {
+    return this.request<Recipe>(`/api/recipes/${encodeURIComponent(idOrSlug)}/duplicate`, {
+      method: 'POST',
+    });
+  }
+
+  /**
    * POST /api/recipes/import
    * Fetch an external recipe page server-side and map its schema.org data
    * onto our recipe shape (nothing is saved).

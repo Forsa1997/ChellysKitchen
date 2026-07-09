@@ -1,12 +1,12 @@
 import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
-import { useRecipe, useDeleteRecipe, usePublishRecipe, useArchiveRecipe, useToggleFavorite, useUpdateRecipeNotes } from '../hooks/useRecipes';
+import { useRecipe, useDeleteRecipe, useDuplicateRecipe, usePublishRecipe, useArchiveRecipe, useToggleFavorite, useUpdateRecipeNotes } from '../hooks/useRecipes';
 import { useAddToWeekPlan } from '../hooks/useWeekPlan';
 import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, AddShoppingCart, CalendarMonth, Casino, ContentCopy, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
+import { AccessTime, Add, AddShoppingCart, CalendarMonth, Casino, ContentCopy, CopyAll, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
 import { apiClient, getApiBaseUrl, type ApiError, type WeekDay } from '../api/client';
 import { buildBringDeeplink } from '../utils/bring';
 import { WEEK_DAYS } from '../utils/weekdays';
@@ -29,6 +29,7 @@ export function RecipeDetailPage() {
   const deleteRating = useDeleteRating();
   const { data: existingRating } = useRecipeRatings(user && slug ? slug : '');
   const deleteRecipe = useDeleteRecipe();
+  const duplicateRecipe = useDuplicateRecipe();
   const publishRecipe = usePublishRecipe();
   const archiveRecipe = useArchiveRecipe();
   const toggleFavorite = useToggleFavorite();
@@ -156,6 +157,16 @@ export function RecipeDetailPage() {
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!recipe) return;
+    try {
+      const copy = await duplicateRecipe.mutateAsync(recipe.id);
+      navigate(`/recipes/${copy.slug}/edit`);
+    } catch {
+      setRatingError('Rezept konnte nicht dupliziert werden.');
+    }
+  };
+
   const handlePlanDay = async (day: WeekDay, label: string) => {
     setWeekPlanAnchor(null);
     if (!recipe) return;
@@ -277,6 +288,16 @@ export function RecipeDetailPage() {
                   ))}
                 </Menu>
               </>
+            )}
+            {user && (
+              <Button
+                startIcon={<CopyAll />}
+                variant="outlined"
+                onClick={handleDuplicate}
+                disabled={duplicateRecipe.isPending}
+              >
+                Variante anlegen
+              </Button>
             )}
             <Button startIcon={<Casino />} variant="outlined" onClick={handleRollAgain}>
               Nochmal würfeln

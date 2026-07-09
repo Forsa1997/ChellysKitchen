@@ -16,6 +16,8 @@ const useArchiveRecipeMock = vi.fn();
 const useToggleFavoriteMock = vi.fn();
 const useUpdateRecipeNotesMock = vi.fn();
 
+const duplicateRecipeMock = { isPending: false, mutateAsync: vi.fn() };
+
 vi.mock('../hooks/useRecipes', () => ({
   useRecipe: (...args: unknown[]) => useRecipeMock(...args),
   useDeleteRecipe: () => useDeleteRecipeMock(),
@@ -23,6 +25,7 @@ vi.mock('../hooks/useRecipes', () => ({
   useArchiveRecipe: () => useArchiveRecipeMock(),
   useToggleFavorite: () => useToggleFavoriteMock(),
   useUpdateRecipeNotes: () => useUpdateRecipeNotesMock(),
+  useDuplicateRecipe: () => duplicateRecipeMock,
 }));
 
 vi.mock('../auth/AuthContext', () => ({
@@ -257,6 +260,22 @@ describe('RecipeDetailPage', () => {
     const href = link.getAttribute('href') ?? '';
     expect(href).toContain('https://api.getbring.com/rest/bringrecipes/deeplink');
     expect(decodeURIComponent(href)).toContain('https://api.example.com/api/recipes/pasta/bring?servings=3');
+  });
+
+  it('duplicates the recipe and jumps into editing the variant', async () => {
+    duplicateRecipeMock.mutateAsync.mockResolvedValue({ slug: 'pasta-variante' });
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: { id: 'u2', role: 'MEMBER' } });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Variante anlegen' }));
+
+    await waitFor(() => expect(duplicateRecipeMock.mutateAsync).toHaveBeenCalledWith('recipe-1'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('current-path')).toHaveTextContent('/recipes/pasta-variante/edit');
+    });
   });
 
   it('adds the recipe to a week plan day with the selected servings', async () => {

@@ -64,6 +64,7 @@ Chellys Kitchen is a family recipe app with a deliberately slim Node.js backend 
 - `weekplan.mjs` - shared family week plan (day -> planned recipes + servings) and ingredient aggregation for the weekly Bring! list (`/api/weekplan`, public `/api/weekplan/bring`)
 - `recipeImport.mjs` - import recipes from external sites: fetch server-side, extract schema.org JSON-LD, parse ingredient lines/durations; SSRF guard (`POST /api/recipes/import`, `IMPORT_ALLOW_PRIVATE=1` only for tests)
 - `passwords.mjs` - scrypt hashing, transparent migration of legacy SHA-256 hashes on login
+- `rateLimit.mjs` - sliding-window limiter for failed logins (per IP+account and per account, in-memory; `LOGIN_MAX_FAILURES`/`LOGIN_WINDOW_MS` tunable for tests)
 - `sessions.mjs` - token maps with TTL (access 1d, refresh 30d, rotation on refresh)
 - `uploads.mjs`, `cors.mjs` - image upload validation, CORS origin resolution
 
