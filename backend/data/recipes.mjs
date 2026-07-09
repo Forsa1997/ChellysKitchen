@@ -345,5 +345,41 @@ export const recipes = [
     category: 'Desserts',
     status: 'PUBLISHED',
     creationDate: '2026-05-02T00:00:00.000Z'
+  },
+  {
+    id: 'r13',
+    slug: 'spinat-parmesan-pasta',
+    img: '/recipe-images/spinat-parmesan-pasta.svg',
+    tag: 'Kochen',
+    title: 'Spinat-Parmesan-Pasta',
+    shortDescription: 'Cremige Vollkorn-Spaghetti mit Babyspinat, Knoblauch und Parmesan',
+    description:
+      'Durch die schnelle Zubereitung und die wenigen Zutaten hast du im Nu ein leckeres Mittag- oder Abendessen. Der leichte Kaesegeschmack gibt diesem cremigen Pasta-Gericht noch die besondere Wuerze! Aber auch der Spinat kann sich hier sehen lassen: Er ist sehr kalorienarm, aber dafuer reich an Vitamin C, was uns uebrigens vor Infektionen schuetzt.',
+    preparationTime: 5,
+    cookingTime: 10,
+    difficulty: 'Einfach',
+    servings: 4,
+    ingredients: [
+      { name: 'Vollkorn-Spaghetti', amount: 240, unit: 'g' },
+      { name: 'Butter', amount: 20, unit: 'g' },
+      { name: 'Knoblauchzehe', amount: 2, unit: 'Stk' },
+      { name: 'Parmesan, gerieben', amount: 50, unit: 'g' },
+      { name: 'Babyspinat, frisch', amount: 300, unit: 'g' },
+      { name: 'Pfeffer und Salz', amount: 0, unit: 'nach Belieben' }
+    ],
+    steps: [
+      { stepNumber: 1, instruction: 'Zu Beginn die Vollkorn-Spaghetti nach Packungsanleitung zubereiten. Die fertigen Nudeln in ein Sieb geben und abtropfen lassen.' },
+      { stepNumber: 2, instruction: 'Nun die Butter in den Topf geben und die Knoblauchzehe schaelen, pressen, hinzugeben und in der Butter fuer ca. 3 Minuten anbraten.' },
+      { stepNumber: 3, instruction: 'Danach den Spinat hinzugeben und so lange duensten, bis dieser eingefallen ist.' },
+      { stepNumber: 4, instruction: 'Die Nudeln wieder in den Topf geben, den Parmesan darueber streuen und alles gut vermischen.' },
+      { stepNumber: 5, instruction: 'Zum Schluss mit Pfeffer und Salz nach Belieben wuerzen.' },
+      { stepNumber: 6, instruction: 'Lass es dir schmecken!' }
+    ],
+    nutritionalValues: { calories: 316, protein: 13.6, carbohydrates: 37.1, fat: 10.7 },
+    authors: [{ name: 'Christoph Ruhe', avatar: '/static/images/avatar/1.jpg' }],
+    createdBy: { id: 'demo-author', name: 'Christoph Ruhe' },
+    category: 'Cooking',
+    status: 'PUBLISHED',
+    creationDate: '2026-07-09T00:00:00.000Z'
   }
 ];

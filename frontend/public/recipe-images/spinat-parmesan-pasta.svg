@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Spinat-Parmesan-Pasta">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3ede2"/>
+      <stop offset="0.55" stop-color="#e9dcc7"/>
+      <stop offset="1" stop-color="#d8c4a3"/>
+    </linearGradient>
+    <radialGradient id="plate" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.82" stop-color="#f4f4f2"/>
+      <stop offset="1" stop-color="#dcdad4"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <ellipse cx="400" cy="280" rx="300" ry="150" fill="#000" opacity="0.08"/>
+  <ellipse cx="400" cy="262" rx="285" ry="150" fill="url(#plate)"/>
+  <ellipse cx="400" cy="262" rx="215" ry="112" fill="#fbf7f0"/>
+  <ellipse cx="400" cy="262" rx="215" ry="112" fill="none" stroke="#e7e1d6" stroke-width="3"/>
+  <!-- three spaghetti nests -->
+  <g fill="none" stroke="#e9c986" stroke-width="9" stroke-linecap="round" opacity="0.95">
+    <path d="M330 218 q22 -20 44 -2 q22 18 0 34 q-22 16 -42 -2 q-18 -16 -2 -32z"/>
+    <path d="M330 218 q26 -14 50 6 q20 20 -4 36"/>
+    <path d="M460 236 q20 -18 40 -2 q20 16 -2 32 q-20 14 -38 -2 q-16 -14 0 -28z"/>
+    <path d="M460 236 q24 -12 44 6 q18 18 -6 32"/>
+    <path d="M398 300 q20 -18 40 -2 q20 16 -2 32 q-20 14 -38 -2 q-16 -14 0 -28z"/>
+    <path d="M398 300 q24 -12 44 6 q18 18 -6 32"/>
+  </g>
+  <g fill="none" stroke="#f2dcaa" stroke-width="4" stroke-linecap="round">
+    <path d="M336 222 q20 -12 40 4"/>
+    <path d="M466 240 q18 -12 36 4"/>
+    <path d="M404 304 q18 -12 36 4"/>
+  </g>
+  <!-- spinach leaves scattered on nests -->
+  <g fill="#4c8b3f">
+    <path d="M336 224 q14 -14 28 -4 q-6 16 -28 4z"/>
+    <path d="M368 232 q14 -12 26 -2 q-6 14 -26 2z"/>
+    <path d="M468 244 q14 -14 28 -4 q-6 16 -28 4z"/>
+    <path d="M486 260 q12 -12 24 -2 q-6 14 -24 2z"/>
+    <path d="M406 306 q14 -14 28 -4 q-6 16 -28 4z"/>
+    <path d="M424 322 q12 -12 24 -2 q-6 14 -24 2z"/>
+  </g>
+  <g fill="#6aa85a">
+    <path d="M348 214 q10 -10 20 -2 q-4 12 -20 2z"/>
+    <path d="M478 232 q10 -10 20 -2 q-4 12 -20 2z"/>
+    <path d="M416 296 q10 -10 20 -2 q-4 12 -20 2z"/>
+  </g>
+  <!-- grated parmesan flecks -->
+  <g fill="#f4e9c9">
+    <circle cx="352" cy="236" r="3"/>
+    <circle cx="374" cy="220" r="2.5"/>
+    <circle cx="486" cy="252" r="3"/>
+    <circle cx="470" cy="264" r="2.5"/>
+    <circle cx="420" cy="316" r="3"/>
+    <circle cx="440" cy="298" r="2.5"/>
+    <circle cx="360" cy="252" r="2"/>
+    <circle cx="500" cy="238" r="2"/>
+    <circle cx="410" cy="332" r="2"/>
+  </g>
+</svg>
