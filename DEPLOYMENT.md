@@ -27,9 +27,19 @@ den JSON-Datei-Store unter `DATA_DIR` — es braucht dann keine Datenbank.
      `name`, `email`, `password`, optional `role`). Eine öffentliche
      Registrierung gibt es nicht; Konten entstehen nur hierüber oder im
      Admin-Dashboard.
-   - `CORS_ORIGIN` — URL der Web-App (z. B. `https://chellys-kitchen-web.onrender.com`).
+   - `CORS_ORIGIN` — kommt aus der `render.yaml`: kommaseparierte Liste der
+     erlaubten Browser-Origins (`https://chellys-kitchen.de`, `www`-Variante
+     und die Render-Fallback-URL). Bei einer neuen Domain dort erweitern.
    - `VITE_API_BASE_URL` (Frontend) — URL der API.
    `DATABASE_URL` wird automatisch aus der Blueprint-Datenbank verdrahtet.
+
+## Eigene Domain
+
+Die Website läuft unter `https://chellys-kitchen.de` (Custom Domain der
+statischen Site; DNS: `www` als CNAME auf die onrender-Adresse, Apex als
+A-Record auf Renders IP). TLS-Zertifikate stellt Render automatisch aus.
+Wichtig bei Domain-Änderungen: die neue Origin in `CORS_ORIGIN`
+(`render.yaml`) ergänzen, sonst blockiert der Browser die API-Aufrufe.
 3. Optional in GitHub die Secrets `RENDER_BACKEND_DEPLOY_HOOK_URL` und
    `RENDER_FRONTEND_DEPLOY_HOOK_URL` hinterlegen; der Deploy-Workflow stößt
    dann bei jedem Push auf `main` einen Render-Deploy an.

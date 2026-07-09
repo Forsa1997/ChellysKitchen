@@ -13,6 +13,8 @@ import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { SignInPage } from './pages/SignInPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { WeekPlanPage } from './pages/WeekPlanPage';
+import { ImpressumPage } from './pages/ImpressumPage';
+import { DatenschutzPage } from './pages/DatenschutzPage';
 
 function App() {
   const routerMode = import.meta.env.VITE_ROUTER_MODE ?? (import.meta.env.PROD ? 'hash' : 'browser');
@@ -61,6 +63,8 @@ function App() {
                   )}
                 />
                 <Route path="/signin" element={<SignInPage />} />
+                <Route path="/impressum" element={<ImpressumPage />} />
+                <Route path="/datenschutz" element={<DatenschutzPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </AppShell>

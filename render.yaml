@@ -33,8 +33,10 @@ services:
         fromDatabase:
           name: chellys-kitchen-db
           property: connectionString
+      # Allowed browser origins (comma-separated). The custom domain plus
+      # the Render fallback URL of the static site.
       - key: CORS_ORIGIN
-        sync: false
+        value: https://chellys-kitchen.de,https://www.chellys-kitchen.de,https://chellys-kitchen-web.onrender.com
       # Initial admin account (needed to reach the admin dashboard).
       # Required in production: without these no admin account is created.
       - key: ADMIN_EMAIL
@@ -62,5 +64,8 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     envVars:
+      # Baked into the bundle at build time (Vite). Points the custom-domain
+      # site at the API, which keeps its Render URL. A rebuild is required
+      # after changing this.
       - key: VITE_API_BASE_URL
-        sync: false
+        value: https://chellys-kitchen-api.onrender.com

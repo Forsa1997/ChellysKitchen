@@ -3,6 +3,8 @@
  * Based on the architecture plan with all endpoints for Auth, Recipes, Ratings, Categories, and Admin
  */
 
+import { resolveApiBaseUrl } from './resolveApiBaseUrl';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -295,22 +297,12 @@ function inferApiBaseUrl(): string {
     return 'http://localhost:4000';
   }
 
-  const configuredUrl = import.meta.env.VITE_API_BASE_URL;
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
   const { protocol, hostname } = window.location;
-
-  if (hostname.endsWith('onrender.com') && hostname.includes('-web')) {
-    return `${protocol}//${hostname.replace('-web', '-api')}`;
-  }
-
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:4000';
-  }
-
-  return window.location.origin;
+  return resolveApiBaseUrl({
+    configuredUrl: import.meta.env.VITE_API_BASE_URL,
+    protocol,
+    hostname,
+  });
 }
 
 const API_BASE_URL = inferApiBaseUrl();
