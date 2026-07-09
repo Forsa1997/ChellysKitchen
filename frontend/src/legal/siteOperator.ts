@@ -13,12 +13,12 @@ const PLACEHOLDERS = new Set([
 ]);
 
 export const siteOperator = {
-  name: 'Vorname Nachname',
-  street: 'Straße und Hausnummer',
-  postalCode: 'PLZ',
-  city: 'Ort',
+  name: 'Michelle Zboron',
+  street: 'An der Junkernwiese 38',
+  postalCode: '30926',
+  city: 'Seelze',
   country: 'Deutschland',
-  email: 'kontakt@chellys-kitchen.de',
+  email: 'chellyzboron@t-online.de',
   // Optional: Telefonnummer (leer lassen, wenn nicht gewünscht).
   phone: '',
 };

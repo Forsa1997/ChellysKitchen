@@ -20,16 +20,32 @@ describe('legal pages', () => {
     expect(screen.getByText('Deutschland')).toBeInTheDocument();
   });
 
-  it('warns while the operator placeholders are not filled in', () => {
+  it('shows the real operator details without a completion warning', () => {
     render(
       <MemoryRouter>
         <ImpressumPage />
       </MemoryRouter>,
     );
 
-    // The shipped defaults are placeholders, so the completion hint shows.
-    expect(operatorNeedsCompletion()).toBe(true);
-    expect(screen.getByText(/noch nicht vollständig/i)).toBeInTheDocument();
+    // Real contact data is filled in, so no completion hint is shown.
+    expect(operatorNeedsCompletion()).toBe(false);
+    expect(screen.queryByText(/noch nicht vollständig/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Michelle Zboron')).toBeInTheDocument();
+    expect(screen.getByText('30926 Seelze')).toBeInTheDocument();
+  });
+
+  it('still detects incomplete operator data via the helper', () => {
+    expect(
+      operatorNeedsCompletion({
+        name: 'PLZ',
+        street: '',
+        postalCode: 'PLZ',
+        city: 'Ort',
+        country: 'Deutschland',
+        email: 'kontakt@chellys-kitchen.de',
+        phone: '',
+      }),
+    ).toBe(true);
   });
 
   it('renders the privacy policy with the required sections', () => {
