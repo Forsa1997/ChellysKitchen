@@ -13,11 +13,12 @@ const defaultMeta = {
   maxTotalMinutes: null,
 };
 
-export function useQueryRecipes(params: RecipeListParams) {
+export function useQueryRecipes(params: RecipeListParams, { enabled = true } = {}) {
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['recipes', params],
     queryFn: () => apiClient.getRecipes(params),
     placeholderData: keepPreviousData,
+    enabled,
   });
 
   const recipes = data?.data || [];

@@ -1,27 +1,25 @@
 import {
   Alert,
+  Badge,
   Box,
   Button,
   Chip,
+  CircularProgress,
   Divider,
-  FormControl,
   IconButton,
   InputAdornment,
   LinearProgress,
-  MenuItem,
   Pagination,
   Paper,
-  Select,
   SelectChangeEvent,
   Skeleton,
   Snackbar,
   Stack,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import type { SxProps, Theme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CasinoIcon from '@mui/icons-material/Casino';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -29,7 +27,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import TuneIcon from '@mui/icons-material/Tune';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Link as RouterLink } from 'react-router';
 import { apiClient, type ApiError } from '../api/client';
@@ -37,59 +35,31 @@ import { useAuth } from '../auth/AuthContext';
 import { useCategories } from '../hooks/useCategories';
 import { useToggleFavorite } from '../hooks/useRecipes';
 import { useQueryRecipes } from '../recipes/useQueryRecipes';
+import { useInfiniteQueryRecipes } from '../recipes/useInfiniteQueryRecipes';
 import { RecipeGrid } from '../recipes/RecipeGrid';
 import { formatCategoryLabel } from './homePageViewModel';
 import { normalizeRecipeListParams } from './recipeListQueryParams';
-
-const difficultyOptions = ['all', 'Einfach', 'Mittel', 'Schwer'] as const;
-const timePresets = ['all', '15', '30', '60'] as const;
-
-const sortLabels: Record<string, string> = {
-  newest: 'Neueste',
-  oldest: 'Älteste',
-  title_asc: 'Titel A-Z',
-  title_desc: 'Titel Z-A',
-};
-
-function timePresetLabel(value: string) {
-  return value === 'all' ? 'Alle' : `bis ${value} Min.`;
-}
-
-// Shared styling so every filter group (category, difficulty, time) looks and
-// behaves identically: standalone rounded buttons that wrap onto new lines,
-// without the theme's default group container box (visible in dark mode).
-const filterToggleGroupSx: SxProps<Theme> = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 1,
-  // Override the theme's grouped-toggle container (a bordered/filled box that
-  // is applied with high specificity in dark mode) so the buttons read as
-  // standalone chips, consistent across light and dark.
-  backgroundColor: 'transparent !important',
-  border: 'none !important',
-  borderRadius: 0,
-  p: 0,
-  '& .MuiToggleButtonGroup-grouped': {
-    m: 0,
-    border: '1px solid',
-    borderColor: 'divider',
-    borderRadius: '8px !important',
-    minHeight: 40,
-    px: 2,
-    whiteSpace: 'nowrap',
-  },
-};
+import { MobileFilterSheet } from './MobileFilterSheet';
+import { CategoryFilter, DifficultyFilter, SortSelect, TimeFilter, sortLabels } from './recipeFilterControls';
 
 export function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const listParams = normalizeRecipeListParams(searchParams);
-  const { recipes, meta, loading, fetching = false, error } = useQueryRecipes(listParams);
+  const theme = useTheme();
+  // Mobile swaps the page-based Pagination for infinite scroll. Both hooks are
+  // called unconditionally (Rules of Hooks); `enabled` makes only one fetch.
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
+  const pagedResult = useQueryRecipes(listParams, { enabled: !isMobile });
+  const infiniteResult = useInfiniteQueryRecipes(listParams, { enabled: isMobile });
+  const { recipes, meta, loading, fetching = false, error } = isMobile ? infiniteResult : pagedResult;
+  const { hasNextPage, fetchNextPage, fetchingNextPage } = infiniteResult;
   const { data: categoryData } = useCategories();
   const [queryDraft, setQueryDraft] = useState({ value: listParams.q, source: listParams.q });
   const [randomPending, setRandomPending] = useState(false);
   const [randomError, setRandomError] = useState<string | null>(null);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const toggleFavorite = useToggleFavorite();
   let queryInput = queryDraft.value;
 
@@ -204,6 +174,25 @@ export function HomePage() {
       setRandomPending(false);
     }
   };
+
+  // Infinite scroll: load the next page once the sentinel below the grid
+  // scrolls near the viewport. Re-armed after each fetch completes, so every
+  // intersection triggers exactly one request.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!isMobile || !hasNextPage || fetchingNextPage || !node) {
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        fetchNextPage();
+      }
+    }, { rootMargin: '400px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isMobile, hasNextPage, fetchingNextPage, fetchNextPage, recipes.length]);
 
   if (error) {
     return <Alert severity="error">Rezepte konnten nicht geladen werden.</Alert>;
@@ -345,8 +334,8 @@ export function HomePage() {
             sx={{
               display: 'grid',
               gap: 2,
-              gridTemplateColumns: { xs: '1fr', lg: 'minmax(360px, 1.15fr) minmax(360px, 1fr)' },
-              alignItems: 'start',
+              gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: '1fr', lg: 'minmax(360px, 1.15fr) minmax(360px, 1fr)' },
+              alignItems: { xs: 'center', md: 'start' },
             }}
           >
           <TextField
@@ -373,92 +362,42 @@ export function HomePage() {
             }}
           />
 
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-              Kategorie
-            </Typography>
-            <ToggleButtonGroup
-              value={listParams.category}
-              exclusive
-              onChange={(_event, value) => handleCategoryChange(value)}
-              size="small"
-              sx={filterToggleGroupSx}
+          {/* On mobile the category/difficulty/time/sort controls live in a
+              bottom sheet behind this button; the badge mirrors how many
+              filters are active so nothing feels hidden. */}
+          <Badge badgeContent={activeFilterCount} color="primary" sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
+            <Button
+              variant="outlined"
+              startIcon={<TuneIcon />}
+              onClick={() => setFilterSheetOpen(true)}
+              sx={{ minHeight: 56, whiteSpace: 'nowrap' }}
             >
-              {categories.map((entry) => (
-                <ToggleButton key={entry} value={entry}>
-                  {formatCategoryLabel(entry)}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
+              Filter
+            </Button>
+          </Badge>
+
+          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <CategoryFilter categories={categories} value={listParams.category} onChange={handleCategoryChange} />
           </Box>
           </Box>
 
-          <Divider />
+          <Divider sx={{ display: { xs: 'none', md: 'block' } }} />
 
           <Box
             sx={{
-              display: 'grid',
+              display: { xs: 'none', md: 'grid' },
               gap: 2,
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr minmax(200px, 240px)' },
+              gridTemplateColumns: { md: '1fr 1fr', lg: '1fr 1fr minmax(200px, 240px)' },
               alignItems: 'start',
             }}
           >
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                Schwierigkeit
-              </Typography>
-              <ToggleButtonGroup
-                value={listParams.difficulty}
-                exclusive
-                onChange={handleDifficultyChange}
-                size="small"
-                sx={filterToggleGroupSx}
-              >
-                {difficultyOptions.map((entry) => (
-                  <ToggleButton key={entry} value={entry}>
-                    {entry === 'all' ? 'Alle' : entry}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Box>
-
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                Zeit
-              </Typography>
-              <ToggleButtonGroup
-                value={listParams.maxTotalMinutes ? String(listParams.maxTotalMinutes) : 'all'}
-                exclusive
-                onChange={handleTimePresetChange}
-                size="small"
-                sx={filterToggleGroupSx}
-              >
-                {timePresets.map((entry) => (
-                  <ToggleButton key={entry} value={entry}>
-                    {timePresetLabel(entry)}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Box>
-
-            <Box sx={{ gridColumn: { sm: '1 / -1', lg: 'auto' }, minWidth: 0 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                Sortierung
-              </Typography>
-              <FormControl size="small" fullWidth>
-                <Select
-                  aria-label="Sortieren nach"
-                  value={listParams.sort}
-                  onChange={handleSortChange}
-                  sx={{ minHeight: 40 }}
-                >
-                  <MenuItem value="newest">{sortLabels.newest}</MenuItem>
-                  <MenuItem value="oldest">{sortLabels.oldest}</MenuItem>
-                  <MenuItem value="title_asc">{sortLabels.title_asc}</MenuItem>
-                  <MenuItem value="title_desc">{sortLabels.title_desc}</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
+            <DifficultyFilter value={listParams.difficulty} onChange={handleDifficultyChange} />
+            <TimeFilter maxTotalMinutes={listParams.maxTotalMinutes} onChange={handleTimePresetChange} />
+            <SortSelect
+              value={listParams.sort}
+              onChange={handleSortChange}
+              sx={{ gridColumn: { md: '1 / -1', lg: 'auto' } }}
+            />
           </Box>
 
           {hasActiveFilters && (
@@ -504,6 +443,20 @@ export function HomePage() {
         </Stack>
       </Paper>
 
+      <MobileFilterSheet
+        open={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        categories={categories}
+        listParams={listParams}
+        onCategoryChange={handleCategoryChange}
+        onDifficultyChange={handleDifficultyChange}
+        onTimePresetChange={handleTimePresetChange}
+        onSortChange={handleSortChange}
+        onReset={resetFilters}
+        hasActiveFilters={hasActiveFilters}
+        resultCount={meta.total}
+      />
+
       {recipes.length > 0 ? (
         <RecipeGrid
           recipes={recipes}
@@ -535,7 +488,20 @@ export function HomePage() {
         </Alert>
       </Snackbar>
 
-      {meta.totalPages > 1 && (
+      {isMobile && recipes.length > 0 && (
+        <Box ref={sentinelRef} sx={{ display: 'flex', justifyContent: 'center', py: 1, minHeight: 40 }}>
+          {fetchingNextPage && (
+            <CircularProgress size={28} aria-label="Weitere Rezepte werden geladen" />
+          )}
+          {!hasNextPage && !fetchingNextPage && (
+            <Typography variant="caption" color="text.secondary">
+              Alle {meta.total} {meta.total === 1 ? 'Rezept' : 'Rezepte'} geladen
+            </Typography>
+          )}
+        </Box>
+      )}
+
+      {!isMobile && meta.totalPages > 1 && (
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={2}
