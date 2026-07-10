@@ -1303,13 +1303,12 @@ const server = createServer(async (req, res) => {
 
   // ============================================================================
   // Recipe Import (from external websites via schema.org JSON-LD, or from a
-  // photo via the Anthropic vision API)
+  // photo via the Google Gemini API)
   // ============================================================================
 
   // POST /api/recipes/import/photo - Extract a recipe from an uploaded photo
   // (cookbook page, handwritten note). Nothing is saved; the result prefills
-  // the create form. OpenAI answers first (OPENAI_API_KEY), Anthropic is the
-  // fallback (ANTHROPIC_API_KEY); at least one key is required.
+  // the create form. The Gemini API is configured via GEMINI_API_KEY.
   if (req.method === 'POST' && req.url === '/api/recipes/import/photo') {
     const user = authenticateRequest(req);
     if (!user) {
@@ -1322,7 +1321,7 @@ const server = createServer(async (req, res) => {
     }
     if (!isPhotoImportConfigured()) {
       jsonResponse(res, 503, {
-        error: 'Der Foto-Import ist auf diesem Server nicht eingerichtet (OPENAI_API_KEY oder ANTHROPIC_API_KEY fehlt).',
+        error: 'Der Foto-Import ist auf diesem Server nicht eingerichtet (GEMINI_API_KEY fehlt).',
       });
       return;
     }

@@ -1,31 +1,16 @@
 // Import recipes from a photo (cookbook page, handwritten note, screenshot).
-// The image goes to a vision model which returns the recipe as structured
-// JSON; the result is mapped onto the create-form shape — like the URL
-// import, nothing is saved.
-//
-// Provider chain: OpenAI first (OPENAI_API_KEY), Anthropic as fallback
-// (ANTHROPIC_API_KEY). The fallback only kicks in on technical failures
-// (API unreachable, broken answer) — a clean "no recipe on this photo"
-// answer is final and does not trigger a second, paid call. Both base URLs
-// are overridable (OPENAI_BASE_URL / ANTHROPIC_BASE_URL), which the
-// end-to-end tests use to point at a mock server.
+// Gemini receives the image and returns structured JSON which is normalized
+// onto the create-form shape. Nothing is saved by this module.
 
 import { parseIngredientText } from './recipeImport.mjs';
 
-const DEFAULT_ANTHROPIC_MODEL = 'claude-opus-4-8';
-// Photo extraction is OCR-like work — the mid-tier model is plenty; the
-// frontier tier (e.g. gpt-5.6-sol) costs a multiple without added value
-// here. Override via PHOTO_IMPORT_OPENAI_MODEL.
-const DEFAULT_OPENAI_MODEL = 'gpt-5.5';
-const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
-// The user is waiting in the create form — cap calls well below the
-// providers' multi-minute defaults.
+const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash';
+const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 const REQUEST_TIMEOUT_MS = 120_000;
 
-// Structured output keeps the model answer machine-readable: the schema is
-// enforced provider-side, so parsing never has to fight prose or code
-// fences. Every property is required and additionalProperties is false —
-// both Anthropic structured outputs and OpenAI strict mode demand that.
+// Structured output keeps the answer machine-readable. Application-side
+// normalization still validates the values because a schema-valid response
+// can contain semantically incomplete recipe data.
 const RECIPE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -62,7 +47,9 @@ const RECIPE_SCHEMA = {
 
 const PROMPT = `Auf dem Bild ist ein Rezept zu sehen — z. B. eine Kochbuchseite,
 ein handgeschriebener Zettel oder ein Bildschirmfoto. Extrahiere das Rezept
-vollständig und originalgetreu (Sprache des Rezepts beibehalten, Deutsch bevorzugen).
+vollständig und inhaltlich originalgetreu. Wenn das Rezept ganz oder teilweise
+in einer anderen Sprache vorliegt, übersetze alle menschenlesbaren Inhalte
+vollständig ins Deutsche.
 
 Regeln:
 - containsRecipe: false, wenn kein Rezept erkennbar ist (dann alle anderen Felder leer/0).
@@ -76,12 +63,8 @@ Regeln:
   neutral abgeleitet).`;
 
 export function isPhotoImportConfigured(env = process.env) {
-  return Boolean(env.OPENAI_API_KEY || env.ANTHROPIC_API_KEY);
+  return Boolean(env.GEMINI_API_KEY);
 }
-
-// ---------------------------------------------------------------------------
-// Shared normalization: both providers answer with the same JSON schema.
-// ---------------------------------------------------------------------------
 
 function toMinutes(value) {
   const minutes = Math.round(Number(value));
@@ -106,12 +89,8 @@ function normalizeStep(entry) {
   return instruction.trim();
 }
 
-/**
- * Map the parsed schema JSON onto the recipe form shape.
- * Returns null when the model reports the photo holds no recipe.
- */
 function normalizeParsedRecipe(parsed) {
-  if (!parsed || typeof parsed !== 'object' || parsed.containsRecipe === false) return null;
+  if (parsed.containsRecipe === false) return null;
 
   const title = String(parsed.title ?? '').trim();
   const ingredients = (Array.isArray(parsed.ingredients) ? parsed.ingredients : [])
@@ -136,154 +115,78 @@ function normalizeParsedRecipe(parsed) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// OpenAI (primary)
-// ---------------------------------------------------------------------------
-
-export function buildOpenAiPhotoImportRequest({ mediaType, base64Data }, { model } = {}) {
+export function buildGeminiPhotoImportRequest(
+  { mediaType, base64Data },
+  { model } = {},
+) {
   return {
-    model: model ?? process.env.PHOTO_IMPORT_OPENAI_MODEL ?? DEFAULT_OPENAI_MODEL,
-    max_completion_tokens: 16000,
-    response_format: {
-      type: 'json_schema',
-      json_schema: { name: 'rezept_extraktion', strict: true, schema: RECIPE_SCHEMA },
-    },
-    messages: [
-      {
-        role: 'user',
-        content: [
-          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64Data}` } },
-          { type: 'text', text: PROMPT },
-        ],
-      },
+    model: model ?? process.env.PHOTO_IMPORT_MODEL ?? DEFAULT_GEMINI_MODEL,
+    store: false,
+    input: [
+      { type: 'image', data: base64Data, mime_type: mediaType },
+      { type: 'text', text: PROMPT },
     ],
+    response_format: {
+      type: 'text',
+      mime_type: 'application/json',
+      schema: RECIPE_SCHEMA,
+    },
   };
 }
 
 /**
- * Map an OpenAI chat-completions answer onto the recipe form shape.
- * Returns null for a clean "no recipe" answer; throws on refusals or
- * broken answers so the caller can fall back to the next provider.
+ * Parse the final text output of a Gemini Interactions API response.
+ * Returns null only for a valid response which contains no usable recipe.
  */
-export function parseOpenAiRecipeResponse(json) {
-  const message = json?.choices?.[0]?.message;
-  if (!message || message.refusal || typeof message.content !== 'string') {
-    throw new Error('OpenAI hat keine verwertbare Antwort geliefert.');
+export function parseGeminiRecipeResponse(interaction) {
+  if (!interaction || interaction.status !== 'completed') {
+    throw new Error('Gemini hat die Anfrage nicht abgeschlossen.');
   }
-  return normalizeParsedRecipe(JSON.parse(message.content));
+
+  const modelOutput = [...(interaction.steps ?? [])]
+    .reverse()
+    .find((step) => step.type === 'model_output');
+  const text = (modelOutput?.content ?? [])
+    .filter((entry) => entry.type === 'text' && typeof entry.text === 'string')
+    .map((entry) => entry.text)
+    .join('');
+  if (!text) {
+    throw new Error('Gemini hat keine verwertbare Antwort geliefert.');
+  }
+
+  const parsed = JSON.parse(text);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Gemini hat kein Rezeptobjekt geliefert.');
+  }
+  return normalizeParsedRecipe(parsed);
 }
 
-export async function extractRecipeViaOpenAi(
+export async function extractRecipeViaGemini(
   { mediaType, base64Data },
   { fetchImpl = fetch, env = process.env, model } = {},
 ) {
-  const baseUrl = (env.OPENAI_BASE_URL ?? DEFAULT_OPENAI_BASE_URL).replace(/\/$/, '');
-  const response = await fetchImpl(`${baseUrl}/chat/completions`, {
+  const baseUrl = (env.GEMINI_BASE_URL ?? DEFAULT_GEMINI_BASE_URL).replace(/\/$/, '');
+  const response = await fetchImpl(`${baseUrl}/interactions`, {
     method: 'POST',
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      'x-goog-api-key': env.GEMINI_API_KEY,
     },
-    body: JSON.stringify(buildOpenAiPhotoImportRequest({ mediaType, base64Data }, { model })),
+    body: JSON.stringify(buildGeminiPhotoImportRequest({ mediaType, base64Data }, { model })),
   });
   if (!response.ok) {
-    throw new Error(`OpenAI antwortete mit HTTP ${response.status}.`);
+    throw new Error(`Gemini antwortete mit HTTP ${response.status}.`);
   }
-  return parseOpenAiRecipeResponse(await response.json());
+  return parseGeminiRecipeResponse(await response.json());
 }
 
-// ---------------------------------------------------------------------------
-// Anthropic (fallback)
-// ---------------------------------------------------------------------------
-
-export function buildPhotoImportRequest({ mediaType, base64Data }, { model } = {}) {
-  return {
-    model: model ?? process.env.PHOTO_IMPORT_MODEL ?? DEFAULT_ANTHROPIC_MODEL,
-    max_tokens: 16000,
-    thinking: { type: 'adaptive' },
-    output_config: { format: { type: 'json_schema', schema: RECIPE_SCHEMA } },
-    messages: [
-      {
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
-          { type: 'text', text: PROMPT },
-        ],
-      },
-    ],
-  };
-}
-
-/**
- * Map an Anthropic Messages API answer onto the recipe form shape.
- * Returns null for a clean "no recipe" answer; throws on refusals or
- * broken answers (same contract as the OpenAI parser).
- */
-export function parseExtractedRecipe(message) {
-  if (!message || message.stop_reason === 'refusal') {
-    throw new Error('Anthropic hat die Anfrage abgelehnt.');
-  }
-  const textBlock = (message.content ?? []).find((block) => block.type === 'text');
-  if (!textBlock) {
-    throw new Error('Anthropic hat keine verwertbare Antwort geliefert.');
-  }
-  return normalizeParsedRecipe(JSON.parse(textBlock.text));
-}
-
-export async function extractRecipeViaAnthropic({ mediaType, base64Data }, { client, model } = {}) {
-  const response = await client.messages.create(
-    buildPhotoImportRequest({ mediaType, base64Data }, { model }),
-  );
-  return parseExtractedRecipe(response);
-}
-
-let cachedAnthropicClient = null;
-
-/**
- * Lazily create the Anthropic client so the SDK is only loaded when the
- * fallback is configured and actually used. Reads ANTHROPIC_API_KEY and
- * ANTHROPIC_BASE_URL from the environment.
- */
-export async function getPhotoImportClient() {
-  if (!cachedAnthropicClient) {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    cachedAnthropicClient = new Anthropic({ timeout: REQUEST_TIMEOUT_MS });
-  }
-  return cachedAnthropicClient;
-}
-
-// ---------------------------------------------------------------------------
-// Orchestration
-// ---------------------------------------------------------------------------
-
-/**
- * Try the configured providers in order (OpenAI, then Anthropic). A clean
- * "no recipe" answer (null) is final; only technical failures move on to
- * the next provider. Throws the last error when every provider fails.
- */
 export async function extractRecipeFromPhoto(
   { mediaType, base64Data },
-  { env = process.env, fetchImpl = fetch, anthropicClient } = {},
+  { env = process.env, fetchImpl = fetch } = {},
 ) {
-  const providers = [];
-  if (env.OPENAI_API_KEY) {
-    providers.push(() => extractRecipeViaOpenAi({ mediaType, base64Data }, { fetchImpl, env }));
+  if (!env.GEMINI_API_KEY) {
+    throw new Error('Der Foto-Import ist nicht konfiguriert.');
   }
-  if (env.ANTHROPIC_API_KEY) {
-    providers.push(async () => extractRecipeViaAnthropic(
-      { mediaType, base64Data },
-      { client: anthropicClient ?? await getPhotoImportClient() },
-    ));
-  }
-
-  let lastError = new Error('Der Foto-Import ist nicht konfiguriert.');
-  for (const run of providers) {
-    try {
-      return await run();
-    } catch (error) {
-      lastError = error;
-    }
-  }
-  throw lastError;
+  return extractRecipeViaGemini({ mediaType, base64Data }, { env, fetchImpl });
 }

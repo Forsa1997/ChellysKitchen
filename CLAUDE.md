@@ -63,7 +63,7 @@ Chellys Kitchen is a family recipe app with a deliberately slim Node.js backend 
 - `bringExport.mjs` - schema.org/Recipe JSON-LD page for the Bring! shopping-list import (`GET /api/recipes/:slug/bring`, `servings` param scales amounts)
 - `weekplan.mjs` - shared family week plan (day -> planned recipes + servings) and ingredient aggregation for the weekly Bring! list (`/api/weekplan`, public `/api/weekplan/bring`)
 - `recipeImport.mjs` - import recipes from external sites: fetch server-side, extract schema.org JSON-LD, parse ingredient lines/durations; SSRF guard (`POST /api/recipes/import`, `IMPORT_ALLOW_PRIVATE=1` only for tests)
-- `photoImport.mjs` - import recipes from a photo (cookbook page, handwritten note) via a vision model with structured output (`POST /api/recipes/import/photo`): OpenAI first (`OPENAI_API_KEY`), Anthropic as fallback on technical failures (`ANTHROPIC_API_KEY`); 503 without any key. Models overridable via `PHOTO_IMPORT_OPENAI_MODEL`/`PHOTO_IMPORT_MODEL`, tests mock both APIs via `OPENAI_BASE_URL`/`ANTHROPIC_BASE_URL`
+- `photoImport.mjs` - import recipes from a photo (cookbook page, handwritten note) via Google Gemini with structured output (`POST /api/recipes/import/photo`); enabled by `GEMINI_API_KEY`, 503 without the key. Model overridable via `PHOTO_IMPORT_MODEL`; tests mock the API via `GEMINI_BASE_URL`
 - `passwords.mjs` - scrypt hashing, transparent migration of legacy SHA-256 hashes on login
 - `rateLimit.mjs` - sliding-window limiter for failed logins (per IP+account and per account, in-memory; `LOGIN_MAX_FAILURES`/`LOGIN_WINDOW_MS` tunable for tests)
 - `sessions.mjs` - token maps with TTL (access 1d, refresh 30d, rotation on refresh)

@@ -112,6 +112,11 @@ test('recipe create -> update -> publish flow and admin role update', async () =
     },
   });
   assert.equal(created.status, 201);
+  assert.equal(
+    created.body.img,
+    'https://picsum.photos/800/450?random=50',
+    'recipes without an image keep the existing default image',
+  );
   const recipeId = created.body.id;
 
   // Owner updates it

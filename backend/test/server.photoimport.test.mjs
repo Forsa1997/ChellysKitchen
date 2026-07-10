@@ -1,7 +1,5 @@
-// End-to-end test for the photo recipe import: boots the real server with a
-// mocked OpenAI API (primary, via OPENAI_BASE_URL) and a mocked Anthropic
-// API (fallback, via ANTHROPIC_BASE_URL) so no network or real keys are
-// needed. One mock HTTP server plays both roles, told apart by the path.
+// End-to-end test for the photo recipe import. The real server calls a mocked
+// Gemini Interactions API, so no network access or real API key is needed.
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { spawn } from 'node:child_process';
@@ -18,13 +16,12 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN_EMAIL = 'photo-admin@test.local';
 const ADMIN_PASSWORD = 'photo-admin-secret';
 
-// 1x1 transparent PNG
 const TINY_PNG_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
-const OPENAI_RECIPE = {
+const GEMINI_RECIPE = {
   containsRecipe: true,
-  title: 'OpenAI-Pfannkuchen',
+  title: 'Gemini-Pfannkuchen',
   shortDescription: 'Vom Kochbuchfoto.',
   servings: 4,
   preparationTime: 10,
@@ -33,18 +30,14 @@ const OPENAI_RECIPE = {
   steps: ['Alles verrühren.', 'Backen.'],
 };
 
-const ANTHROPIC_RECIPE = { ...OPENAI_RECIPE, title: 'Anthropic-Pfannkuchen' };
-
 let child;
 let dataDir;
 let mockServer;
 let memberToken;
-// 'ok' answers with a recipe, 'noRecipe' with containsRecipe:false,
-// 'fail' with HTTP 500 (which must trigger the Anthropic fallback).
-let openAiMode = 'ok';
-let openAiCalls = 0;
-let anthropicCalls = 0;
-let lastOpenAiRequest = null;
+let geminiMode = 'ok';
+let geminiCalls = 0;
+let lastGeminiRequest = null;
+let lastGeminiApiKey = null;
 
 async function api(path, { method = 'GET', token, body } = {}) {
   const response = await fetch(`${BASE}${path}`, {
@@ -77,54 +70,36 @@ async function waitForServer() {
   throw new Error('Server did not start');
 }
 
-function handleOpenAi(body, res) {
-  openAiCalls += 1;
-  lastOpenAiRequest = body;
-  if (openAiMode === 'fail') {
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: { message: 'kaputt' } }));
-    return;
-  }
-  const payload = openAiMode === 'noRecipe' ? { containsRecipe: false } : OPENAI_RECIPE;
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({
-    id: 'chatcmpl_mock',
-    choices: [{
-      index: 0,
-      finish_reason: 'stop',
-      message: { role: 'assistant', content: JSON.stringify(payload), refusal: null },
-    }],
-  }));
-}
-
-function handleAnthropic(body, res) {
-  anthropicCalls += 1;
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({
-    id: 'msg_mock',
-    type: 'message',
-    role: 'assistant',
-    model: body.model,
-    stop_reason: 'end_turn',
-    content: [{ type: 'text', text: JSON.stringify(ANTHROPIC_RECIPE) }],
-    usage: { input_tokens: 10, output_tokens: 10 },
-  }));
-}
-
 before(async () => {
   mockServer = createServer((req, res) => {
     let raw = '';
     req.on('data', (chunk) => { raw += chunk; });
     req.on('end', () => {
-      const body = JSON.parse(raw);
-      if (req.url === '/v1/chat/completions') {
-        handleOpenAi(body, res);
-      } else if (req.url === '/v1/messages') {
-        handleAnthropic(body, res);
-      } else {
+      if (req.url !== '/v1beta/interactions') {
         res.writeHead(404);
         res.end();
+        return;
       }
+
+      geminiCalls += 1;
+      lastGeminiRequest = JSON.parse(raw);
+      lastGeminiApiKey = req.headers['x-goog-api-key'];
+      if (geminiMode === 'fail') {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: { message: 'kaputt' } }));
+        return;
+      }
+
+      const payload = geminiMode === 'noRecipe' ? { containsRecipe: false } : GEMINI_RECIPE;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        id: 'interaction_mock',
+        status: 'completed',
+        steps: [{
+          type: 'model_output',
+          content: [{ type: 'text', text: JSON.stringify(payload) }],
+        }],
+      }));
     });
   });
   await new Promise((resolve) => mockServer.listen(MOCK_PORT, '127.0.0.1', resolve));
@@ -138,10 +113,8 @@ before(async () => {
       DATA_DIR: dataDir,
       ADMIN_EMAIL,
       ADMIN_PASSWORD,
-      OPENAI_API_KEY: 'sk-openai-mock',
-      OPENAI_BASE_URL: `http://127.0.0.1:${MOCK_PORT}/v1`,
-      ANTHROPIC_API_KEY: 'sk-anthropic-mock',
-      ANTHROPIC_BASE_URL: `http://127.0.0.1:${MOCK_PORT}`,
+      GEMINI_API_KEY: 'gemini-mock-key',
+      GEMINI_BASE_URL: `http://127.0.0.1:${MOCK_PORT}/v1beta`,
     },
     stdio: 'ignore',
   });
@@ -161,9 +134,9 @@ after(async () => {
   if (dataDir) rmSync(dataDir, { recursive: true, force: true });
 });
 
-test('photo import asks OpenAI first and maps its answer', async () => {
-  openAiMode = 'ok';
-  anthropicCalls = 0;
+test('photo import asks Gemini once and maps its answer', async () => {
+  geminiMode = 'ok';
+  geminiCalls = 0;
   const imported = await api('/api/recipes/import/photo', {
     method: 'POST',
     token: memberToken,
@@ -172,44 +145,41 @@ test('photo import asks OpenAI first and maps its answer', async () => {
 
   assert.equal(imported.status, 200);
   assert.equal(imported.body.source, 'photo');
-  assert.equal(imported.body.recipe.title, 'OpenAI-Pfannkuchen');
+  assert.equal(imported.body.recipe.title, 'Gemini-Pfannkuchen');
   assert.deepEqual(imported.body.recipe.ingredients[0], { amount: 250, unit: 'g', name: 'Mehl' });
   assert.deepEqual(imported.body.recipe.steps[1], { stepNumber: 2, instruction: 'Backen.' });
-  assert.equal(anthropicCalls, 0, 'Anthropic must not be called when OpenAI succeeds');
-
-  // The image must reach OpenAI as a base64 data URL.
-  const sent = lastOpenAiRequest.messages[0].content.find((b) => b.type === 'image_url');
-  assert.equal(sent.image_url.url, `data:image/png;base64,${TINY_PNG_BASE64}`);
+  assert.equal(geminiCalls, 1);
+  assert.equal(lastGeminiApiKey, 'gemini-mock-key');
+  assert.equal(lastGeminiRequest.store, false);
+  assert.deepEqual(
+    lastGeminiRequest.input.find((entry) => entry.type === 'image'),
+    { type: 'image', data: TINY_PNG_BASE64, mime_type: 'image/png' },
+  );
 });
 
-test('photo import falls back to Anthropic when OpenAI fails', async () => {
-  openAiMode = 'fail';
-  anthropicCalls = 0;
-  const imported = await api('/api/recipes/import/photo', {
-    method: 'POST',
-    token: memberToken,
-    body: { filename: 'rezept.png', data: `data:image/png;base64,${TINY_PNG_BASE64}` },
-  });
-  openAiMode = 'ok';
-
-  assert.equal(imported.status, 200);
-  assert.equal(imported.body.recipe.title, 'Anthropic-Pfannkuchen');
-  assert.equal(anthropicCalls, 1);
-});
-
-test('photo import reports when no recipe is recognized (no fallback)', async () => {
-  openAiMode = 'noRecipe';
-  anthropicCalls = 0;
+test('photo import reports when Gemini recognizes no recipe', async () => {
+  geminiMode = 'noRecipe';
   const imported = await api('/api/recipes/import/photo', {
     method: 'POST',
     token: memberToken,
     body: { filename: 'katze.png', data: `data:image/png;base64,${TINY_PNG_BASE64}` },
   });
-  openAiMode = 'ok';
+  geminiMode = 'ok';
 
   assert.equal(imported.status, 422);
   assert.match(imported.body.error, /kein Rezept/i);
-  assert.equal(anthropicCalls, 0, 'a clean "no recipe" answer is final');
+});
+
+test('photo import reports a temporary Gemini failure', async () => {
+  geminiMode = 'fail';
+  const imported = await api('/api/recipes/import/photo', {
+    method: 'POST',
+    token: memberToken,
+    body: { filename: 'rezept.png', data: `data:image/png;base64,${TINY_PNG_BASE64}` },
+  });
+  geminiMode = 'ok';
+
+  assert.equal(imported.status, 502);
 });
 
 test('photo import validates auth and image payload', async () => {

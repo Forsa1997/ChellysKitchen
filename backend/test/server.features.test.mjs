@@ -76,8 +76,7 @@ before(async () => {
       // The fixture pages live on localhost, which the SSRF guard would block.
       IMPORT_ALLOW_PRIVATE: '1',
       // Photo import must report "not configured" regardless of the host env.
-      ANTHROPIC_API_KEY: '',
-      OPENAI_API_KEY: '',
+      GEMINI_API_KEY: '',
     },
     stdio: 'ignore',
   });
@@ -269,8 +268,8 @@ test('recipe import maps a schema.org page onto the recipe form shape', async ()
   assert.equal(imported.body.recipe.steps[0].instruction, 'Alles kochen.');
 });
 
-test('photo import answers 503 when no provider key is configured', async () => {
-  // This server was booted without OPENAI_API_KEY/ANTHROPIC_API_KEY, so the
+test('photo import answers 503 when no Gemini key is configured', async () => {
+  // This server was booted without GEMINI_API_KEY, so the
   // endpoint must explain that the feature is not configured.
   const response = await api('/api/recipes/import/photo', {
     method: 'POST',

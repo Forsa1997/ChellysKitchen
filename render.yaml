@@ -37,12 +37,9 @@ services:
       # the Render fallback URL of the static site.
       - key: CORS_ORIGIN
         value: https://chellys-kitchen.de,https://www.chellys-kitchen.de,https://chellys-kitchen-web.onrender.com
-      # Optional: enable the photo recipe import. OpenAI is asked first,
-      # Anthropic is the fallback on technical failures — one key is enough.
-      # Without any key the endpoint answers with a friendly hint.
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: ANTHROPIC_API_KEY
+      # Optional: enable the photo recipe import through Google Gemini.
+      # Without the key the endpoint answers with a friendly hint.
+      - key: GEMINI_API_KEY
         sync: false
       # Initial admin account (needed to reach the admin dashboard).
       # Required in production: without these no admin account is created.

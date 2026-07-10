@@ -15,8 +15,8 @@ wenn keiner weiß, was es heute geben soll.
 - Zutatenliste skaliert kopieren/teilen (Einkaufshilfe)
 - **Rezept-Import**: per Link (schema.org-Rezeptseiten, z. B. Chefkoch) oder
   **per Foto** (Kochbuchseite/handgeschriebener Zettel, Vision-Modell —
-  OpenAI zuerst, Anthropic als Fallback; benötigt `OPENAI_API_KEY` oder
-  `ANTHROPIC_API_KEY` auf dem Server)
+  Google Gemini; benötigt `GEMINI_API_KEY` auf dem Server). Anderssprachige
+  Fotorezepte werden beim Import ins Deutsche übersetzt.
 - Bewertungen (1–5 Sterne), Rollen (Mitglied/Editor/Admin), Admin-Dashboard
 - **Backup**: kompletter Export/Import (inkl. Bilder) im Admin-Dashboard
 - Als PWA auf dem Handy-Homescreen installierbar
@@ -66,6 +66,8 @@ cd frontend && npm test   # Vitest + Testing Library
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
 | `ADMIN_NAME` | Anzeigename des Admin-Kontos (Standard `Admin`) |
 | `SEED_USERS` | Optional: JSON-Array weiterer Konten, z. B. `[{"name":"Chelly","email":"c@example.com","password":"…","role":"EDITOR"}]` |
+| `GEMINI_API_KEY` | Aktiviert den Rezept-Import per Foto über Google Gemini |
+| `PHOTO_IMPORT_MODEL` | Optionales Gemini-Modell, Standard `gemini-3.5-flash` |
 
 Es gibt keine öffentliche Registrierung — Konten entstehen nur über das
 Admin-Dashboard oder die Umgebungsvariablen `ADMIN_EMAIL`/`SEED_USERS`.

@@ -27,13 +27,11 @@ den JSON-Datei-Store unter `DATA_DIR` — es braucht dann keine Datenbank.
      `name`, `email`, `password`, optional `role`). Eine öffentliche
      Registrierung gibt es nicht; Konten entstehen nur hierüber oder im
      Admin-Dashboard.
-   - `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` — optional, aktivieren den
-     Rezept-Import per Foto (Vision-Modell). OpenAI ist die erste Quelle,
-     Anthropic der Fallback bei technischen Fehlern; einer der beiden Keys
-     genügt. Ohne Key antwortet der Endpoint mit einem verständlichen
-     Hinweis; der Rest der App funktioniert normal. Modelle übersteuern:
-     `PHOTO_IMPORT_OPENAI_MODEL` (Standard `gpt-5.5`) bzw.
-     `PHOTO_IMPORT_MODEL` (Standard `claude-opus-4-8`).
+   - `GEMINI_API_KEY` — optional, aktiviert den Rezept-Import per Foto über
+     Google Gemini. Ohne Key antwortet der Endpoint mit einem verständlichen
+     Hinweis; der Rest der App funktioniert normal. Das Modell lässt sich mit
+     `PHOTO_IMPORT_MODEL` übersteuern (Standard `gemini-3.5-flash`). Inhalte
+     aus anderssprachigen Fotos werden für das Formular ins Deutsche übersetzt.
    - `CORS_ORIGIN` — kommt aus der `render.yaml`: kommaseparierte Liste der
      erlaubten Browser-Origins (`https://chellys-kitchen.de`, `www`-Variante
      und die Render-Fallback-URL). Bei einer neuen Domain dort erweitern.
