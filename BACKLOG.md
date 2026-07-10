@@ -65,8 +65,9 @@ per Foto steht oben, weil er den initialen Rezeptbestand am meisten
 beschleunigt.
 
 ### Rezept-Import erweitern
-- [ ] Foto-Import: Zutatenliste/Rezept von einem Foto (Kochbuch, handschriftlicher
-      Zettel) per OCR/Vision-Modell erfassen
+- [x] Foto-Import: Zutatenliste/Rezept von einem Foto (Kochbuch, handschriftlicher
+      Zettel) per Vision-Modell erfassen — umgesetzt über die Anthropic-API
+      (`POST /api/recipes/import/photo`, aktiv mit `ANTHROPIC_API_KEY`)
 - [ ] Fallback-Import für Seiten ohne schema.org/JSON-LD (einfaches HTML-Parsing)
 
 ### Kochen im Alltag

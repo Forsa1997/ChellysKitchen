@@ -27,6 +27,11 @@ den JSON-Datei-Store unter `DATA_DIR` — es braucht dann keine Datenbank.
      `name`, `email`, `password`, optional `role`). Eine öffentliche
      Registrierung gibt es nicht; Konten entstehen nur hierüber oder im
      Admin-Dashboard.
+   - `ANTHROPIC_API_KEY` — optional, aktiviert den Rezept-Import per Foto
+     (Vision-Modell). Ohne den Key antwortet der Endpoint mit einem
+     verständlichen Hinweis; der Rest der App funktioniert normal.
+     `PHOTO_IMPORT_MODEL` kann das verwendete Modell übersteuern
+     (Standard `claude-opus-4-8`).
    - `CORS_ORIGIN` — kommt aus der `render.yaml`: kommaseparierte Liste der
      erlaubten Browser-Origins (`https://chellys-kitchen.de`, `www`-Variante
      und die Render-Fallback-URL). Bei einer neuen Domain dort erweitern.
