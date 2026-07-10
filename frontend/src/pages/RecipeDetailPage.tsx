@@ -6,12 +6,13 @@ import { useAddToWeekPlan } from '../hooks/useWeekPlan';
 import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, AddShoppingCart, CalendarMonth, Casino, ContentCopy, CopyAll, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
+import { AccessTime, Add, AddShoppingCart, CalendarMonth, Casino, ContentCopy, CopyAll, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, LocalDining, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
 import { apiClient, getApiBaseUrl, type ApiError, type WeekDay } from '../api/client';
 import { buildBringDeeplink } from '../utils/bring';
 import { WEEK_DAYS } from '../utils/weekdays';
 import type { Ingredient, RecipeStep } from '../types/domain';
 import { recipeRenderImage } from '../recipes/recipeImages';
+import { CookingMode } from '../components/CookingMode';
 
 const EDITOR_ROLES = ['EDITOR', 'ADMIN'];
 
@@ -46,6 +47,7 @@ export function RecipeDetailPage() {
   const addToWeekPlan = useAddToWeekPlan();
   const [weekPlanAnchor, setWeekPlanAnchor] = useState<HTMLElement | null>(null);
   const [weekPlanSuccess, setWeekPlanSuccess] = useState<string | null>(null);
+  const [cookingModeOpen, setCookingModeOpen] = useState(false);
   const apiError = error as ApiError | null;
   const isNotFound = apiError?.statusCode === 404;
 
@@ -299,6 +301,9 @@ export function RecipeDetailPage() {
                 Variante anlegen
               </Button>
             )}
+            <Button startIcon={<LocalDining />} variant="outlined" onClick={() => setCookingModeOpen(true)}>
+              Kochmodus
+            </Button>
             <Button startIcon={<Casino />} variant="outlined" onClick={handleRollAgain}>
               Nochmal würfeln
             </Button>
@@ -761,6 +766,12 @@ export function RecipeDetailPage() {
           </CardContent>
         </Paper>
       </Stack>
+      <CookingMode
+        recipe={recipe}
+        servings={selectedServings}
+        open={cookingModeOpen}
+        onClose={() => setCookingModeOpen(false)}
+      />
       <Snackbar
         open={copyStatus !== 'idle'}
         autoHideDuration={3000}
