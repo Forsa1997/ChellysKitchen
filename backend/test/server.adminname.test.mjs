@@ -93,6 +93,10 @@ test('a changed ADMIN_NAME renames the existing admin without touching other dat
   });
   assert.equal(created.status, 201);
 
+  // The persister debounces writes (200 ms) and Windows kills the process
+  // without running the SIGTERM flush — wait until the store is on disk.
+  await new Promise((r) => setTimeout(r, 600));
+
   // Restart with a different ADMIN_NAME against the same DATA_DIR.
   await stopServer(child);
   child = startServer('Christoph');

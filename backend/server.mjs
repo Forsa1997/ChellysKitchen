@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
+import { pathToFileURL } from 'node:url';
 import { createReadStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { recipes } from './data/recipes.mjs';
@@ -43,6 +44,7 @@ import {
   pruneExpiredSessions,
   resolveSession,
 } from './src/sessions.mjs';
+import { createMetricsRecorder, resolveRequestId } from './src/observability.mjs';
 
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigin = process.env.CORS_ORIGIN;
@@ -83,6 +85,25 @@ const persister = createDebouncedPersister(
   200,
 );
 const persist = () => persister.schedule();
+
+const metrics = createMetricsRecorder();
+
+// Beim Testlauf (node --test) bleibt stdout für den TAP-Report reserviert.
+const requestLoggingEnabled = !process.env.NODE_TEST_CONTEXT;
+
+function logRequest({ requestId, method, path, statusCode, durationMs }) {
+  if (!requestLoggingEnabled) return;
+  console.log(JSON.stringify({
+    level: statusCode >= 500 ? 'error' : 'info',
+    time: new Date().toISOString(),
+    msg: 'request completed',
+    requestId,
+    method,
+    path,
+    statusCode,
+    durationMs: Math.round(durationMs * 100) / 100,
+  }));
+}
 
 // Login is the only public write endpoint (there is no registration), so
 // failed attempts are rate-limited: per IP+account, plus a wider per-account
@@ -396,6 +417,15 @@ seedDefaultUsers();
 persist();
 
 const server = createServer(async (req, res) => {
+  const requestStart = process.hrtime.bigint();
+  const requestId = resolveRequestId(req.headers['x-request-id']);
+  res.setHeader('x-request-id', requestId);
+  res.on('finish', () => {
+    const durationMs = Number(process.hrtime.bigint() - requestStart) / 1e6;
+    metrics.record(res.statusCode, durationMs);
+    logRequest({ requestId, method: req.method, path: req.url, statusCode: res.statusCode, durationMs });
+  });
+
   withCors(req, res);
 
   if (req.method === 'OPTIONS') {
@@ -410,6 +440,11 @@ const server = createServer(async (req, res) => {
       database: process.env.DATABASE_URL ? 'postgres' : 'json-file',
       timestamp: new Date().toISOString(),
     });
+    return;
+  }
+
+  if (req.method === 'GET' && req.url === '/metrics') {
+    jsonResponse(res, 200, metrics.snapshot());
     return;
   }
 
@@ -1701,9 +1736,17 @@ const server = createServer(async (req, res) => {
   jsonResponse(res, 404, { error: 'Not Found' });
 });
 
-server.listen(port, () => {
-  console.log(`Chellys Kitchen API listening on http://localhost:${port}`);
-});
+export { server };
+
+// Nur beim Direktstart lauschen — Integrationstests importieren den Server
+// und binden ihn selbst an einen freien Port.
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMain) {
+  server.listen(port, () => {
+    console.log(`Chellys Kitchen API listening on http://localhost:${port}`);
+  });
+}
 
 function shutdown() {
   // flush() may be async (Postgres store) — wait for the final write before
