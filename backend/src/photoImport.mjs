@@ -13,7 +13,10 @@
 import { parseIngredientText } from './recipeImport.mjs';
 
 const DEFAULT_ANTHROPIC_MODEL = 'claude-opus-4-8';
-const DEFAULT_OPENAI_MODEL = 'gpt-5.1';
+// Photo extraction is OCR-like work — the mid-tier model is plenty; the
+// frontier tier (e.g. gpt-5.6-sol) costs a multiple without added value
+// here. Override via PHOTO_IMPORT_OPENAI_MODEL.
+const DEFAULT_OPENAI_MODEL = 'gpt-5.5';
 const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
 // The user is waiting in the create form — cap calls well below the
 // providers' multi-minute defaults.

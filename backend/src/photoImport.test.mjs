@@ -76,6 +76,9 @@ test('buildOpenAiPhotoImportRequest embeds the image as data URL with a strict s
   );
 
   assert.equal(request.model, 'gpt-5.1');
+  // Without an explicit model (and no PHOTO_IMPORT_OPENAI_MODEL in the test
+  // env) the default applies.
+  assert.equal(buildOpenAiPhotoImportRequest({ mediaType: 'image/jpeg', base64Data: 'QUJD' }).model, 'gpt-5.5');
   assert.equal(request.response_format.type, 'json_schema');
   assert.equal(request.response_format.json_schema.strict, true);
 

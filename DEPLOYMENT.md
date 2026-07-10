@@ -32,7 +32,7 @@ den JSON-Datei-Store unter `DATA_DIR` — es braucht dann keine Datenbank.
      Anthropic der Fallback bei technischen Fehlern; einer der beiden Keys
      genügt. Ohne Key antwortet der Endpoint mit einem verständlichen
      Hinweis; der Rest der App funktioniert normal. Modelle übersteuern:
-     `PHOTO_IMPORT_OPENAI_MODEL` (Standard `gpt-5.1`) bzw.
+     `PHOTO_IMPORT_OPENAI_MODEL` (Standard `gpt-5.5`) bzw.
      `PHOTO_IMPORT_MODEL` (Standard `claude-opus-4-8`).
    - `CORS_ORIGIN` — kommt aus der `render.yaml`: kommaseparierte Liste der
      erlaubten Browser-Origins (`https://chellys-kitchen.de`, `www`-Variante
