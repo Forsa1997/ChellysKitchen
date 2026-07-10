@@ -235,7 +235,9 @@ export function RecipeForm({ heading, subheading, submitLabel, initialValues, on
         description: description || undefined,
         category: effectiveCategory,
         tag: tag || undefined,
-        img: img || undefined,
+        // PATCH only updates fields that are present. Send an explicit empty
+        // value when an existing image was removed so the backend can clear it.
+        img: img || (initialValues?.img ? '' : undefined),
         difficulty,
         servings,
         preparationTime,
