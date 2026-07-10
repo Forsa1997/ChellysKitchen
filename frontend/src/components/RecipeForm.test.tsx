@@ -13,13 +13,14 @@ vi.mock('../api/client', () => ({
   },
 }));
 
-function renderForm() {
+function renderForm(initialValues?: React.ComponentProps<typeof RecipeForm>['initialValues']) {
   const onSubmit = vi.fn<(data: CreateRecipeRequest) => Promise<unknown>>(() => Promise.resolve(undefined));
   const onCancel = vi.fn(() => undefined);
   render(
     <RecipeForm
       heading="Neues Rezept erstellen"
       submitLabel="Rezept speichern"
+      initialValues={initialValues}
       onSubmit={onSubmit}
       onCancel={onCancel}
     />,
@@ -161,5 +162,21 @@ describe('RecipeForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('submits an explicit empty image when an existing recipe image is removed', async () => {
+    const { onSubmit } = renderForm({
+      title: 'Honigkuchen',
+      shortDescription: 'Süß und saftig',
+      img: '/uploads/honigkuchen.jpg',
+      ingredients: [{ name: 'Honig', amount: 1.5, unit: 'EL' }],
+      steps: [{ stepNumber: 1, instruction: 'Alles verrühren.' }],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bild entfernen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rezept speichern' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toEqual(expect.objectContaining({ img: '' }));
   });
 });
