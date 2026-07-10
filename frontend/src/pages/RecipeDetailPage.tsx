@@ -1,4 +1,4 @@
-import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
 import { useRecipe, useDeleteRecipe, useDuplicateRecipe, usePublishRecipe, useArchiveRecipe, useToggleFavorite, useUpdateRecipeNotes } from '../hooks/useRecipes';
@@ -6,7 +6,7 @@ import { useAddToWeekPlan } from '../hooks/useWeekPlan';
 import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/useRatings';
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
-import { AccessTime, Add, AddShoppingCart, CalendarMonth, Casino, ContentCopy, CopyAll, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, LocalDining, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
+import { AccessTime, Add, AddShoppingCart, CalendarMonth, Casino, ContentCopy, CopyAll, Edit as EditIcon, Delete as DeleteIcon, Favorite, FavoriteBorder, LocalDining, MoreVert, Publish as PublishIcon, Archive as ArchiveIcon, LocalPrintshop, Restaurant, People, LocalFireDepartment, FitnessCenter, Grain, Remove, ShoppingCartOutlined, WaterDrop } from '@mui/icons-material';
 import { apiClient, getApiBaseUrl, type ApiError, type WeekDay } from '../api/client';
 import { buildBringDeeplink } from '../utils/bring';
 import { WEEK_DAYS } from '../utils/weekdays';
@@ -46,6 +46,7 @@ export function RecipeDetailPage() {
   const [ratingError, setRatingError] = useState<string | null>(null);
   const addToWeekPlan = useAddToWeekPlan();
   const [weekPlanAnchor, setWeekPlanAnchor] = useState<HTMLElement | null>(null);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
   const [weekPlanSuccess, setWeekPlanSuccess] = useState<string | null>(null);
   const [cookingModeOpen, setCookingModeOpen] = useState(false);
   const apiError = error as ApiError | null;
@@ -247,6 +248,16 @@ export function RecipeDetailPage() {
     'SCHWER': 'error'
   } as const satisfies Record<typeof recipe.difficulty, 'success' | 'warning' | 'error'>;
 
+  const isOwner = user?.id === recipe.createdBy?.id;
+  const isEditor = user ? EDITOR_ROLES.includes(user.role) : false;
+  const canEdit = isOwner || isEditor;
+  const canDelete = isOwner || user?.role === 'ADMIN';
+
+  const runMenuAction = (action: () => void) => {
+    setMoreAnchor(null);
+    action();
+  };
+
   return (
     <>
       <Stack spacing={3.5}>
@@ -291,58 +302,74 @@ export function RecipeDetailPage() {
                 </Menu>
               </>
             )}
-            {user && (
-              <Button
-                startIcon={<CopyAll />}
-                variant="outlined"
-                onClick={handleDuplicate}
-                disabled={duplicateRecipe.isPending}
-              >
-                Variante anlegen
-              </Button>
-            )}
             <Button startIcon={<LocalDining />} variant="outlined" onClick={() => setCookingModeOpen(true)}>
               Kochmodus
             </Button>
-            <Button startIcon={<Casino />} variant="outlined" onClick={handleRollAgain}>
-              Nochmal würfeln
-            </Button>
-            <Button startIcon={<ContentCopy />} variant="outlined" onClick={handleCopyLink}>
-              Link kopieren
-            </Button>
-            <Button startIcon={<LocalPrintshop />} variant="outlined" onClick={handlePrint}>
-              Drucken
-            </Button>
-            {(() => {
-              const isOwner = user?.id === recipe.createdBy?.id;
-              const isEditor = user ? EDITOR_ROLES.includes(user.role) : false;
-              const canEdit = isOwner || isEditor;
-              const canDelete = isOwner || user?.role === 'ADMIN';
-              return (
-                <>
-                  {canEdit && (
-                    <Button component={RouterLink} to={`/recipes/${recipe.slug}/edit`} startIcon={<EditIcon />} variant="outlined">
-                      Bearbeiten
-                    </Button>
-                  )}
-                  {isEditor && recipe.status !== 'PUBLISHED' && (
-                    <Button onClick={handlePublish} startIcon={<PublishIcon />} variant="outlined" color="success" disabled={publishRecipe.isPending}>
-                      Veröffentlichen
-                    </Button>
-                  )}
-                  {isEditor && recipe.status !== 'ARCHIVED' && (
-                    <Button onClick={handleArchive} startIcon={<ArchiveIcon />} variant="outlined" color="warning" disabled={archiveRecipe.isPending}>
-                      Archivieren
-                    </Button>
-                  )}
-                  {canDelete && (
-                    <Button onClick={handleDeleteRecipe} startIcon={<DeleteIcon />} variant="outlined" color="error" disabled={deleteRecipe.isPending}>
-                      Löschen
-                    </Button>
-                  )}
-                </>
-              );
-            })()}
+            <Tooltip title="Weitere Aktionen">
+              <IconButton
+                aria-label="Weitere Aktionen"
+                onClick={(event) => setMoreAnchor(event.currentTarget)}
+              >
+                <MoreVert />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={moreAnchor}
+              open={moreAnchor !== null}
+              onClose={() => setMoreAnchor(null)}
+            >
+              {user && (
+                <MenuItem onClick={() => runMenuAction(handleDuplicate)} disabled={duplicateRecipe.isPending}>
+                  <ListItemIcon><CopyAll fontSize="small" /></ListItemIcon>
+                  <ListItemText>Variante anlegen</ListItemText>
+                </MenuItem>
+              )}
+              <MenuItem onClick={() => runMenuAction(handleRollAgain)}>
+                <ListItemIcon><Casino fontSize="small" /></ListItemIcon>
+                <ListItemText>Nochmal würfeln</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => runMenuAction(handleCopyLink)}>
+                <ListItemIcon><ContentCopy fontSize="small" /></ListItemIcon>
+                <ListItemText>Link kopieren</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => runMenuAction(handlePrint)}>
+                <ListItemIcon><LocalPrintshop fontSize="small" /></ListItemIcon>
+                <ListItemText>Drucken</ListItemText>
+              </MenuItem>
+              {canEdit && <Divider />}
+              {canEdit && (
+                <MenuItem
+                  component={RouterLink}
+                  to={`/recipes/${recipe.slug}/edit`}
+                  onClick={() => setMoreAnchor(null)}
+                >
+                  <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText>Bearbeiten</ListItemText>
+                </MenuItem>
+              )}
+              {isEditor && recipe.status !== 'PUBLISHED' && (
+                <MenuItem onClick={() => runMenuAction(handlePublish)} disabled={publishRecipe.isPending}>
+                  <ListItemIcon><PublishIcon fontSize="small" color="success" /></ListItemIcon>
+                  <ListItemText>Veröffentlichen</ListItemText>
+                </MenuItem>
+              )}
+              {isEditor && recipe.status !== 'ARCHIVED' && (
+                <MenuItem onClick={() => runMenuAction(handleArchive)} disabled={archiveRecipe.isPending}>
+                  <ListItemIcon><ArchiveIcon fontSize="small" color="warning" /></ListItemIcon>
+                  <ListItemText>Archivieren</ListItemText>
+                </MenuItem>
+              )}
+              {canDelete && (
+                <MenuItem
+                  onClick={() => runMenuAction(handleDeleteRecipe)}
+                  disabled={deleteRecipe.isPending}
+                  sx={{ color: 'error.main' }}
+                >
+                  <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
+                  <ListItemText>Löschen</ListItemText>
+                </MenuItem>
+              )}
+            </Menu>
           </Stack>
         </Stack>
 
