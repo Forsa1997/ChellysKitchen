@@ -13,14 +13,25 @@ const UNIT_WORDS = new Set([
   'scheibe', 'scheiben', 'tasse', 'tassen', 'zweig', 'zweige', 'blatt', 'blätter',
 ]);
 
+const NAMED_ENTITIES = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+  auml: 'ä', ouml: 'ö', uuml: 'ü', Auml: 'Ä', Ouml: 'Ö', Uuml: 'Ü', szlig: 'ß',
+  eacute: 'é', egrave: 'è', agrave: 'à', ccedil: 'ç',
+  ndash: '–', mdash: '—', hellip: '…', middot: '·', times: '×', deg: '°',
+  frac12: '½', frac14: '¼', frac34: '¾',
+};
+
 function decodeEntities(text) {
   return String(text)
-    .replaceAll('&amp;', '&')
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
-    .replaceAll('&nbsp;', ' ');
+    .replace(/&#x([0-9a-f]+);/gi, (match, hex) => {
+      const code = parseInt(hex, 16);
+      return code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    })
+    .replace(/&#(\d+);/g, (match, dec) => {
+      const code = Number(dec);
+      return code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    })
+    .replace(/&([a-zA-Z]+\d*);/g, (match, name) => NAMED_ENTITIES[name] ?? match);
 }
 
 function isRecipeNode(node) {
@@ -155,6 +166,96 @@ export function mapJsonLdToRecipe(jsonLd) {
       .map((line) => parseIngredientText(line))
       .filter((ingredient) => ingredient.name),
     steps: flattenInstructions(jsonLd.recipeInstructions),
+  };
+}
+
+// --- Fallback for pages without schema.org/JSON-LD: plain HTML parsing ---
+// Two heuristics, in order: schema.org microdata (itemprop attributes) and
+// content sections under "Zutaten"/"Zubereitung"-style headings.
+
+function stripTags(html) {
+  return decodeEntities(String(html).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
+function metaContent(html, key) {
+  const tag = html.match(new RegExp(`<meta\\b[^>]*(?:property|name)\\s*=\\s*["']${key}["'][^>]*>`, 'i'))?.[0];
+  const content = tag?.match(/content\s*=\s*["']([^"']*)["']/i)?.[1];
+  const text = content ? decodeEntities(content).trim() : '';
+  return text || undefined;
+}
+
+function microdataValues(html, prop) {
+  const matches = html.matchAll(
+    new RegExp(`<([a-z][a-z0-9]*)\\b[^>]*\\bitemprop\\s*=\\s*["']${prop}["'][^>]*>([\\s\\S]*?)<\\/\\1>`, 'gi'),
+  );
+  return [...matches].map((match) => stripTags(match[2])).filter(Boolean);
+}
+
+// Markup between a heading whose text matches `keywords` and the next heading.
+function sectionAfterHeading(html, keywords) {
+  const headings = [...html.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi)];
+  for (let i = 0; i < headings.length; i++) {
+    if (!keywords.test(stripTags(headings[i][1]))) continue;
+    const start = headings[i].index + headings[i][0].length;
+    const end = i + 1 < headings.length ? headings[i + 1].index : html.length;
+    return html.slice(start, end);
+  }
+  return null;
+}
+
+function listItems(sectionHtml) {
+  const list = sectionHtml?.match(/<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/i);
+  if (!list) return null;
+  const items = [...list[2].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+    .map((match) => stripTags(match[1]))
+    .filter(Boolean);
+  return items.length ? items : null;
+}
+
+function paragraphTexts(sectionHtml) {
+  const items = [...(sectionHtml ?? '').matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map((match) => stripTags(match[1]))
+    .filter(Boolean);
+  return items.length ? items : null;
+}
+
+/**
+ * Best-effort extraction for pages without JSON-LD. Returns the same shape
+ * as mapJsonLdToRecipe, or null when no ingredient list is recognizable —
+ * without ingredients an "import" would be an empty form.
+ */
+export function extractRecipeFromHtml(html) {
+  const source = String(html);
+
+  const ingredientLines =
+    [microdataValues(source, 'recipeIngredient'), microdataValues(source, 'ingredients')]
+      .find((values) => values.length) ??
+    listItems(sectionAfterHeading(source, /zutaten|ingredients/i));
+  if (!ingredientLines?.length) return null;
+
+  let stepTexts = microdataValues(source, 'recipeInstructions');
+  if (!stepTexts.length) {
+    const section = sectionAfterHeading(source, /zubereitung|anleitung|instructions|directions|preparation/i);
+    stepTexts = listItems(section) ?? paragraphTexts(section) ?? [];
+  }
+
+  const title =
+    stripTags(source.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? '') ||
+    metaContent(source, 'og:title') ||
+    (stripTags(source.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '').split('|')[0] ?? '').trim();
+
+  const bodyText = stripTags(source.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' '));
+  const servingsMatch = bodyText.match(/(\d+)\s*(?:portionen?|personen?|servings?)\b/i);
+
+  return {
+    title,
+    shortDescription: metaContent(source, 'description') ?? metaContent(source, 'og:description') ?? '',
+    servings: servingsMatch ? Number(servingsMatch[1]) : 2,
+    preparationTime: 0,
+    cookingTime: 0,
+    img: parseImage(metaContent(source, 'og:image')),
+    ingredients: ingredientLines.map((line) => parseIngredientText(line)).filter((ingredient) => ingredient.name),
+    steps: stepTexts.map((instruction, index) => ({ stepNumber: index + 1, instruction })),
   };
 }
 

@@ -68,7 +68,9 @@ beschleunigt.
 - [x] Foto-Import: Zutatenliste/Rezept von einem Foto (Kochbuch, handschriftlicher
       Zettel) per Vision-Modell erfassen — umgesetzt mit Google Gemini
       (`POST /api/recipes/import/photo`, aktiv mit `GEMINI_API_KEY`)
-- [ ] Fallback-Import für Seiten ohne schema.org/JSON-LD (einfaches HTML-Parsing)
+- [x] Fallback-Import für Seiten ohne schema.org/JSON-LD (einfaches HTML-Parsing) —
+      umgesetzt: erst Microdata (`itemprop`), dann Überschriften-Heuristik
+      („Zutaten"/„Zubereitung" + Listen bzw. Absätze)
 
 ### Kochen im Alltag
 - [x] Kochmodus / Wake-Lock: Vollbild, große Schrift, Bildschirm bleibt an

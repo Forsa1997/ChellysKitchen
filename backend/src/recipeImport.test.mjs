@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  extractRecipeFromHtml,
   extractRecipeJsonLd,
   isAllowedImportUrl,
   mapJsonLdToRecipe,
@@ -110,6 +111,111 @@ test('mapJsonLdToRecipe applies sensible defaults', () => {
   assert.deepEqual(mapped.ingredients, []);
   assert.deepEqual(mapped.steps, []);
   assert.equal(mapped.img, undefined);
+});
+
+test('extractRecipeFromHtml parses a German page with Zutaten/Zubereitung headings', () => {
+  const html = `<!doctype html><html><head>
+    <title>Omas Kartoffelsuppe | kochblog.de</title>
+    <meta property="og:image" content="https://example.com/suppe.jpg">
+    <meta name="description" content="Deftige Suppe wie früher.">
+    </head><body>
+    <h1>Omas Kartoffelsuppe</h1>
+    <p>Reicht für 4 Portionen.</p>
+    <h2>Zutaten</h2>
+    <ul>
+      <li>500 g Kartoffeln</li>
+      <li>1 Zwiebel</li>
+      <li>Salz &amp; Pfeffer</li>
+    </ul>
+    <h2>Zubereitung</h2>
+    <ol>
+      <li>Kartoffeln schälen und würfeln.</li>
+      <li>Alles weich kochen und pürieren.</li>
+    </ol>
+    </body></html>`;
+
+  const recipe = extractRecipeFromHtml(html);
+  assert.equal(recipe.title, 'Omas Kartoffelsuppe');
+  assert.equal(recipe.shortDescription, 'Deftige Suppe wie früher.');
+  assert.equal(recipe.servings, 4);
+  assert.equal(recipe.img, 'https://example.com/suppe.jpg');
+  assert.deepEqual(recipe.ingredients, [
+    { amount: 500, unit: 'g', name: 'Kartoffeln' },
+    { amount: 1, unit: '', name: 'Zwiebel' },
+    { amount: 0, unit: '', name: 'Salz & Pfeffer' },
+  ]);
+  assert.deepEqual(recipe.steps, [
+    { stepNumber: 1, instruction: 'Kartoffeln schälen und würfeln.' },
+    { stepNumber: 2, instruction: 'Alles weich kochen und pürieren.' },
+  ]);
+});
+
+test('extractRecipeFromHtml prefers microdata itemprops when present', () => {
+  const html = `<html><body>
+    <h1 itemprop="name">Microdata-Nudeln</h1>
+    <span itemprop="recipeIngredient">200 g Nudeln</span>
+    <span itemprop="recipeIngredient">1 EL Olivenöl</span>
+    <li itemprop="recipeInstructions">Nudeln kochen.</li>
+    <li itemprop="recipeInstructions">Öl darüber geben.</li>
+    </body></html>`;
+
+  const recipe = extractRecipeFromHtml(html);
+  assert.equal(recipe.title, 'Microdata-Nudeln');
+  assert.deepEqual(recipe.ingredients, [
+    { amount: 200, unit: 'g', name: 'Nudeln' },
+    { amount: 1, unit: 'EL', name: 'Olivenöl' },
+  ]);
+  assert.deepEqual(recipe.steps.map((step) => step.instruction), [
+    'Nudeln kochen.',
+    'Öl darüber geben.',
+  ]);
+});
+
+test('extractRecipeFromHtml falls back to paragraphs when steps are not a list', () => {
+  const html = `<html><body>
+    <h1>Pfannkuchen</h1>
+    <h3>Ingredients</h3>
+    <ul><li>2 Eier</li><li>250 ml Milch</li></ul>
+    <h3>Directions</h3>
+    <p>Alles verrühren.</p>
+    <p>In der Pfanne ausbacken.</p>
+    <h3>Tipps</h3>
+    <p>Mit Zimt servieren.</p>
+    </body></html>`;
+
+  const recipe = extractRecipeFromHtml(html);
+  assert.equal(recipe.title, 'Pfannkuchen');
+  assert.equal(recipe.servings, 2);
+  assert.deepEqual(recipe.steps.map((step) => step.instruction), [
+    'Alles verrühren.',
+    'In der Pfanne ausbacken.',
+  ]);
+});
+
+test('extractRecipeFromHtml decodes umlaut and numeric HTML entities', () => {
+  const html = `<html><body><h1>Gr&uuml;ne So&szlig;e</h1>
+    <h2>Zutaten</h2><ul><li>1 Bund Petersilie</li><li>&frac12; Zitrone</li></ul>
+    <h2>Zubereitung</h2><ol><li>Kr&auml;uter hacken &#8211; fertig.</li></ol>
+    </body></html>`;
+
+  const recipe = extractRecipeFromHtml(html);
+  assert.equal(recipe.title, 'Grüne Soße');
+  assert.equal(recipe.ingredients[1].name, '½ Zitrone');
+  assert.equal(recipe.steps[0].instruction, 'Kräuter hacken – fertig.');
+});
+
+test('extractRecipeFromHtml uses title/og fallbacks and returns null without ingredients', () => {
+  const noRecipe = extractRecipeFromHtml('<html><body><h1>Blogpost</h1><p>Nur Text.</p></body></html>');
+  assert.equal(noRecipe, null);
+
+  const withoutH1 = extractRecipeFromHtml(`<html><head>
+    <meta property="og:title" content="Schneller Salat">
+    </head><body>
+    <h2>Zutaten</h2><ul><li>1 Gurke</li></ul>
+    </body></html>`);
+  assert.equal(withoutH1.title, 'Schneller Salat');
+  assert.deepEqual(withoutH1.ingredients, [{ amount: 1, unit: '', name: 'Gurke' }]);
+  assert.deepEqual(withoutH1.steps, []);
 });
 
 test('isAllowedImportUrl blocks private targets and non-http protocols', () => {

@@ -17,6 +17,7 @@ import {
   isPhotoImportConfigured,
 } from './src/photoImport.mjs';
 import {
+  extractRecipeFromHtml,
   extractRecipeJsonLd,
   isAllowedImportUrl,
   mapJsonLdToRecipe,
@@ -1392,13 +1393,16 @@ const server = createServer(async (req, res) => {
       // Recipe pages are a few hundred KB; anything beyond a few MB is not
       // a page we want to buffer.
       const html = (await response.text()).slice(0, 3_000_000);
+      // Prefer structured JSON-LD; fall back to plain HTML parsing
+      // (microdata or Zutaten/Zubereitung headings) for pages without it.
       const jsonLd = extractRecipeJsonLd(html);
-      if (!jsonLd) {
-        jsonResponse(res, 422, { error: 'Auf dieser Seite wurde kein Rezept gefunden (kein schema.org-Rezept vorhanden).' });
+      const recipe = jsonLd ? mapJsonLdToRecipe(jsonLd) : extractRecipeFromHtml(html);
+      if (!recipe) {
+        jsonResponse(res, 422, { error: 'Auf dieser Seite wurde kein Rezept gefunden.' });
         return;
       }
 
-      jsonResponse(res, 200, { recipe: mapJsonLdToRecipe(jsonLd), source: url });
+      jsonResponse(res, 200, { recipe, source: url });
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
