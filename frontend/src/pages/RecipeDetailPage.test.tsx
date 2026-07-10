@@ -112,6 +112,10 @@ describe('RecipeDetailPage', () => {
     );
   };
 
+  const openMoreMenu = (screen: ReturnType<typeof renderPage>) => {
+    fireEvent.click(screen.getByRole('button', { name: 'Weitere Aktionen' }));
+  };
+
   it('shows loading state while recipe is fetched', () => {
     useRecipeMock.mockReturnValue({ data: null, isLoading: true, error: null });
     useAuthMock.mockReturnValue({ user: null });
@@ -152,7 +156,48 @@ describe('RecipeDetailPage', () => {
     expect(screen.getByText('Schnell und lecker')).toBeInTheDocument();
     expect(screen.getByText('Zutaten')).toBeInTheDocument();
     expect(screen.getByText('Zubereitung')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Bearbeiten' })).toHaveAttribute('href', '/recipes/pasta/edit');
+    openMoreMenu(screen);
+    expect(screen.getByRole('menuitem', { name: 'Bearbeiten' })).toHaveAttribute('href', '/recipes/pasta/edit');
+  });
+
+  it('keeps only the primary actions visible and tucks the rest into the more menu', async () => {
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: { id: 'u1', role: 'ADMIN' } });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    // Primary actions stay directly visible.
+    expect(screen.getByRole('button', { name: 'Als Favorit markieren' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zum Wochenplan' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Kochmodus' })).toBeInTheDocument();
+
+    // Secondary actions are not rendered as standalone buttons.
+    for (const name of ['Variante anlegen', 'Nochmal würfeln', 'Link kopieren', 'Drucken', 'Archivieren', 'Löschen']) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    }
+
+    openMoreMenu(screen);
+
+    for (const name of ['Variante anlegen', 'Nochmal würfeln', 'Link kopieren', 'Drucken', 'Bearbeiten', 'Archivieren', 'Löschen']) {
+      expect(screen.getByRole('menuitem', { name })).toBeInTheDocument();
+    }
+  });
+
+  it('hides member-only actions in the more menu for visitors', () => {
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    openMoreMenu(screen);
+
+    expect(screen.getByRole('menuitem', { name: 'Nochmal würfeln' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Drucken' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Variante anlegen' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Bearbeiten' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Löschen' })).not.toBeInTheDocument();
   });
 
   it('shows the rendered photo together with the SVG illustration for bundled recipes', () => {
@@ -217,7 +262,8 @@ describe('RecipeDetailPage', () => {
 
     const screen = renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Drucken' }));
+    openMoreMenu(screen);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Drucken' }));
 
     expect(print).toHaveBeenCalledTimes(1);
   });
@@ -270,7 +316,8 @@ describe('RecipeDetailPage', () => {
 
     const screen = renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Variante anlegen' }));
+    openMoreMenu(screen);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Variante anlegen' }));
 
     await waitFor(() => expect(duplicateRecipeMock.mutateAsync).toHaveBeenCalledWith('recipe-1'));
     await waitFor(() => {
@@ -357,7 +404,8 @@ describe('RecipeDetailPage', () => {
 
     const screen = renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nochmal würfeln' }));
+    openMoreMenu(screen);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Nochmal würfeln' }));
 
     expect(getRandomRecipeMock).toHaveBeenCalledWith({ exclude: 'pasta' });
     await waitFor(() => {
@@ -400,7 +448,8 @@ describe('RecipeDetailPage', () => {
 
     const screen = renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Link kopieren' }));
+    openMoreMenu(screen);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Link kopieren' }));
 
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/recipes/pasta')));
     expect(screen.getByText('Link kopiert')).toBeInTheDocument();
