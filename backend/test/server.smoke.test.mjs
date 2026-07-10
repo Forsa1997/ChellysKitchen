@@ -135,6 +135,8 @@ test('recipe create -> update -> publish flow and admin role update', async () =
   assert.equal(usersList.status, 200);
   assert.ok(Array.isArray(usersList.body.data));
   assert.equal(typeof usersList.body.total, 'number');
+  const memberEntry = usersList.body.data.find((entry) => entry.id === member.user.id);
+  assert.equal(memberEntry._count.recipesCreated, 1);
 
   // Promote the member to EDITOR
   const memberId = member.user.id;

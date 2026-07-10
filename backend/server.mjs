@@ -1419,7 +1419,17 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const data = Array.from(users.values()).map(sanitizeUser);
+    const recipeCountsByUserId = new Map();
+    for (const recipe of recipeStore) {
+      const ownerId = recipe.createdBy?.id;
+      if (!ownerId) continue;
+      recipeCountsByUserId.set(ownerId, (recipeCountsByUserId.get(ownerId) ?? 0) + 1);
+    }
+
+    const data = Array.from(users.values()).map((entry) => ({
+      ...sanitizeUser(entry),
+      _count: { recipesCreated: recipeCountsByUserId.get(entry.id) ?? 0 },
+    }));
     jsonResponse(res, 200, { data, total: data.length });
     return;
   }
