@@ -649,6 +649,24 @@ class ApiClient {
     });
   }
 
+  /**
+   * POST /api/recipes/import/photo
+   * Extract a recipe from a photo (cookbook page, handwritten note) via the
+   * server-side vision model (nothing is saved).
+   */
+  async importRecipeFromPhoto(file: File): Promise<ImportRecipeResponse> {
+    const data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Das Foto konnte nicht gelesen werden.'));
+      reader.readAsDataURL(file);
+    });
+    return this.request<ImportRecipeResponse>('/api/recipes/import/photo', {
+      method: 'POST',
+      body: JSON.stringify({ filename: file.name, data }),
+    });
+  }
+
   // ============================================================================
   // Week Plan Endpoints
   // ============================================================================

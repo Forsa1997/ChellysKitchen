@@ -75,6 +75,9 @@ before(async () => {
       ADMIN_PASSWORD,
       // The fixture pages live on localhost, which the SSRF guard would block.
       IMPORT_ALLOW_PRIVATE: '1',
+      // Photo import must report "not configured" regardless of the host env.
+      ANTHROPIC_API_KEY: '',
+      OPENAI_API_KEY: '',
     },
     stdio: 'ignore',
   });
@@ -264,6 +267,18 @@ test('recipe import maps a schema.org page onto the recipe form shape', async ()
   assert.equal(imported.body.recipe.preparationTime, 15);
   assert.deepEqual(imported.body.recipe.ingredients[0], { amount: 250, unit: 'g', name: 'Linsen' });
   assert.equal(imported.body.recipe.steps[0].instruction, 'Alles kochen.');
+});
+
+test('photo import answers 503 when no provider key is configured', async () => {
+  // This server was booted without OPENAI_API_KEY/ANTHROPIC_API_KEY, so the
+  // endpoint must explain that the feature is not configured.
+  const response = await api('/api/recipes/import/photo', {
+    method: 'POST',
+    token: memberToken,
+    body: { filename: 'foto.png', data: 'data:image/png;base64,QUJD' },
+  });
+  assert.equal(response.status, 503);
+  assert.match(response.body.error, /Foto-Import/);
 });
 
 test('recipe import validates input and requires membership', async () => {

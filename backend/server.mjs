@@ -13,6 +13,10 @@ import {
   createEmptyWeekPlan,
 } from './src/weekplan.mjs';
 import {
+  extractRecipeFromPhoto,
+  isPhotoImportConfigured,
+} from './src/photoImport.mjs';
+import {
   extractRecipeJsonLd,
   isAllowedImportUrl,
   mapJsonLdToRecipe,
@@ -1298,8 +1302,57 @@ const server = createServer(async (req, res) => {
   }
 
   // ============================================================================
-  // Recipe Import (from external websites via schema.org JSON-LD)
+  // Recipe Import (from external websites via schema.org JSON-LD, or from a
+  // photo via the Anthropic vision API)
   // ============================================================================
+
+  // POST /api/recipes/import/photo - Extract a recipe from an uploaded photo
+  // (cookbook page, handwritten note). Nothing is saved; the result prefills
+  // the create form. OpenAI answers first (OPENAI_API_KEY), Anthropic is the
+  // fallback (ANTHROPIC_API_KEY); at least one key is required.
+  if (req.method === 'POST' && req.url === '/api/recipes/import/photo') {
+    const user = authenticateRequest(req);
+    if (!user) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+    if (!hasMinRole(user, 'MEMBER')) {
+      jsonResponse(res, 403, { error: 'Nur Mitglieder können Rezepte importieren.' });
+      return;
+    }
+    if (!isPhotoImportConfigured()) {
+      jsonResponse(res, 503, {
+        error: 'Der Foto-Import ist auf diesem Server nicht eingerichtet (OPENAI_API_KEY oder ANTHROPIC_API_KEY fehlt).',
+      });
+      return;
+    }
+
+    let image;
+    try {
+      const payload = await parseJsonBody(req, Math.ceil(MAX_UPLOAD_BYTES * 1.4) + 1024);
+      image = validateImageUpload(payload);
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+
+    let recipe;
+    try {
+      recipe = await extractRecipeFromPhoto({
+        mediaType: contentTypeForExt(image.ext),
+        base64Data: image.buffer.toString('base64'),
+      });
+    } catch {
+      jsonResponse(res, 502, { error: 'Die Bilderkennung ist gerade nicht erreichbar. Bitte später erneut versuchen.' });
+      return;
+    }
+    if (!recipe) {
+      jsonResponse(res, 422, { error: 'Auf dem Foto wurde kein Rezept erkannt.' });
+      return;
+    }
+    jsonResponse(res, 200, { recipe, source: 'photo' });
+    return;
+  }
 
   // POST /api/recipes/import - Fetch a page server-side and map its
   // schema.org recipe onto our form shape. Nothing is saved; the result
