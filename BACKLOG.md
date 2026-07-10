@@ -72,8 +72,10 @@ beschleunigt.
 - [ ] Fallback-Import für Seiten ohne schema.org/JSON-LD (einfaches HTML-Parsing)
 
 ### Kochen im Alltag
-- [ ] Kochmodus / Wake-Lock: Vollbild, große Schrift, Bildschirm bleibt an
-      (Screen Wake Lock API), Schritt-für-Schritt statt Fließtext
+- [x] Kochmodus / Wake-Lock: Vollbild, große Schrift, Bildschirm bleibt an
+      (Screen Wake Lock API), Schritt-für-Schritt statt Fließtext — umgesetzt
+      als „Kochmodus"-Button auf der Detailseite (Zutatenübersicht in der
+      gewählten Portionsgröße, dann ein Schritt pro Seite)
 - [ ] Timer direkt aus dem Rezepttext: Zeitangaben klickbar → startet Countdown
 - [ ] Mengen-/Einheiten-Umrechner (g ↔ ml ↔ Tasse/EL, °C ↔ Umluft-Hinweis)
 

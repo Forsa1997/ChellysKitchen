@@ -365,6 +365,25 @@ describe('RecipeDetailPage', () => {
     });
   });
 
+  it('opens cooking mode with the selected servings', async () => {
+    useRecipeMock.mockReturnValue({ data: recipe, isLoading: false, error: null });
+    useAuthMock.mockReturnValue({ user: null });
+    mockDefaults();
+
+    const screen = renderPage();
+
+    // Scale up first: cooking mode shows the ingredients for the selection.
+    fireEvent.click(screen.getByRole('button', { name: 'Portionen erhöhen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Kochmodus' }));
+
+    expect(await screen.findByText('Zutaten für 3 Portionen')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+    expect(screen.getByText('Schritt 1 von 1')).toBeInTheDocument();
+    expect(screen.getAllByText('Wasser kochen und Pasta garen.').length).toBeGreaterThan(0);
+  });
+
   it('copies the recipe link from the recipe action bar', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
