@@ -69,7 +69,11 @@ beschleunigt.
       Zettel) per Vision-Modell erfassen — umgesetzt: OpenAI als erste Quelle,
       Anthropic als Fallback (`POST /api/recipes/import/photo`, aktiv mit
       `OPENAI_API_KEY` und/oder `ANTHROPIC_API_KEY`)
-- [ ] Fallback-Import für Seiten ohne schema.org/JSON-LD (einfaches HTML-Parsing)
+- [x] Fallback-Import für Seiten ohne schema.org/JSON-LD — umgesetzt: erst
+      schema.org-Microdata (`itemprop`), dann Heuristik über
+      „Zutaten"/„Zubereitung"-Überschriften mit Listen; die Antwort trägt
+      `parser: 'jsonld' | 'html'` und das Formular zeigt beim Fallback einen
+      „bitte besonders gründlich prüfen"-Hinweis
 
 ### Kochen im Alltag
 - [x] Kochmodus / Wake-Lock: Vollbild, große Schrift, Bildschirm bleibt an

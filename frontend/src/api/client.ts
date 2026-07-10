@@ -278,6 +278,12 @@ export interface ImportedRecipe {
 export interface ImportRecipeResponse {
   recipe: ImportedRecipe;
   source: string;
+  /**
+   * How the backend read the page: 'jsonld' from structured schema.org data,
+   * 'html' from the best-effort fallback parser (microdata/headings).
+   * Absent for the photo import.
+   */
+  parser?: 'jsonld' | 'html';
 }
 
 // Error Types

@@ -13,7 +13,11 @@ export function CreateRecipePage() {
   const [importing, setImporting] = useState(false);
   const [photoImporting, setPhotoImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-  const [imported, setImported] = useState<{ values: RecipeFormInitialValues; version: number } | null>(null);
+  const [imported, setImported] = useState<{
+    values: RecipeFormInitialValues;
+    version: number;
+    fallbackParsed?: boolean;
+  } | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const handleImport = async () => {
@@ -21,9 +25,13 @@ export function CreateRecipePage() {
     setImporting(true);
     setImportError(null);
     try {
-      const { recipe } = await apiClient.importRecipe(importUrl.trim());
+      const { recipe, parser } = await apiClient.importRecipe(importUrl.trim());
       // Remount the form (via key) so the imported values become its state.
-      setImported((prev) => ({ values: recipe, version: (prev?.version ?? 0) + 1 }));
+      setImported((prev) => ({
+        values: recipe,
+        version: (prev?.version ?? 0) + 1,
+        fallbackParsed: parser === 'html',
+      }));
     } catch (err) {
       setImportError(err instanceof Error ? err.message : 'Import fehlgeschlagen.');
     } finally {
@@ -107,9 +115,17 @@ export function CreateRecipePage() {
 
         {importError && <Alert severity="warning" sx={{ mt: 2 }}>{importError}</Alert>}
         {imported && !importError && (
-          <Alert severity="success" sx={{ mt: 2 }}>
-            Rezept übernommen — bitte unten prüfen, Kategorie wählen und speichern.
-          </Alert>
+          imported.fallbackParsed ? (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Rezept übernommen — die Seite hatte keine strukturierten Rezeptdaten,
+              die Felder wurden bestmöglich aus dem Seiteninhalt gelesen. Bitte
+              besonders gründlich prüfen.
+            </Alert>
+          ) : (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              Rezept übernommen — bitte unten prüfen, Kategorie wählen und speichern.
+            </Alert>
+          )
         )}
       </Paper>
 

@@ -34,6 +34,20 @@ const FIXTURE_RECIPE_HTML = `<!doctype html><html><head>
 })}</script>
 </head><body>Rezept</body></html>`;
 
+// A page without any JSON-LD: the import must fall back to plain HTML parsing.
+const FIXTURE_PLAIN_HTML = `<!doctype html><html><head>
+<title>Omas Blog</title>
+<meta property="og:title" content="Kartoffelgratin ohne Schnickschnack">
+<meta name="description" content="Direkt aus dem Familienblog.">
+</head><body>
+<h1>Kartoffelgratin ohne Schnickschnack</h1>
+<p>Reicht f&uuml;r 4 Portionen.</p>
+<h2>Zutaten</h2>
+<ul><li>1 kg Kartoffeln</li><li>200 ml Sahne</li><li>Salz</li></ul>
+<h2>Zubereitung</h2>
+<ol><li>Kartoffeln schneiden.</li><li>Mit Sahne backen.</li></ol>
+</body></html>`;
+
 async function api(path, { token, method = 'GET', body } = {}) {
   const headers = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -86,6 +100,9 @@ before(async () => {
     if (req.url === '/rezept') {
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(FIXTURE_RECIPE_HTML);
+    } else if (req.url === '/nur-html') {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(FIXTURE_PLAIN_HTML);
     } else {
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end('<html><body>Kein Rezept hier.</body></html>');
@@ -267,6 +284,29 @@ test('recipe import maps a schema.org page onto the recipe form shape', async ()
   assert.equal(imported.body.recipe.preparationTime, 15);
   assert.deepEqual(imported.body.recipe.ingredients[0], { amount: 250, unit: 'g', name: 'Linsen' });
   assert.equal(imported.body.recipe.steps[0].instruction, 'Alles kochen.');
+  assert.equal(imported.body.parser, 'jsonld');
+});
+
+test('recipe import falls back to plain HTML parsing without JSON-LD', async () => {
+  const imported = await api('/api/recipes/import', {
+    method: 'POST',
+    token: memberToken,
+    body: { url: `${FIXTURE_BASE}/nur-html` },
+  });
+  assert.equal(imported.status, 200);
+  assert.equal(imported.body.parser, 'html');
+  assert.equal(imported.body.recipe.title, 'Kartoffelgratin ohne Schnickschnack');
+  assert.equal(imported.body.recipe.shortDescription, 'Direkt aus dem Familienblog.');
+  assert.equal(imported.body.recipe.servings, 4);
+  assert.deepEqual(imported.body.recipe.ingredients, [
+    { amount: 1, unit: 'kg', name: 'Kartoffeln' },
+    { amount: 200, unit: 'ml', name: 'Sahne' },
+    { amount: 0, unit: '', name: 'Salz' },
+  ]);
+  assert.deepEqual(imported.body.recipe.steps.map((step) => step.instruction), [
+    'Kartoffeln schneiden.',
+    'Mit Sahne backen.',
+  ]);
 });
 
 test('photo import answers 503 when no provider key is configured', async () => {

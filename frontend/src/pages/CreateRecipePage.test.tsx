@@ -69,6 +69,33 @@ describe('CreateRecipePage import', () => {
     expect(screen.getAllByLabelText(/Anweisung/)[0]).toHaveValue('Alles kochen.');
   });
 
+  it('shows a review hint when the fallback HTML parser was used', async () => {
+    importRecipeMock.mockResolvedValue({
+      recipe: {
+        title: 'Kartoffelgratin',
+        shortDescription: '',
+        servings: 4,
+        preparationTime: 0,
+        cookingTime: 0,
+        img: undefined,
+        ingredients: [{ name: 'Kartoffeln', amount: 1, unit: 'kg' }],
+        steps: [],
+      },
+      source: 'https://example.com/blog',
+      parser: 'html',
+    });
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('Rezept-URL'), {
+      target: { value: 'https://example.com/blog' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Importieren' }));
+
+    expect(await screen.findByText(/keine strukturierten Rezeptdaten/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Titel/)).toHaveValue('Kartoffelgratin');
+  });
+
   it('shows the server error when the import fails', async () => {
     importRecipeMock.mockRejectedValue(new Error('Auf dieser Seite wurde kein Rezept gefunden.'));
 

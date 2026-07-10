@@ -21,6 +21,7 @@ import {
   isAllowedImportUrl,
   mapJsonLdToRecipe,
 } from './src/recipeImport.mjs';
+import { extractRecipeFromHtml } from './src/recipeHtmlFallback.mjs';
 import { createRateLimiter } from './src/rateLimit.mjs';
 import { resolveCorsOrigin } from './src/cors.mjs';
 import {
@@ -1394,12 +1395,19 @@ const server = createServer(async (req, res) => {
       // a page we want to buffer.
       const html = (await response.text()).slice(0, 3_000_000);
       const jsonLd = extractRecipeJsonLd(html);
-      if (!jsonLd) {
-        jsonResponse(res, 422, { error: 'Auf dieser Seite wurde kein Rezept gefunden (kein schema.org-Rezept vorhanden).' });
+      if (jsonLd) {
+        jsonResponse(res, 200, { recipe: mapJsonLdToRecipe(jsonLd), source: url, parser: 'jsonld' });
         return;
       }
 
-      jsonResponse(res, 200, { recipe: mapJsonLdToRecipe(jsonLd), source: url });
+      // No JSON-LD: fall back to microdata/heuristic HTML parsing.
+      const fallback = extractRecipeFromHtml(html);
+      if (!fallback) {
+        jsonResponse(res, 422, { error: 'Auf dieser Seite wurde kein Rezept gefunden (weder schema.org-Daten noch erkennbare Zutaten/Zubereitung).' });
+        return;
+      }
+
+      jsonResponse(res, 200, { recipe: fallback, source: url, parser: 'html' });
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: error.message });
