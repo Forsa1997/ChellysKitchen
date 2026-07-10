@@ -60,4 +60,46 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 
 ## Ideen für später (bewusst zurückgestellt)
 
-- (aktuell leer — neue Wünsche hier sammeln)
+Stand Juli 2026, gesammelt aus einem Ideen-Review. Priorität: Rezept-Import
+per Foto steht oben, weil er den initialen Rezeptbestand am meisten
+beschleunigt.
+
+### Rezept-Import erweitern
+- [ ] Foto-Import: Zutatenliste/Rezept von einem Foto (Kochbuch, handschriftlicher
+      Zettel) per OCR/Vision-Modell erfassen
+- [ ] Fallback-Import für Seiten ohne schema.org/JSON-LD (einfaches HTML-Parsing)
+
+### Kochen im Alltag
+- [ ] Kochmodus / Wake-Lock: Vollbild, große Schrift, Bildschirm bleibt an
+      (Screen Wake Lock API), Schritt-für-Schritt statt Fließtext
+- [ ] Timer direkt aus dem Rezepttext: Zeitangaben klickbar → startet Countdown
+- [ ] Mengen-/Einheiten-Umrechner (g ↔ ml ↔ Tasse/EL, °C ↔ Umluft-Hinweis)
+
+### Familien-Organisation
+- [ ] Essensplan-Historie / "Wiederholungs-Cooldown": zuletzt gekochte Rezepte
+      beim Würfeln/Wochenplan niedriger gewichten statt nur hart auszuschließen
+- [ ] Notizen als Kommentar-Thread (Autor + Zeitstempel) statt ein gemeinsames,
+      überschreibbares Textfeld pro Rezept
+- [ ] Essensplan-Vorlagen speichern und wiederverwenden
+- [ ] Wochenplan als iCal-Feed exportieren (Familienkalender-Sync)
+
+### Rezeptqualität & Auffindbarkeit
+- [ ] Nährwert-Schätzung (Kalorien/Makros pro Portion)
+- [ ] Vorrats-/Saison-Filter: "Was kann ich aus dem kochen, was ich zuhause habe?"
+- [ ] Zusätzliche Tags/Anlässe (Resteverwertung, Meal Prep, Kindergeburtstag)
+- [ ] "Ähnliche Rezepte" auf der Detailseite (Kategorie + Zutaten-Überlappung)
+
+### Import & Pflege
+- [ ] Rezept-Versionierung: einfacher Änderungsverlauf am Original (wer hat
+      wann was geändert), ergänzend zu "Variante anlegen"
+
+### Admin/Technik
+- [ ] Soft-Delete/Papierkorb für Rezepte statt direktem Löschen
+- [ ] Verwaiste Uploads periodisch aufräumen (Bild hochgeladen, Rezept nie
+      gespeichert/gelöscht → Bytes bleiben aktuell dauerhaft in Postgres)
+- [ ] Druckansicht/PDF-Export pro Rezept
+
+### Sicherheit/Robustheit
+- [ ] 2FA optional für Admin-Rolle (volle Backup-Export-Rechte)
+- [ ] Audit-Log für Admin-Aktionen (User angelegt/gelöscht, Rolle geändert,
+      Backup importiert)
