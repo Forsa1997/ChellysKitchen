@@ -77,6 +77,7 @@ before(async () => {
       IMPORT_ALLOW_PRIVATE: '1',
       // Photo import must report "not configured" regardless of the host env.
       ANTHROPIC_API_KEY: '',
+      OPENAI_API_KEY: '',
     },
     stdio: 'ignore',
   });
@@ -268,9 +269,9 @@ test('recipe import maps a schema.org page onto the recipe form shape', async ()
   assert.equal(imported.body.recipe.steps[0].instruction, 'Alles kochen.');
 });
 
-test('photo import answers 503 when no ANTHROPIC_API_KEY is configured', async () => {
-  // This server was booted without an API key, so the endpoint must explain
-  // that the feature is not configured instead of failing obscurely.
+test('photo import answers 503 when no provider key is configured', async () => {
+  // This server was booted without OPENAI_API_KEY/ANTHROPIC_API_KEY, so the
+  // endpoint must explain that the feature is not configured.
   const response = await api('/api/recipes/import/photo', {
     method: 'POST',
     token: memberToken,

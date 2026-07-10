@@ -15,7 +15,8 @@ wenn keiner weiß, was es heute geben soll.
 - Zutatenliste skaliert kopieren/teilen (Einkaufshilfe)
 - **Rezept-Import**: per Link (schema.org-Rezeptseiten, z. B. Chefkoch) oder
   **per Foto** (Kochbuchseite/handgeschriebener Zettel, Vision-Modell —
-  benötigt `ANTHROPIC_API_KEY` auf dem Server)
+  OpenAI zuerst, Anthropic als Fallback; benötigt `OPENAI_API_KEY` oder
+  `ANTHROPIC_API_KEY` auf dem Server)
 - Bewertungen (1–5 Sterne), Rollen (Mitglied/Editor/Admin), Admin-Dashboard
 - **Backup**: kompletter Export/Import (inkl. Bilder) im Admin-Dashboard
 - Als PWA auf dem Handy-Homescreen installierbar

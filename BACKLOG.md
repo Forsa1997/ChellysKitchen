@@ -66,8 +66,9 @@ beschleunigt.
 
 ### Rezept-Import erweitern
 - [x] Foto-Import: Zutatenliste/Rezept von einem Foto (Kochbuch, handschriftlicher
-      Zettel) per Vision-Modell erfassen — umgesetzt über die Anthropic-API
-      (`POST /api/recipes/import/photo`, aktiv mit `ANTHROPIC_API_KEY`)
+      Zettel) per Vision-Modell erfassen — umgesetzt: OpenAI als erste Quelle,
+      Anthropic als Fallback (`POST /api/recipes/import/photo`, aktiv mit
+      `OPENAI_API_KEY` und/oder `ANTHROPIC_API_KEY`)
 - [ ] Fallback-Import für Seiten ohne schema.org/JSON-LD (einfaches HTML-Parsing)
 
 ### Kochen im Alltag

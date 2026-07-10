@@ -14,7 +14,6 @@ import {
 } from './src/weekplan.mjs';
 import {
   extractRecipeFromPhoto,
-  getPhotoImportClient,
   isPhotoImportConfigured,
 } from './src/photoImport.mjs';
 import {
@@ -1309,7 +1308,8 @@ const server = createServer(async (req, res) => {
 
   // POST /api/recipes/import/photo - Extract a recipe from an uploaded photo
   // (cookbook page, handwritten note). Nothing is saved; the result prefills
-  // the create form. Requires ANTHROPIC_API_KEY.
+  // the create form. OpenAI answers first (OPENAI_API_KEY), Anthropic is the
+  // fallback (ANTHROPIC_API_KEY); at least one key is required.
   if (req.method === 'POST' && req.url === '/api/recipes/import/photo') {
     const user = authenticateRequest(req);
     if (!user) {
@@ -1322,7 +1322,7 @@ const server = createServer(async (req, res) => {
     }
     if (!isPhotoImportConfigured()) {
       jsonResponse(res, 503, {
-        error: 'Der Foto-Import ist auf diesem Server nicht eingerichtet (ANTHROPIC_API_KEY fehlt).',
+        error: 'Der Foto-Import ist auf diesem Server nicht eingerichtet (OPENAI_API_KEY oder ANTHROPIC_API_KEY fehlt).',
       });
       return;
     }
@@ -1338,10 +1338,10 @@ const server = createServer(async (req, res) => {
 
     let recipe;
     try {
-      recipe = await extractRecipeFromPhoto(
-        { mediaType: contentTypeForExt(image.ext), base64Data: image.buffer.toString('base64') },
-        { client: await getPhotoImportClient() },
-      );
+      recipe = await extractRecipeFromPhoto({
+        mediaType: contentTypeForExt(image.ext),
+        base64Data: image.buffer.toString('base64'),
+      });
     } catch {
       jsonResponse(res, 502, { error: 'Die Bilderkennung ist gerade nicht erreichbar. Bitte später erneut versuchen.' });
       return;

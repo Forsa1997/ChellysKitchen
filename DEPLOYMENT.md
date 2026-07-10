@@ -27,11 +27,13 @@ den JSON-Datei-Store unter `DATA_DIR` — es braucht dann keine Datenbank.
      `name`, `email`, `password`, optional `role`). Eine öffentliche
      Registrierung gibt es nicht; Konten entstehen nur hierüber oder im
      Admin-Dashboard.
-   - `ANTHROPIC_API_KEY` — optional, aktiviert den Rezept-Import per Foto
-     (Vision-Modell). Ohne den Key antwortet der Endpoint mit einem
-     verständlichen Hinweis; der Rest der App funktioniert normal.
-     `PHOTO_IMPORT_MODEL` kann das verwendete Modell übersteuern
-     (Standard `claude-opus-4-8`).
+   - `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` — optional, aktivieren den
+     Rezept-Import per Foto (Vision-Modell). OpenAI ist die erste Quelle,
+     Anthropic der Fallback bei technischen Fehlern; einer der beiden Keys
+     genügt. Ohne Key antwortet der Endpoint mit einem verständlichen
+     Hinweis; der Rest der App funktioniert normal. Modelle übersteuern:
+     `PHOTO_IMPORT_OPENAI_MODEL` (Standard `gpt-5.1`) bzw.
+     `PHOTO_IMPORT_MODEL` (Standard `claude-opus-4-8`).
    - `CORS_ORIGIN` — kommt aus der `render.yaml`: kommaseparierte Liste der
      erlaubten Browser-Origins (`https://chellys-kitchen.de`, `www`-Variante
      und die Render-Fallback-URL). Bei einer neuen Domain dort erweitern.
