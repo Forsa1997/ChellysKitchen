@@ -3,10 +3,17 @@
   "configurations": [
     {
       "name": "frontend",
-      "runtimeExecutable": "C:\\Users\\Chris\\.node\\node-v22.23.1-win-x64\\node.exe",
-      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5173"],
       "port": 5173,
       "cwd": "frontend"
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 4000,
+      "cwd": "backend"
     }
   ]
 }

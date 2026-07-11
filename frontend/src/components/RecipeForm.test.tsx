@@ -13,7 +13,10 @@ vi.mock('../api/client', () => ({
   },
 }));
 
-function renderForm(initialValues?: React.ComponentProps<typeof RecipeForm>['initialValues']) {
+function renderForm(
+  initialValues?: React.ComponentProps<typeof RecipeForm>['initialValues'],
+  extraProps?: Partial<React.ComponentProps<typeof RecipeForm>>,
+) {
   const onSubmit = vi.fn<(data: CreateRecipeRequest) => Promise<unknown>>(() => Promise.resolve(undefined));
   const onCancel = vi.fn(() => undefined);
   render(
@@ -23,6 +26,7 @@ function renderForm(initialValues?: React.ComponentProps<typeof RecipeForm>['ini
       initialValues={initialValues}
       onSubmit={onSubmit}
       onCancel={onCancel}
+      {...extraProps}
     />,
   );
   return { onSubmit, onCancel };
@@ -40,6 +44,7 @@ function fillMinimalRecipe() {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  window.localStorage.clear();
 });
 
 describe('RecipeForm', () => {
@@ -162,6 +167,84 @@ describe('RecipeForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('mirrors the form state into the live preview as you type', () => {
+    renderForm();
+
+    const preview = screen.getByRole('region', { name: 'Live-Vorschau' });
+    expect(within(preview).getByText('Noch kein Titel')).toBeInTheDocument();
+    expect(within(preview).getByText('Die Kurzbeschreibung erscheint hier.')).toBeInTheDocument();
+    // Defaults: 10 Min. Vorbereitung + 20 Min. Kochzeit, 2 Portionen.
+    expect(within(preview).getByText(/30 Min\./)).toBeInTheDocument();
+    expect(within(preview).getByText(/2 Portionen/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Titel/), { target: { value: 'Kürbissuppe' } });
+    fireEvent.change(screen.getByLabelText(/Kurzbeschreibung/), { target: { value: 'Cremig und warm.' } });
+    fireEvent.change(screen.getAllByLabelText(/Menge/)[0], { target: { value: '1,5' } });
+    fireEvent.change(screen.getAllByLabelText(/Einheit/)[0], { target: { value: 'kg' } });
+    fireEvent.change(screen.getAllByLabelText(/^Zutat/)[0], { target: { value: 'Kürbis' } });
+    fireEvent.change(screen.getAllByLabelText(/Anweisung/)[0], { target: { value: 'Alles pürieren.' } });
+
+    expect(within(preview).getByText('Kürbissuppe')).toBeInTheDocument();
+    expect(within(preview).getByText('Cremig und warm.')).toBeInTheDocument();
+    expect(within(preview).getByText(/1,5 kg Kürbis/)).toBeInTheDocument();
+    expect(within(preview).getByText('Alles pürieren.')).toBeInTheDocument();
+  });
+
+  it('only shows named ingredients in the preview', () => {
+    renderForm();
+
+    const preview = screen.getByRole('region', { name: 'Live-Vorschau' });
+    // The initial empty ingredient row must not create an empty preview entry.
+    fireEvent.change(screen.getAllByLabelText(/Menge/)[0], { target: { value: '2' } });
+    expect(within(preview).queryByText(/^2\s*$/)).not.toBeInTheDocument();
+  });
+
+  it('restores a saved draft when a draftKey is provided', () => {
+    window.localStorage.setItem(
+      'recipe-draft:test',
+      JSON.stringify({
+        title: 'Entwurf-Titel',
+        shortDescription: 'Aus dem Entwurf.',
+        ingredients: [{ name: 'Mehl', amount: '250', unit: 'g' }],
+        steps: [{ stepNumber: 1, instruction: 'Kneten.' }],
+      }),
+    );
+
+    renderForm(undefined, { draftKey: 'recipe-draft:test' });
+
+    expect(screen.getByLabelText(/Titel/)).toHaveValue('Entwurf-Titel');
+    expect(screen.getByLabelText(/Kurzbeschreibung/)).toHaveValue('Aus dem Entwurf.');
+    expect(screen.getAllByLabelText(/^Zutat/)[0]).toHaveValue('Mehl');
+    expect(screen.getAllByLabelText(/Anweisung/)[0]).toHaveValue('Kneten.');
+  });
+
+  it('persists the form state as a draft while typing', async () => {
+    renderForm(undefined, { draftKey: 'recipe-draft:test' });
+
+    fireEvent.change(screen.getByLabelText(/Titel/), { target: { value: 'Autosave-Kuchen' } });
+
+    await waitFor(
+      () => {
+        const raw = window.localStorage.getItem('recipe-draft:test');
+        expect(raw).not.toBeNull();
+        expect(JSON.parse(raw as string).title).toBe('Autosave-Kuchen');
+      },
+      { timeout: 3000 },
+    );
+    expect(screen.getByText(/Entwurf automatisch gespeichert/)).toBeInTheDocument();
+  });
+
+  it('clears the draft after a successful submit', async () => {
+    renderForm(undefined, { draftKey: 'recipe-draft:test' });
+
+    fillMinimalRecipe();
+    fireEvent.click(screen.getByRole('button', { name: 'Rezept speichern' }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem('recipe-draft:test')).toBeNull();
+    }, { timeout: 3000 });
   });
 
   it('submits an explicit empty image when an existing recipe image is removed', async () => {

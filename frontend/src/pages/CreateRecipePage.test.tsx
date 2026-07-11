@@ -5,12 +5,13 @@ import { CreateRecipePage } from './CreateRecipePage';
 
 const importRecipeMock = vi.fn();
 const importRecipeFromPhotoMock = vi.fn();
+const uploadImageMock = vi.fn();
 
 vi.mock('../api/client', () => ({
   apiClient: {
     importRecipe: (...args: unknown[]) => importRecipeMock(...args),
     importRecipeFromPhoto: (...args: unknown[]) => importRecipeFromPhotoMock(...args),
-    uploadImage: vi.fn(),
+    uploadImage: (...args: unknown[]) => uploadImageMock(...args),
   },
 }));
 
@@ -35,6 +36,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   importRecipeMock.mockReset();
   importRecipeFromPhotoMock.mockReset();
+  uploadImageMock.mockReset();
+  window.localStorage.clear();
 });
 
 describe('CreateRecipePage import', () => {
@@ -67,24 +70,56 @@ describe('CreateRecipePage import', () => {
     expect(screen.getByLabelText(/Kurzbeschreibung/)).toHaveValue('Von einer fremden Seite.');
     expect(screen.getAllByLabelText(/^Zutat/)[0]).toHaveValue('Linsen');
     expect(screen.getAllByLabelText(/Anweisung/)[0]).toHaveValue('Alles kochen.');
+    // Success bar summarizes what was taken over.
+    expect(await screen.findByText(/Rezept erkannt/)).toBeInTheDocument();
+    expect(screen.getByText(/1 Zutat/)).toBeInTheDocument();
   });
 
-  it('shows the server error when the import fails', async () => {
+  it('restores the previous form state via Rückgängig', async () => {
+    importRecipeMock.mockResolvedValue({
+      recipe: {
+        title: 'Importierter Titel',
+        shortDescription: 'Importierte Beschreibung.',
+        ingredients: [{ name: 'Linsen', amount: 250, unit: 'g' }],
+        steps: [{ stepNumber: 1, instruction: 'Alles kochen.' }],
+      },
+      source: 'https://example.com/rezept',
+    });
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/Titel/), { target: { value: 'Mein eigener Titel' } });
+    fireEvent.change(screen.getByLabelText('Rezept-URL'), {
+      target: { value: 'https://example.com/rezept' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Importieren' }));
+
+    await waitFor(() => expect(screen.getByLabelText(/Titel/)).toHaveValue('Importierter Titel'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rückgängig' }));
+
+    expect(screen.getByLabelText(/Titel/)).toHaveValue('Mein eigener Titel');
+  });
+
+  it('shows the server error with retry and leaves the form untouched', async () => {
     importRecipeMock.mockRejectedValue(new Error('Auf dieser Seite wurde kein Rezept gefunden.'));
 
     renderPage();
 
+    fireEvent.change(screen.getByLabelText(/Titel/), { target: { value: 'Mein eigener Titel' } });
     fireEvent.change(screen.getByLabelText('Rezept-URL'), {
       target: { value: 'https://example.com/kein-rezept' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Importieren' }));
 
     expect(await screen.findByText('Auf dieser Seite wurde kein Rezept gefunden.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Erneut versuchen' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Titel/)).toHaveValue('Mein eigener Titel');
   });
 });
 
 describe('CreateRecipePage photo import', () => {
-  it('prefills the form from a photographed recipe', async () => {
+  it('prefills the form and takes the photo over as recipe image', async () => {
     importRecipeFromPhotoMock.mockResolvedValue({
       recipe: {
         title: 'Foto-Pfannkuchen',
@@ -97,6 +132,7 @@ describe('CreateRecipePage photo import', () => {
       },
       source: 'photo',
     });
+    uploadImageMock.mockResolvedValue({ url: '/uploads/rezept.jpg' });
 
     renderPage();
 
@@ -111,6 +147,36 @@ describe('CreateRecipePage photo import', () => {
     });
     expect(screen.getAllByLabelText(/^Zutat/)[0]).toHaveValue('Mehl');
     expect(screen.getAllByLabelText(/Anweisung/)[0]).toHaveValue('Alles verrühren.');
+    // The photographed page becomes the recipe image.
+    await waitFor(() => expect(uploadImageMock).toHaveBeenCalledWith(file));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/oder Bild-URL/)).toHaveValue('/uploads/rezept.jpg');
+    });
+  });
+
+  it('still fills the form when the image upload fails', async () => {
+    importRecipeFromPhotoMock.mockResolvedValue({
+      recipe: {
+        title: 'Foto-Pfannkuchen',
+        shortDescription: 'Vom Kochbuchfoto.',
+        ingredients: [{ name: 'Mehl', amount: 250, unit: 'g' }],
+        steps: [{ stepNumber: 1, instruction: 'Alles verrühren.' }],
+      },
+      source: 'photo',
+    });
+    uploadImageMock.mockRejectedValue(new Error('Upload kaputt.'));
+
+    renderPage();
+
+    const file = new File(['fake-image'], 'rezept.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText(/Foto importieren/), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Titel/)).toHaveValue('Foto-Pfannkuchen');
+    });
+    expect(screen.getByLabelText(/oder Bild-URL/)).toHaveValue('');
   });
 
   it('shows the server error when the photo import fails', async () => {
@@ -124,5 +190,6 @@ describe('CreateRecipePage photo import', () => {
     });
 
     expect(await screen.findByText('Auf dem Foto wurde kein Rezept erkannt.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Erneut versuchen' })).toBeInTheDocument();
   });
 });
