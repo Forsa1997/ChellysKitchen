@@ -69,18 +69,17 @@ export const inputsCustomizations: Components<Theme> = {
                                 backgroundColor: brand[700],
                             },
                             ...theme.applyStyles('dark', {
-                                color: 'black',
-                                backgroundColor: gray[50],
-                                backgroundImage: `linear-gradient(to bottom, ${gray[100]}, ${gray[50]})`,
-                                boxShadow: 'inset 0 -1px 0  hsl(220, 30%, 80%)',
-                                border: `1px solid ${gray[50]}`,
+                                color: brand[50],
+                                backgroundColor: brand[400],
+                                backgroundImage: 'none',
+                                boxShadow: 'none',
+                                border: `1px solid ${brand[400]}`,
                                 '&:hover': {
-                                    backgroundImage: 'none',
-                                    backgroundColor: gray[300],
+                                    backgroundColor: brand[300],
                                     boxShadow: 'none',
                                 },
                                 '&:active': {
-                                    backgroundColor: gray[400],
+                                    backgroundColor: brand[500],
                                 },
                             }),
                         },
@@ -123,15 +122,15 @@ export const inputsCustomizations: Components<Theme> = {
                                 backgroundColor: gray[200],
                             },
                             ...theme.applyStyles('dark', {
-                                backgroundColor: gray[800],
-                                borderColor: gray[700],
+                                backgroundColor: (theme.vars || theme).palette.background.paper,
+                                borderColor: (theme.vars || theme).palette.divider,
 
                                 '&:hover': {
-                                    backgroundColor: gray[900],
-                                    borderColor: gray[600],
+                                    backgroundColor: (theme.vars || theme).palette.action.hover,
+                                    borderColor: gray[500],
                                 },
                                 '&:active': {
-                                    backgroundColor: gray[900],
+                                    backgroundColor: (theme.vars || theme).palette.action.selected,
                                 },
                             }),
                         },
@@ -239,14 +238,14 @@ export const inputsCustomizations: Components<Theme> = {
                     backgroundColor: gray[200],
                 },
                 ...theme.applyStyles('dark', {
-                    backgroundColor: gray[800],
-                    borderColor: gray[700],
+                    backgroundColor: (theme.vars || theme).palette.background.paper,
+                    borderColor: (theme.vars || theme).palette.divider,
                     '&:hover': {
-                        backgroundColor: gray[900],
-                        borderColor: gray[600],
+                        backgroundColor: (theme.vars || theme).palette.action.hover,
+                        borderColor: gray[500],
                     },
                     '&:active': {
-                        backgroundColor: gray[900],
+                        backgroundColor: (theme.vars || theme).palette.action.selected,
                     },
                 }),
                 variants: [

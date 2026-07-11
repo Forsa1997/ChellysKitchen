@@ -1,4 +1,4 @@
-import { alpha, Theme, Components } from '@mui/material/styles';
+import { Theme, Components } from '@mui/material/styles';
 import { gray } from '../themePrimitives.ts';
 
 export const surfacesCustomizations: Components<Theme> = {
@@ -39,7 +39,7 @@ export const surfacesCustomizations: Components<Theme> = {
                 '&:hover': { backgroundColor: gray[50] },
                 '&:focus-visible': { backgroundColor: 'transparent' },
                 ...theme.applyStyles('dark', {
-                    '&:hover': { backgroundColor: gray[800] },
+                    '&:hover': { backgroundColor: (theme.vars || theme).palette.action.hover },
                 }),
             }),
         },
@@ -65,7 +65,7 @@ export const surfacesCustomizations: Components<Theme> = {
                     boxShadow: 'none',
                     overflow: 'hidden',
                     ...theme.applyStyles('dark', {
-                        backgroundColor: gray[800],
+                        backgroundColor: (theme.vars || theme).palette.background.paper,
                     }),
                     variants: [
                         {
@@ -77,7 +77,7 @@ export const surfacesCustomizations: Components<Theme> = {
                                 boxShadow: 'none',
                                 background: 'hsl(0, 0%, 100%)',
                                 ...theme.applyStyles('dark', {
-                                    background: alpha(gray[900], 0.4),
+                                    background: 'hsl(220, 22%, 13%)',
                                 }),
                             },
                         },

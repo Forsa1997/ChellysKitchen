@@ -48,9 +48,8 @@ export const navigationCustomizations: Components<Theme> = {
                     },
                 },
                 ...theme.applyStyles('dark', {
-                    background: gray[900],
-                    boxShadow:
-                        'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px',
+                    background: (theme.vars || theme).palette.background.paper,
+                    boxShadow: (theme.vars || theme).palette.baseShadow,
                 }),
             }),
         },
