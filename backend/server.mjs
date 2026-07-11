@@ -128,6 +128,14 @@ function hasMinRole(user, role) {
   return !!user && (ROLE_RANK[user.role] ?? -1) >= (ROLE_RANK[role] ?? Infinity);
 }
 
+function isPublicRecipe(recipe) {
+  return (recipe.status ?? 'PUBLISHED') === 'PUBLISHED';
+}
+
+function canViewRecipe(recipe, requester) {
+  return isPublicRecipe(recipe) || hasMinRole(requester, 'EDITOR');
+}
+
 function findRecipeByIdOrSlug(idOrSlug) {
   return recipeStore.find(
     (entry) => entry.id === idOrSlug || (entry.slug ?? toSlug(entry.title)) === idOrSlug,
@@ -508,7 +516,13 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      jsonResponse(res, 200, sanitizeRecipe(recipe, authenticateRequest(req)));
+      const requester = authenticateRequest(req);
+      if (!canViewRecipe(recipe, requester)) {
+        jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+        return;
+      }
+
+      jsonResponse(res, 200, sanitizeRecipe(recipe, requester));
       return;
     }
   }
@@ -523,7 +537,7 @@ const server = createServer(async (req, res) => {
 
     if (bringMatch) {
       const recipe = findRecipeByIdOrSlug(decodeURIComponent(bringMatch[1]));
-      if (!recipe) {
+      if (!recipe || !canViewRecipe(recipe, authenticateRequest(req))) {
         jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
         return;
       }
@@ -1225,7 +1239,7 @@ const server = createServer(async (req, res) => {
     for (const day of WEEK_DAYS) {
       for (const entry of weekPlanStore[day]) {
         const recipe = recipeStore.find((r) => r.id === entry.recipeId);
-        if (recipe) {
+        if (recipe && isPublicRecipe(recipe)) {
           entries.push({ recipe, servings: entry.servings });
         }
       }

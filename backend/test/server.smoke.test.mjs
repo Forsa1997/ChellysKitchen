@@ -168,6 +168,31 @@ test('recipe create -> update -> publish flow and admin role update', async () =
   const publicList = await api('/api/recipes?pageSize=24');
   assert.equal(publicList.status, 200);
   assert.ok(!publicList.body.data.some((r) => r.id === recipeId), 'archived recipe hidden from public list');
+
+  // An archived recipe must not be discoverable through endpoints that use a
+  // slug directly either. Otherwise the public list would hide it while a
+  // previously shared URL still exposed its contents.
+  const anonymousDetail = await api(`/api/recipes/${archived.body.slug}`);
+  assert.equal(anonymousDetail.status, 404);
+
+  const anonymousBring = await fetch(`${BASE}/api/recipes/${archived.body.slug}/bring`);
+  assert.equal(anonymousBring.status, 404);
+
+  const addToPlan = await api('/api/weekplan/monday', {
+    method: 'POST',
+    token,
+    body: { recipeId, servings: 2 },
+  });
+  assert.equal(addToPlan.status, 200);
+  const weekPlanBring = await fetch(`${BASE}/api/weekplan/bring`);
+  const weekPlanHtml = await weekPlanBring.text();
+  assert.equal(weekPlanBring.status, 200);
+  assert.doesNotMatch(weekPlanHtml, /Smoke Test Rezept/);
+
+  // Editors may still access the detail endpoint to review unpublished work.
+  const editorDetail = await api(`/api/recipes/${archived.body.slug}`, { token });
+  assert.equal(editorDetail.status, 200);
+  assert.equal(editorDetail.body.status, 'ARCHIVED');
 });
 
 test('image upload stores a file that is served back', async () => {
