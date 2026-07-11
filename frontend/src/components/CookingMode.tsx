@@ -1,5 +1,8 @@
 import { AppBar, Box, Button, Container, Dialog, IconButton, List, ListItem, ListItemText, Stack, Toolbar, Typography } from '@mui/material';
-import { ArrowBack, ArrowForward, Check, Close } from '@mui/icons-material';
+import ArrowBack from '@mui/icons-material/ArrowBack';
+import ArrowForward from '@mui/icons-material/ArrowForward';
+import Check from '@mui/icons-material/Check';
+import Close from '@mui/icons-material/Close';
 import { useState } from 'react';
 import type { Ingredient, Recipe } from '../types/domain';
 import { useWakeLock } from '../hooks/useWakeLock';

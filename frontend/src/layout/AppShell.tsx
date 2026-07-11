@@ -15,6 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useState, type PropsWithChildren } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
+import ColorModeIconDropdown from '../ColorModeIconDropdown';
 
 export function AppShell({ children }: PropsWithChildren) {
   const { user, logout } = useAuth();
@@ -29,6 +30,9 @@ export function AppShell({ children }: PropsWithChildren) {
 
   const desktopActions = user ? (
     <>
+      <Button component={RouterLink} to="/rezeptwelt" variant="text">
+        Rezeptwelt
+      </Button>
       <Button component={RouterLink} to="/recipes/new" variant="contained">
         Rezept erstellen
       </Button>
@@ -48,9 +52,14 @@ export function AppShell({ children }: PropsWithChildren) {
       </Button>
     </>
   ) : (
-    <Button component={RouterLink} to="/signin" variant="contained">
-      Anmelden
-    </Button>
+    <>
+      <Button component={RouterLink} to="/rezeptwelt" variant="text">
+        Rezeptwelt
+      </Button>
+      <Button component={RouterLink} to="/signin" variant="contained">
+        Anmelden
+      </Button>
+    </>
   );
 
   return (
@@ -122,17 +131,20 @@ export function AppShell({ children }: PropsWithChildren) {
               sx={{ alignItems: 'center', display: { xs: 'none', md: 'flex' } }}
             >
               {desktopActions}
+              <ColorModeIconDropdown aria-label="Farbschema ändern" />
             </Stack>
 
-            {/* Mobile menu toggle */}
-            <IconButton
-              edge="end"
-              aria-label={mobileOpen ? 'Menü schließen' : 'Menü öffnen'}
-              onClick={() => setMobileOpen((open) => !open)}
-              sx={{ display: { xs: 'inline-flex', md: 'none' } }}
-            >
-              {mobileOpen ? <CloseIcon /> : <MenuIcon />}
-            </IconButton>
+            <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'flex', md: 'none' } }}>
+              <ColorModeIconDropdown aria-label="Farbschema ändern" />
+              {/* Mobile menu toggle */}
+              <IconButton
+                edge="end"
+                aria-label={mobileOpen ? 'Menü schließen' : 'Menü öffnen'}
+                onClick={() => setMobileOpen((open) => !open)}
+              >
+                {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+              </IconButton>
+            </Stack>
           </Toolbar>
         </Container>
       </AppBar>
@@ -157,6 +169,7 @@ export function AppShell({ children }: PropsWithChildren) {
           </Stack>
           <Divider sx={{ mb: 2 }} />
           <Stack spacing={1.25}>
+            <ColorModeIconDropdown aria-label="Farbschema ändern" />
             {user ? (
               <>
                 <Typography variant="body2" color="text.secondary">
@@ -164,6 +177,9 @@ export function AppShell({ children }: PropsWithChildren) {
                 </Typography>
                 <Button component={RouterLink} to="/recipes/new" variant="contained" fullWidth onClick={closeMenu}>
                   Rezept erstellen
+                </Button>
+                <Button component={RouterLink} to="/rezeptwelt" variant="outlined" fullWidth onClick={closeMenu}>
+                  Rezeptwelt
                 </Button>
                 <Button component={RouterLink} to="/wochenplan" variant="outlined" fullWidth onClick={closeMenu}>
                   Wochenplan
@@ -178,9 +194,14 @@ export function AppShell({ children }: PropsWithChildren) {
                 </Button>
               </>
             ) : (
-              <Button component={RouterLink} to="/signin" variant="contained" fullWidth onClick={closeMenu}>
-                Anmelden
-              </Button>
+              <>
+                <Button component={RouterLink} to="/rezeptwelt" variant="outlined" fullWidth onClick={closeMenu}>
+                  Rezeptwelt
+                </Button>
+                <Button component={RouterLink} to="/signin" variant="contained" fullWidth onClick={closeMenu}>
+                  Anmelden
+                </Button>
+              </>
             )}
           </Stack>
         </Box>

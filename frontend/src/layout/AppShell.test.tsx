@@ -28,5 +28,6 @@ describe('AppShell', () => {
     const logo = screen.getByAltText('Chellys Kitchen Logo');
     expect(logo).toHaveAttribute('src', '/brand/chellys-kitchen-icon.svg');
     expect(screen.getByRole('link', { name: /Chellys Kitchen/ })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Rezeptwelt' })).toHaveAttribute('href', '/rezeptwelt');
   });
 });

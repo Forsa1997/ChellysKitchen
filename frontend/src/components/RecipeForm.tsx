@@ -17,7 +17,9 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
-import { Add as AddIcon, Delete as DeleteIcon, CloudUpload as CloudUploadIcon } from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { apiClient, type CreateRecipeRequest } from '../api/client';
 import { useCategories } from '../hooks/useCategories';
 import { RecipePreviewCard } from './RecipePreviewCard';

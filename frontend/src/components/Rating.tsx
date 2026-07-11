@@ -1,6 +1,6 @@
 // Rating Components
 import { Box, Rating, Typography, Stack } from '@mui/material';
-import { Star } from '@mui/icons-material';
+import Star from '@mui/icons-material/Star';
 
 interface RatingDisplayProps {
   value: number;

@@ -17,6 +17,7 @@ const mockMutation = () => ({ isPending: false, mutateAsync: vi.fn() });
 vi.mock('../hooks/useAdmin', () => ({
   useUsers: () => ({ data: { data: [], total: 0 }, isLoading: false, error: null }),
   useUpdateUserRole: () => mockMutation(),
+  useUpdateUserName: () => mockMutation(),
   useCreateUser: () => mockMutation(),
   useAdminRecipes: () => ({ data: { data: [], total: 0 } }),
 }));
