@@ -6,6 +6,18 @@ import { AdminDashboard } from './AdminDashboard';
 
 const useAuthMock = vi.fn();
 const createUserMock = vi.fn();
+const updateUserNameMock = vi.fn();
+let usersDataMock: {
+  data: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: 'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN';
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  total: number;
+} = { data: [], total: 0 };
 
 vi.mock('../auth/AuthContext', () => ({
   useAuth: () => useAuthMock(),
@@ -14,8 +26,9 @@ vi.mock('../auth/AuthContext', () => ({
 const mockMutation = () => ({ isPending: false, mutateAsync: vi.fn() });
 
 vi.mock('../hooks/useAdmin', () => ({
-  useUsers: () => ({ data: { data: [], total: 0 }, isLoading: false, error: null }),
+  useUsers: () => ({ data: usersDataMock, isLoading: false, error: null }),
   useUpdateUserRole: () => mockMutation(),
+  useUpdateUserName: () => ({ isPending: false, mutateAsync: updateUserNameMock }),
   useCreateUser: () => ({ isPending: false, mutateAsync: createUserMock }),
   useAdminRecipes: () => ({ data: { data: [], total: 0 } }),
 }));
@@ -48,6 +61,8 @@ describe('AdminDashboard user creation', () => {
     cleanup();
     vi.restoreAllMocks();
     createUserMock.mockReset();
+    updateUserNameMock.mockReset();
+    usersDataMock = { data: [], total: 0 };
   });
 
   it('creates a user with name, email, password and role', async () => {
@@ -86,5 +101,26 @@ describe('AdminDashboard user creation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
 
     await waitFor(() => expect(createUserMock).not.toHaveBeenCalled());
+  });
+
+  it('changes a user name', async () => {
+    useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
+    updateUserNameMock.mockResolvedValue({ id: 'user-2', name: 'Chelly Kocht' });
+    usersDataMock = {
+      data: [{ id: 'user-2', name: 'Chelly', email: 'chelly@example.com', role: 'MEMBER', createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      total: 1,
+    };
+
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Name ändern' }));
+    fireEvent.change(await screen.findByLabelText(/^Name$/), { target: { value: 'Chelly Kocht' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+
+    await waitFor(() => expect(updateUserNameMock).toHaveBeenCalledWith({
+      id: 'user-2',
+      data: { name: 'Chelly Kocht' },
+    }));
+    await waitFor(() => expect(screen.getByText(/Name von Chelly Kocht wurde geändert/)).toBeInTheDocument());
   });
 });

@@ -58,7 +58,7 @@ export default function ColorModeIconDropdown(props: IconButtonOwnProps) {
             </IconButton>
             <Menu
                 anchorEl={anchorEl}
-                id="account-menu"
+                id="color-scheme-menu"
                 open={open}
                 onClose={handleClose}
                 onClick={handleClose}
@@ -75,13 +75,13 @@ export default function ColorModeIconDropdown(props: IconButtonOwnProps) {
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
                 <MenuItem selected={mode === 'system'} onClick={handleMode('system')}>
-                    System
+                    Systemeinstellung
                 </MenuItem>
                 <MenuItem selected={mode === 'light'} onClick={handleMode('light')}>
-                    Light
+                    Hell
                 </MenuItem>
                 <MenuItem selected={mode === 'dark'} onClick={handleMode('dark')}>
-                    Dark
+                    Dunkel
                 </MenuItem>
             </Menu>
         </React.Fragment>

@@ -229,6 +229,10 @@ export interface UpdateUserRoleRequest {
   role: UserRole;
 }
 
+export interface UpdateUserNameRequest {
+  name: string;
+}
+
 export interface CreateUserRequest {
   name: string;
   email: string;
@@ -831,6 +835,17 @@ class ApiClient {
    */
   async updateUserRole(id: string, data: UpdateUserRoleRequest): Promise<User> {
     return this.request<User>(`/api/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * PATCH /api/admin/users/:id/name
+   * Update user name (admin only)
+   */
+  async updateUserName(id: string, data: UpdateUserNameRequest): Promise<User> {
+    return this.request<User>(`/api/admin/users/${id}/name`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });

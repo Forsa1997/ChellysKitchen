@@ -72,8 +72,11 @@ before(async () => {
   await waitForReady();
 });
 
-after(() => {
-  if (child) child.kill('SIGTERM');
+after(async () => {
+  if (child && child.exitCode === null) {
+    child.kill('SIGTERM');
+    await new Promise((resolve) => child.once('exit', resolve));
+  }
   if (dataDir) rmSync(dataDir, { recursive: true, force: true });
 });
 

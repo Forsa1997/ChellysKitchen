@@ -129,7 +129,10 @@ before(async () => {
 });
 
 after(async () => {
-  child?.kill();
+  if (child && child.exitCode === null) {
+    child.kill('SIGTERM');
+    await new Promise((resolve) => child.once('exit', resolve));
+  }
   await new Promise((resolve) => mockServer?.close(resolve));
   if (dataDir) rmSync(dataDir, { recursive: true, force: true });
 });

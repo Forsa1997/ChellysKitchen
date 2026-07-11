@@ -29,7 +29,7 @@ import {
 import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useUsers, useUpdateUserRole, useCreateUser, useAdminRecipes } from '../hooks/useAdmin';
+import { useUsers, useUpdateUserRole, useUpdateUserName, useCreateUser, useAdminRecipes } from '../hooks/useAdmin';
 import { usePublishRecipe, useArchiveRecipe, useDeleteRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
 import { apiClient, type User, type UserRole, type Recipe } from '../api/client';
@@ -45,6 +45,7 @@ export function AdminDashboard() {
   const { data: usersData, isLoading, error } = useUsers();
   const { data: recipesData } = useAdminRecipes();
   const updateUserRole = useUpdateUserRole();
+  const updateUserName = useUpdateUserName();
   const createUser = useCreateUser();
   const publishRecipe = usePublishRecipe();
   const archiveRecipe = useArchiveRecipe();
@@ -53,6 +54,8 @@ export function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [newRole, setNewRole] = useState<UserRole>('MEMBER');
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [newName, setNewName] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'MEMBER' as UserRole });
   const [actionError, setActionError] = useState<string | null>(null);
@@ -86,6 +89,28 @@ export function AdminDashboard() {
       setSelectedUser(null);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Rolle konnte nicht geändert werden.');
+    }
+  };
+
+  const handleNameChange = (user: User) => {
+    setSelectedUser(user.id);
+    setNewName(user.name);
+    setNameDialogOpen(true);
+  };
+
+  const handleNameUpdate = async () => {
+    if (!selectedUser || !newName.trim()) return;
+
+    try {
+      const updated = await updateUserName.mutateAsync({
+        id: selectedUser,
+        data: { name: newName.trim() },
+      });
+      setNameDialogOpen(false);
+      setSelectedUser(null);
+      setActionSuccess(`Name von ${updated.name} wurde geändert.`);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Name konnte nicht geändert werden.');
     }
   };
 
@@ -245,16 +270,26 @@ export function AdminDashboard() {
                   {user._count?.recipesCreated || 0}
                 </TableCell>
                 <TableCell>
-                  {user.id !== currentUser?.id && (
+                  <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
                     <Button
                       size="small"
                       variant="outlined"
-                      onClick={() => handleRoleChange(user.id, user.role)}
-                      disabled={updateUserRole.isPending}
+                      onClick={() => handleNameChange(user)}
+                      disabled={updateUserName.isPending}
                     >
-                      Rolle ändern
+                      Name ändern
                     </Button>
-                  )}
+                    {user.id !== currentUser?.id && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleRoleChange(user.id, user.role)}
+                        disabled={updateUserRole.isPending}
+                      >
+                        Rolle ändern
+                      </Button>
+                    )}
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
@@ -470,6 +505,26 @@ export function AdminDashboard() {
         <DialogActions>
           <Button onClick={() => setRoleDialogOpen(false)}>Abbrechen</Button>
           <Button onClick={handleRoleUpdate} variant="contained" disabled={updateUserRole.isPending}>
+            Speichern
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={nameDialogOpen} onClose={() => setNameDialogOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Namen ändern</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Name"
+            margin="dense"
+            value={newName}
+            onChange={(event) => setNewName(event.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNameDialogOpen(false)}>Abbrechen</Button>
+          <Button onClick={handleNameUpdate} variant="contained" disabled={updateUserName.isPending || !newName.trim()}>
             Speichern
           </Button>
         </DialogActions>

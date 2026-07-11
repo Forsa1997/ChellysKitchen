@@ -1569,6 +1569,41 @@ const server = createServer(async (req, res) => {
     }
   }
 
+  // PATCH /api/admin/users/:id/name - Update a user's displayed name (admin only)
+  if (req.method === 'PATCH' && req.url?.match(/^\/api\/admin\/users\/[^/]+\/name$/)) {
+    const actingUser = authenticateRequest(req);
+    if (!hasMinRole(actingUser, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    try {
+      const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+      const targetId = requestUrl.pathname.split('/')[4];
+      const targetUser = findUserById(targetId);
+      if (!targetUser) {
+        jsonResponse(res, 404, { error: 'Benutzer nicht gefunden.' });
+        return;
+      }
+
+      const { name } = await parseJsonBody(req);
+      const normalizedName = String(name ?? '').trim();
+      if (!normalizedName || normalizedName.length > 100) {
+        jsonResponse(res, 400, { error: 'Der Name muss zwischen 1 und 100 Zeichen lang sein.' });
+        return;
+      }
+
+      targetUser.name = normalizedName;
+      targetUser.updatedAt = new Date().toISOString();
+      persist();
+      jsonResponse(res, 200, sanitizeUser(targetUser));
+      return;
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+  }
+
   // GET /api/admin/recipes - List all recipes incl. drafts/archived (admin only)
   if (req.method === 'GET' && req.url === '/api/admin/recipes') {
     const user = authenticateRequest(req);

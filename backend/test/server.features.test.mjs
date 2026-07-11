@@ -126,8 +126,11 @@ before(async () => {
   memberToken = login.body.accessToken;
 });
 
-after(() => {
-  if (child) child.kill('SIGTERM');
+after(async () => {
+  if (child && child.exitCode === null) {
+    child.kill('SIGTERM');
+    await new Promise((resolve) => child.once('exit', resolve));
+  }
   if (fixtureServer) fixtureServer.close();
   if (dataDir) rmSync(dataDir, { recursive: true, force: true });
 });

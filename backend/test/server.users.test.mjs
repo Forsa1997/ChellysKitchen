@@ -75,8 +75,11 @@ before(async () => {
   await waitForReady();
 });
 
-after(() => {
-  if (child) child.kill('SIGTERM');
+after(async () => {
+  if (child && child.exitCode === null) {
+    child.kill('SIGTERM');
+    await new Promise((resolve) => child.once('exit', resolve));
+  }
   if (dataDir) rmSync(dataDir, { recursive: true, force: true });
 });
 
@@ -146,6 +149,47 @@ test('user creation defaults to MEMBER when no role is given', async () => {
   });
   assert.equal(created.status, 201);
   assert.equal(created.body.role, 'MEMBER');
+});
+
+test('admin can change a user name', async () => {
+  const adminToken = await loginAsAdmin();
+  const users = await api('/api/admin/users', { token: adminToken });
+  const user = users.body.data.find((entry) => entry.email === 'chelly@test.local');
+
+  const updated = await api(`/api/admin/users/${user.id}/name`, {
+    method: 'PATCH',
+    token: adminToken,
+    body: { name: 'Chelly Kocht' },
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.name, 'Chelly Kocht');
+
+  const list = await api('/api/admin/users', { token: adminToken });
+  assert.equal(list.body.data.find((entry) => entry.id === user.id).name, 'Chelly Kocht');
+});
+
+test('changing a user name requires an admin and a non-empty name', async () => {
+  const adminToken = await loginAsAdmin();
+  const users = await api('/api/admin/users', { token: adminToken });
+  const user = users.body.data.find((entry) => entry.email === 'gast@test.local');
+
+  const invalid = await api(`/api/admin/users/${user.id}/name`, {
+    method: 'PATCH',
+    token: adminToken,
+    body: { name: '   ' },
+  });
+  assert.equal(invalid.status, 400);
+
+  const editorLogin = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: 'chelly@test.local', password: 'chef12345' },
+  });
+  const forbidden = await api(`/api/admin/users/${user.id}/name`, {
+    method: 'PATCH',
+    token: editorLogin.body.accessToken,
+    body: { name: 'Nicht erlaubt' },
+  });
+  assert.equal(forbidden.status, 403);
 });
 
 test('user creation validates input', async () => {
