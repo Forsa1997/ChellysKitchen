@@ -29,55 +29,55 @@ const defaultTheme = createTheme();
 const customShadows: Shadows = [...defaultTheme.shadows];
 
 export const brand = {
-    50: 'hsl(342, 85%, 97%)',
-    100: 'hsl(342, 80%, 93%)',
-    200: 'hsl(342, 72%, 84%)',
-    300: 'hsl(342, 68%, 70%)',
-    400: 'hsl(342, 64%, 54%)',
-    500: 'hsl(342, 70%, 44%)',
+    50: 'hsl(342, 85%, 98%)',
+    100: 'hsl(342, 75%, 95%)',
+    200: 'hsl(342, 78%, 88%)',
+    300: 'hsl(342, 80%, 76%)',
+    400: 'hsl(342, 80%, 68%)',
+    500: 'hsl(342, 72%, 42%)',
     600: 'hsl(342, 74%, 36%)',
-    700: 'hsl(342, 70%, 28%)',
-    800: 'hsl(342, 62%, 18%)',
-    900: 'hsl(342, 58%, 12%)',
+    700: 'hsl(342, 70%, 30%)',
+    800: 'hsl(342, 48%, 20%)',
+    900: 'hsl(342, 60%, 10%)',
 };
 
 export const gray = {
-    50: 'hsl(220, 35%, 97%)',
-    100: 'hsl(220, 30%, 94%)',
-    200: 'hsl(220, 20%, 88%)',
-    300: 'hsl(220, 20%, 80%)',
-    400: 'hsl(220, 20%, 65%)',
-    500: 'hsl(220, 20%, 42%)',
-    600: 'hsl(220, 20%, 35%)',
-    700: 'hsl(220, 20%, 25%)',
-    800: 'hsl(220, 30%, 6%)',
-    900: 'hsl(220, 35%, 3%)',
+    50: 'hsl(30, 45%, 97%)',
+    100: 'hsl(30, 28%, 95%)',
+    200: 'hsl(30, 18%, 88%)',
+    300: 'hsl(30, 14%, 80%)',
+    400: 'hsl(335, 8%, 64%)',
+    500: 'hsl(340, 8%, 44%)',
+    600: 'hsl(340, 12%, 34%)',
+    700: 'hsl(336, 10%, 21%)',
+    800: 'hsl(336, 10%, 16%)',
+    900: 'hsl(336, 14%, 8%)',
 };
 
 export const green = {
-    50: 'hsl(120, 80%, 98%)',
-    100: 'hsl(120, 75%, 94%)',
-    200: 'hsl(120, 75%, 87%)',
-    300: 'hsl(120, 61%, 77%)',
-    400: 'hsl(120, 44%, 53%)',
-    500: 'hsl(120, 59%, 30%)',
-    600: 'hsl(120, 70%, 25%)',
-    700: 'hsl(120, 75%, 16%)',
-    800: 'hsl(120, 84%, 10%)',
-    900: 'hsl(120, 87%, 6%)',
+    50: 'hsl(145, 35%, 96%)',
+    100: 'hsl(145, 35%, 92%)',
+    200: 'hsl(145, 34%, 84%)',
+    300: 'hsl(145, 38%, 72%)',
+    400: 'hsl(145, 38%, 62%)',
+    500: 'hsl(145, 38%, 32%)',
+    600: 'hsl(145, 42%, 26%)',
+    700: 'hsl(145, 36%, 22%)',
+    800: 'hsl(145, 28%, 18%)',
+    900: 'hsl(145, 22%, 15%)',
 };
 
 export const orange = {
-    50: 'hsl(45, 100%, 97%)',
-    100: 'hsl(45, 92%, 90%)',
-    200: 'hsl(45, 94%, 80%)',
-    300: 'hsl(45, 90%, 65%)',
-    400: 'hsl(45, 90%, 40%)',
-    500: 'hsl(45, 90%, 35%)',
-    600: 'hsl(45, 91%, 25%)',
-    700: 'hsl(45, 94%, 20%)',
-    800: 'hsl(45, 95%, 16%)',
-    900: 'hsl(45, 93%, 12%)',
+    50: 'hsl(32, 90%, 96%)',
+    100: 'hsl(32, 90%, 92%)',
+    200: 'hsl(30, 88%, 82%)',
+    300: 'hsl(30, 90%, 70%)',
+    400: 'hsl(30, 90%, 64%)',
+    500: 'hsl(26, 85%, 45%)',
+    600: 'hsl(26, 86%, 37%)',
+    700: 'hsl(28, 72%, 28%)',
+    800: 'hsl(30, 52%, 21%)',
+    900: 'hsl(30, 45%, 16%)',
 };
 
 export const red = {
@@ -96,19 +96,19 @@ export const red = {
 export const getDesignTokens = (mode: PaletteMode) => {
     customShadows[1] =
         mode === 'dark'
-            ? 'hsla(220, 35%, 2%, 0.48) 0px 10px 28px -12px, hsla(220, 35%, 2%, 0.32) 0px 4px 12px -4px'
-            : 'hsla(220, 30%, 5%, 0.07) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.07) 0px 8px 16px -5px';
+            ? 'hsla(336, 30%, 4%, 0.7) 0px 4px 16px 0px, hsla(336, 25%, 8%, 0.8) 0px 8px 16px -5px'
+            : 'hsla(340, 25%, 14%, 0.07) 0px 4px 16px 0px, hsla(340, 25%, 14%, 0.07) 0px 8px 16px -5px';
 
     return {
         palette: {
             mode,
             primary: {
                 light: brand[200],
-                main: brand[400],
+                main: brand[500],
                 dark: brand[700],
                 contrastText: brand[50],
                 ...(mode === 'dark' && {
-                    contrastText: brand[50],
+                    contrastText: brand[900],
                     light: brand[300],
                     main: brand[400],
                     dark: brand[700],
@@ -116,7 +116,7 @@ export const getDesignTokens = (mode: PaletteMode) => {
             },
             secondary: {
                 light: orange[100],
-                main: orange[300],
+                main: orange[500],
                 dark: orange[600],
                 contrastText: gray[900],
                 ...(mode === 'dark' && {
@@ -160,65 +160,71 @@ export const getDesignTokens = (mode: PaletteMode) => {
             },
             success: {
                 light: green[300],
-                main: green[400],
+                main: green[500],
                 dark: green[800],
                 ...(mode === 'dark' && {
                     light: green[400],
-                    main: green[500],
+                    main: green[400],
                     dark: green[700],
                 }),
             },
             grey: {
                 ...gray,
             },
-            divider: mode === 'dark' ? alpha(gray[400], 0.24) : alpha(gray[300], 0.4),
+            divider: mode === 'dark' ? gray[700] : gray[200],
             background: {
-                default: 'hsl(36, 33%, 98%)',
+                default: gray[50],
                 paper: 'hsl(0, 0%, 100%)',
-                ...(mode === 'dark' && { default: 'hsl(220, 26%, 8%)', paper: 'hsl(220, 24%, 11%)' }),
+                ...(mode === 'dark' && { default: gray[900], paper: 'hsl(336, 12%, 12%)' }),
             },
             text: {
-                primary: gray[800],
-                secondary: gray[600],
+                primary: 'hsl(340, 25%, 14%)',
+                secondary: gray[500],
                 warning: orange[400],
-                ...(mode === 'dark' && { primary: 'hsl(220, 20%, 96%)', secondary: 'hsl(220, 18%, 72%)' }),
+                ...(mode === 'dark' && { primary: 'hsl(30, 25%, 94%)', secondary: gray[400] }),
             },
             action: {
                 hover: alpha(gray[200], 0.2),
                 selected: `${alpha(gray[200], 0.3)}`,
                 ...(mode === 'dark' && {
-                    hover: alpha(gray[400], 0.1),
-                    selected: alpha(gray[400], 0.16),
+                    hover: alpha(gray[600], 0.2),
+                    selected: alpha(gray[600], 0.3),
                 }),
             },
         },
         typography: {
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: '"Instrument Sans", sans-serif',
             h1: {
-                fontSize: defaultTheme.typography.pxToRem(48),
-                fontWeight: 600,
+                fontFamily: '"Bricolage Grotesque", sans-serif',
+                fontSize: defaultTheme.typography.pxToRem(40),
+                fontWeight: 700,
                 lineHeight: 1.2,
                 letterSpacing: 0,
             },
             h2: {
+                fontFamily: '"Bricolage Grotesque", sans-serif',
                 fontSize: defaultTheme.typography.pxToRem(36),
                 fontWeight: 600,
                 lineHeight: 1.2,
             },
             h3: {
+                fontFamily: '"Bricolage Grotesque", sans-serif',
                 fontSize: defaultTheme.typography.pxToRem(30),
                 lineHeight: 1.2,
             },
             h4: {
+                fontFamily: '"Bricolage Grotesque", sans-serif',
                 fontSize: defaultTheme.typography.pxToRem(24),
                 fontWeight: 600,
                 lineHeight: 1.5,
             },
             h5: {
+                fontFamily: '"Bricolage Grotesque", sans-serif',
                 fontSize: defaultTheme.typography.pxToRem(20),
                 fontWeight: 600,
             },
             h6: {
+                fontFamily: '"Bricolage Grotesque", sans-serif',
                 fontSize: defaultTheme.typography.pxToRem(18),
                 fontWeight: 600,
             },
@@ -242,7 +248,7 @@ export const getDesignTokens = (mode: PaletteMode) => {
             },
         },
         shape: {
-            borderRadius: 8,
+            borderRadius: 12,
         },
         shadows: customShadows,
     };
@@ -253,13 +259,13 @@ export const colorSchemes = {
         palette: {
             primary: {
                 light: brand[200],
-                main: brand[400],
+                main: brand[500],
                 dark: brand[700],
                 contrastText: brand[50],
             },
             secondary: {
                 light: orange[100],
-                main: orange[300],
+                main: orange[500],
                 dark: orange[600],
                 contrastText: gray[900],
             },
@@ -281,20 +287,20 @@ export const colorSchemes = {
             },
             success: {
                 light: green[300],
-                main: green[400],
+                main: green[500],
                 dark: green[800],
             },
             grey: {
                 ...gray,
             },
-            divider: alpha(gray[300], 0.4),
+            divider: gray[200],
             background: {
-                default: 'hsl(36, 33%, 98%)',
+                default: gray[50],
                 paper: 'hsl(0, 0%, 100%)',
             },
             text: {
-                primary: gray[800],
-                secondary: gray[600],
+                primary: 'hsl(340, 25%, 14%)',
+                secondary: gray[500],
                 warning: orange[400],
             },
             action: {
@@ -308,7 +314,7 @@ export const colorSchemes = {
     dark: {
         palette: {
             primary: {
-                contrastText: brand[50],
+                contrastText: brand[900],
                 light: brand[300],
                 main: brand[400],
                 dark: brand[700],
@@ -337,52 +343,58 @@ export const colorSchemes = {
             grey: {
                 ...gray,
             },
-            divider: alpha(gray[400], 0.24),
+            divider: gray[700],
             background: {
-                default: 'hsl(220, 26%, 8%)',
-                paper: 'hsl(220, 24%, 11%)',
+                default: gray[900],
+                paper: 'hsl(336, 12%, 12%)',
             },
             text: {
-                primary: 'hsl(220, 20%, 96%)',
-                secondary: 'hsl(220, 18%, 72%)',
+                primary: 'hsl(30, 25%, 94%)',
+                secondary: gray[400],
             },
             action: {
-                hover: alpha(gray[400], 0.1),
-                selected: alpha(gray[400], 0.16),
+                hover: alpha(gray[600], 0.2),
+                selected: alpha(gray[600], 0.3),
             },
             baseShadow:
-                'hsla(220, 35%, 2%, 0.48) 0px 10px 28px -12px, hsla(220, 35%, 2%, 0.32) 0px 4px 12px -4px',
+                'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px',
         },
     },
 };
 
 export const typography = {
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: '"Instrument Sans", sans-serif',
     h1: {
-        fontSize: defaultTheme.typography.pxToRem(48),
-        fontWeight: 600,
+        fontFamily: '"Bricolage Grotesque", sans-serif',
+        fontSize: defaultTheme.typography.pxToRem(40),
+        fontWeight: 700,
         lineHeight: 1.2,
         letterSpacing: 0,
     },
     h2: {
+        fontFamily: '"Bricolage Grotesque", sans-serif',
         fontSize: defaultTheme.typography.pxToRem(36),
         fontWeight: 600,
         lineHeight: 1.2,
     },
     h3: {
+        fontFamily: '"Bricolage Grotesque", sans-serif',
         fontSize: defaultTheme.typography.pxToRem(30),
         lineHeight: 1.2,
     },
     h4: {
+        fontFamily: '"Bricolage Grotesque", sans-serif',
         fontSize: defaultTheme.typography.pxToRem(24),
         fontWeight: 600,
         lineHeight: 1.5,
     },
     h5: {
+        fontFamily: '"Bricolage Grotesque", sans-serif',
         fontSize: defaultTheme.typography.pxToRem(20),
         fontWeight: 600,
     },
     h6: {
+        fontFamily: '"Bricolage Grotesque", sans-serif',
         fontSize: defaultTheme.typography.pxToRem(18),
         fontWeight: 600,
     },
@@ -407,7 +419,7 @@ export const typography = {
 };
 
 export const shape = {
-    borderRadius: 8,
+    borderRadius: 12,
 };
 
 // @ts-expect-error CSS variable shadows are accepted by MUI at runtime.

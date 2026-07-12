@@ -31,7 +31,13 @@ function FavoriteButton({ recipe, onToggleFavorite, size = 'small' as const }: R
     <IconButton
       aria-label={recipe.isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
       size="small"
-      sx={{ border: 'none' }}
+      sx={{
+        border: 'none',
+        bgcolor: 'rgba(255,255,255,.94)',
+        color: 'hsl(340, 25%, 14%)',
+        boxShadow: '0 3px 12px rgba(40, 20, 28, .14)',
+        '&:hover': { bgcolor: 'white', transform: 'scale(1.04)' },
+      }}
       onClick={(event) => {
         // The whole card is a link; the heart must not navigate.
         event.preventDefault();
@@ -59,15 +65,17 @@ function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'border-color 120ms ease, transform 120ms ease',
+        borderRadius: 4,
+        transition: 'border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease',
         '&:hover': {
-          borderColor: 'primary.light',
-          transform: 'translateY(-2px)',
+          borderColor: 'primary.main',
+          transform: 'translateY(-4px)',
+          boxShadow: '0 14px 32px rgba(80, 35, 50, .10)',
         },
       }}
     >
       {recipe.img ? (
-        <Box sx={{ position: 'relative' }}>
+        <Box data-recipe-media sx={{ position: 'relative' }}>
           <CardMedia
             image={renderImage ?? recipe.img}
             component="img"
@@ -93,17 +101,25 @@ function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
               }}
             />
           )}
+          <Box sx={{ position: 'absolute', top: 12, right: 12 }}>
+            <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} size="medium" />
+          </Box>
         </Box>
       ) : (
-        <Box sx={{ aspectRatio: '16 / 10', bgcolor: 'grey.100' }} />
+        <Box data-recipe-media sx={{ position: 'relative', aspectRatio: '16 / 10', bgcolor: 'grey.100' }}>
+          <Box sx={{ position: 'absolute', top: 12, right: 12 }}>
+            <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} size="medium" />
+          </Box>
+        </Box>
       )}
       <CardContent sx={{ p: 2.25, display: 'flex', minHeight: 188, flexDirection: 'column' }}>
         <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
           {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
-          <Chip label={recipe.difficulty} size="small" variant="outlined" />
-          <Box sx={{ ml: 'auto' }}>
-            <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} />
-          </Box>
+          <Chip
+            label={recipe.difficulty}
+            size="small"
+            color={recipe.difficulty.toLowerCase().includes('einfach') ? 'success' : recipe.difficulty.toLowerCase().includes('schwer') ? 'error' : 'secondary'}
+          />
         </Stack>
         <Typography variant="h6" sx={{ mb: 0.5 }}>
           {recipe.title}
@@ -139,6 +155,7 @@ function RecipeListItem({ recipe, onToggleFavorite }: RecipeCardProps) {
       sx={{
         textDecoration: 'none',
         overflow: 'hidden',
+        borderRadius: 3,
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'stretch',
@@ -149,10 +166,10 @@ function RecipeListItem({ recipe, onToggleFavorite }: RecipeCardProps) {
           image={imageSrc}
           component="img"
           alt={recipe.title}
-          sx={{ width: 104, height: 104, flexShrink: 0, objectFit: 'cover' }}
+          sx={{ width: 92, height: 92, flexShrink: 0, objectFit: 'cover' }}
         />
       ) : (
-        <Box sx={{ width: 104, height: 104, flexShrink: 0, bgcolor: 'grey.100' }} />
+        <Box sx={{ width: 92, height: 92, flexShrink: 0, bgcolor: 'grey.100' }} />
       )}
       <CardContent sx={{ p: 1.5, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.5, '&:last-child': { pb: 1.5 } }}>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'flex-start' }}>
@@ -173,7 +190,7 @@ function RecipeListItem({ recipe, onToggleFavorite }: RecipeCardProps) {
           <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} />
         </Stack>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-          <Chip label={recipe.difficulty} size="small" variant="outlined" />
+          <Chip label={recipe.difficulty} size="small" color={recipe.difficulty.toLowerCase().includes('einfach') ? 'success' : recipe.difficulty.toLowerCase().includes('schwer') ? 'error' : 'secondary'} />
           <Typography variant="caption" color="text.secondary">
             {totalRecipeMinutes(recipe.preparationTime, recipe.cookingTime)} Min.
           </Typography>

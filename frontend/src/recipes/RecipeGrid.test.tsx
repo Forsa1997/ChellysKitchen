@@ -123,6 +123,16 @@ describe('RecipeGrid', () => {
     expect(onToggleFavorite).toHaveBeenCalledWith(expect.objectContaining({ slug: 'pasta', isFavorite: false }));
   });
 
+  it('places the desktop favorite action inside the recipe image', () => {
+    const screen = render(
+      <MemoryRouter>
+        <RecipeGrid recipes={[{ ...favoriteRecipe, img: 'https://example.com/pasta.jpg' }]} onToggleFavorite={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Als Favorit markieren' }).closest('[data-recipe-media]')).not.toBeNull();
+  });
+
   it('labels the heart button for removal when the recipe is already a favorite', () => {
     const screen = render(
       <MemoryRouter>

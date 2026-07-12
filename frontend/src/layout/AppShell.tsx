@@ -92,16 +92,30 @@ export function AppShell({ children }: PropsWithChildren) {
               sx={{ alignItems: 'center', textDecoration: 'none' }}
             >
               <Box
-                component="img"
-                src="/brand/chellys-kitchen-icon.svg"
-                alt="Chellys Kitchen Logo"
-                sx={{ width: { xs: 36, sm: 42 }, height: { xs: 36, sm: 42 } }}
-              />
+                data-brand-mark
+                sx={(theme) => ({
+                  width: { xs: 40, sm: 46 },
+                  height: { xs: 40, sm: 46 },
+                  display: 'grid',
+                  placeItems: 'center',
+                  bgcolor: 'hsl(342, 75%, 95%)',
+                  borderRadius: '13px',
+                  ...theme.applyStyles('dark', { bgcolor: 'hsl(342, 32%, 19%)' }),
+                })}
+              >
+                <Box
+                  component="img"
+                  src="/brand/chellys-kitchen-icon.svg"
+                  alt="Chellys Kitchen Logo"
+                  sx={{ width: { xs: 28, sm: 32 }, height: { xs: 28, sm: 32 } }}
+                />
+              </Box>
               <Box>
                 <Typography
                   variant="h6"
                   sx={{
                     color: 'primary.main',
+                    fontFamily: '"Bricolage Grotesque", sans-serif',
                     fontWeight: 800,
                     lineHeight: 1.15,
                     fontSize: { xs: '1.1rem', sm: '1.2rem' },
@@ -207,7 +221,7 @@ export function AppShell({ children }: PropsWithChildren) {
         </Box>
       </Drawer>
 
-      <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 5 }, flexGrow: 1 }}>
+      <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, flexGrow: 1 }}>
         {children}
       </Container>
 

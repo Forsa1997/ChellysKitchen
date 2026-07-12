@@ -29,7 +29,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import TuneIcon from '@mui/icons-material/Tune';
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Link as RouterLink } from 'react-router';
 import { apiClient, type ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { useCategories } from '../hooks/useCategories';
@@ -250,21 +249,8 @@ export function HomePage() {
           </Typography>
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ justifyContent: { md: 'flex-end' } }}>
-          {/* Auth/navigation actions live in the burger menu on mobile, so only
-              show them here from md up to avoid duplication. */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ display: { xs: 'none', md: 'flex' } }}>
-            {user ? (
-              <Button component={RouterLink} to="/recipes/new" variant="contained">
-                Rezept erstellen
-              </Button>
-            ) : (
-              <Button component={RouterLink} to="/signin" variant="contained">
-                Anmelden
-              </Button>
-            )}
-          </Stack>
           <Button
-            variant="outlined"
+            variant="tonal"
             startIcon={<CasinoIcon />}
             onClick={openRandomRecipe}
             disabled={meta.total === 0 || randomPending}
@@ -296,7 +282,9 @@ export function HomePage() {
             sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}
           >
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <TuneIcon color="primary" fontSize="small" />
+              <Box sx={(theme) => ({ width: 38, height: 38, display: 'grid', placeItems: 'center', borderRadius: 2.5, bgcolor: 'hsl(342, 75%, 95%)', ...theme.applyStyles('dark', { bgcolor: 'hsl(342, 32%, 19%)' }) })}>
+                <TuneIcon color="primary" fontSize="small" />
+              </Box>
               <Box>
                 <Typography variant="subtitle1">
                   {meta.total} {meta.total === 1 ? 'Rezept' : 'Rezepte'} gefunden
@@ -310,7 +298,7 @@ export function HomePage() {
             <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}>
               {user && (
                 <Button
-                  variant={listParams.favorites ? 'contained' : 'outlined'}
+                  variant={listParams.favorites ? 'contained' : 'tonal'}
                   size="small"
                   startIcon={listParams.favorites ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                   onClick={() => updateParams({ favorites: listParams.favorites ? '' : 'true', page: '1' })}
@@ -367,10 +355,10 @@ export function HomePage() {
               filters are active so nothing feels hidden. */}
           <Badge badgeContent={activeFilterCount} color="primary" sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
             <Button
-              variant="outlined"
+              variant="tonal"
               startIcon={<TuneIcon />}
               onClick={() => setFilterSheetOpen(true)}
-              sx={{ minHeight: 56, whiteSpace: 'nowrap' }}
+              sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
             >
               Filter
             </Button>

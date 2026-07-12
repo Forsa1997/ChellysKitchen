@@ -6,6 +6,7 @@ import {
   Grid,
   IconButton,
   Paper,
+  Chip,
   Snackbar,
   Stack,
   Tooltip,
@@ -67,7 +68,8 @@ export function WeekPlanPage() {
         sx={{ justifyContent: 'space-between', alignItems: { md: 'flex-end' } }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          <Typography variant="overline" color="primary" sx={{ fontWeight: 800, letterSpacing: '.1em' }}>Gemeinsam genießen</Typography>
+          <Typography variant="h1" sx={{ mt: 0.5 }}>
             Wochenplan
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 620 }}>
@@ -96,11 +98,20 @@ export function WeekPlanPage() {
         {WEEK_DAYS.map(({ key, label }) => {
           const entries = days[key] ?? [];
           return (
-            <Grid key={key} size={{ xs: 12, sm: 6, lg: 4 }}>
-              <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
-                  {label}
-                </Typography>
+            <Grid key={key} size={{ xs: 12, sm: 6, lg: 3 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  minHeight: 150,
+                  height: '100%',
+                  ...(entries.length === 0 && { borderStyle: 'dashed', bgcolor: 'transparent' }),
+                }}
+              >
+                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{label}</Typography>
+                  {entries.length > 0 && <Chip label={entries.length} color="primary" size="small" />}
+                </Stack>
                 {entries.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">
                     Noch nichts geplant.
@@ -114,7 +125,7 @@ export function WeekPlanPage() {
                             component="img"
                             src={recipeRenderImage(entry.recipe.img) ?? entry.recipe.img}
                             alt=""
-                            sx={{ width: 56, height: 42, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }}
+                            sx={{ width: 60, height: 46, objectFit: 'cover', borderRadius: 2.5, flexShrink: 0 }}
                           />
                         )}
                         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -172,7 +183,7 @@ export function WeekPlanPage() {
                           <IconButton
                             aria-label={`${entry.recipe.title} vom Plan entfernen`}
                             size="small"
-                            color="error"
+                            color="inherit"
                             disabled={removeFromWeekPlan.isPending}
                             onClick={() => run(
                               () => removeFromWeekPlan.mutateAsync({ day: key, recipeId: entry.recipeId }),

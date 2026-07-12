@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 import { Float, Html, OrbitControls } from '@react-three/drei';
-import { Box, Button, Chip, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, Paper, Stack, Typography, useColorScheme } from '@mui/material';
 import { Link as RouterLink } from 'react-router';
 import { useMemo, useState } from 'react';
 import type { Recipe } from '../types/domain';
@@ -53,16 +53,17 @@ function Station({ recipe, index }: { recipe: Recipe; index: number }) {
   );
 }
 
-function RecipeWorldScene({ recipes }: { recipes: Recipe[] }) {
+function RecipeWorldScene({ recipes, darkMode }: { recipes: Recipe[]; darkMode: boolean }) {
+  const background = darkMode ? '#2b1d23' : '#f8dfe2';
   return (
     <>
-      <color attach="background" args={['#f8dfe2']} />
-      <fog attach="fog" args={['#f8dfe2', 10, 26]} />
+      <color attach="background" args={[background]} />
+      <fog attach="fog" args={[background, 10, 26]} />
       <ambientLight intensity={1.3} />
       <directionalLight position={[5, 8, 4]} intensity={2.2} castShadow />
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[22, 18]} />
-        <meshStandardMaterial color="#b9ddb5" roughness={0.95} />
+        <meshStandardMaterial color={darkMode ? '#294336' : '#b9ddb5'} roughness={0.95} />
       </mesh>
       {recipes.map((recipe, index) => <Station key={recipe.id} recipe={recipe} index={index} />)}
       <OrbitControls enablePan={false} minDistance={7} maxDistance={14} minPolarAngle={0.75} maxPolarAngle={1.25} />
@@ -73,6 +74,8 @@ function RecipeWorldScene({ recipes }: { recipes: Recipe[] }) {
 export function RecipeWorldPage() {
   const { recipes, loading, error } = useQueryRecipes({ pageSize: 48, sort: 'newest' });
   const [selectedCategory, setSelectedCategory] = useState('Alle');
+  const { mode, systemMode } = useColorScheme();
+  const darkMode = (mode === 'system' ? systemMode : mode) === 'dark';
   const categories = useMemo(() => ['Alle', ...Array.from(new Set(recipes.map((recipe) => recipe.category)))], [recipes]);
   const visibleRecipes = selectedCategory === 'Alle' ? recipes : recipes.filter((recipe) => recipe.category === selectedCategory);
 
@@ -92,7 +95,7 @@ export function RecipeWorldPage() {
 
       <Stack direction="row" spacing={1} useFlexGap aria-label="Rezeptwelt filtern" sx={{ flexWrap: 'wrap' }}>
         {categories.map((category) => (
-          <Button key={category} size="small" variant={selectedCategory === category ? 'contained' : 'outlined'} onClick={() => setSelectedCategory(category)}>
+          <Button key={category} size="small" variant={selectedCategory === category ? 'contained' : 'tonal'} onClick={() => setSelectedCategory(category)} sx={{ borderRadius: 999 }}>
             {category}
           </Button>
         ))}
@@ -108,11 +111,12 @@ export function RecipeWorldPage() {
         <>
           <Box
             aria-label="Interaktive 3D-Rezeptwelt"
-            sx={{ height: { xs: 420, sm: 560 }, overflow: 'hidden', borderRadius: 5, boxShadow: 5, border: '1px solid', borderColor: 'divider' }}
+            sx={{ position: 'relative', height: { xs: 420, sm: 560 }, overflow: 'hidden', borderRadius: 6, boxShadow: 5, border: '1px solid', borderColor: 'divider' }}
           >
             <Canvas shadows camera={{ position: [0, 9, 11], fov: 44 }} dpr={[1, 1.5]}>
-              <RecipeWorldScene recipes={visibleRecipes} />
+              <RecipeWorldScene recipes={visibleRecipes} darkMode={darkMode} />
             </Canvas>
+            <Chip label="Ziehen zum Drehen" sx={{ position: 'absolute', left: 16, bottom: 16, bgcolor: 'background.paper', boxShadow: 2 }} />
           </Box>
           <Paper component="section" aria-label="Rezeptstationen" variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}>
             <Typography variant="h6" sx={{ mb: 1 }}>Stationenliste</Typography>

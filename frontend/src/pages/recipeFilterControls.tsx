@@ -41,18 +41,17 @@ const filterToggleGroupSx: SxProps<Theme> = {
   p: 0,
   '& .MuiToggleButtonGroup-grouped': {
     m: 0,
-    border: '1px solid',
-    borderColor: 'divider',
-    borderRadius: '8px !important',
-    minHeight: 40,
-    px: 2,
+    border: 'none',
+    borderRadius: '999px !important',
+    minHeight: 32,
+    px: 1.75,
     whiteSpace: 'nowrap',
   },
 };
 
 function FilterGroupLabel({ children }: { children: string }) {
   return (
-    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+    <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.75, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
       {children}
     </Typography>
   );

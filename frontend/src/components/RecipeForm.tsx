@@ -494,7 +494,8 @@ export function RecipeForm({
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
       <Box>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>{heading}</Typography>
+        <Typography variant="overline" color="primary" sx={{ fontWeight: 800, letterSpacing: '.1em' }}>Deine Rezeptsammlung</Typography>
+        <Typography variant="h1" sx={{ mt: 0.5 }}>{heading}</Typography>
         {subheading && (
           <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 620 }}>{subheading}</Typography>
         )}
@@ -504,7 +505,7 @@ export function RecipeForm({
         sx={{
           mt: 3,
           display: 'grid',
-          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 340px' },
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 360px' },
           gap: 3,
           alignItems: 'start',
         }}
@@ -676,8 +677,16 @@ export function RecipeForm({
           >
             <Stack spacing={1.5}>
               {ingredients.map((ingredient, index) => (
-                <Grid key={index} container spacing={1.5} sx={{ alignItems: 'center' }}>
-                  <Grid size={{ xs: 6, sm: 2 }}>
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '64px 56px minmax(0, 1fr) 38px', sm: '90px 90px minmax(0, 1fr) 38px' },
+                    gap: 1.25,
+                    alignItems: 'end',
+                  }}
+                >
+                  <Box>
                     <TextField
                       label="Menge"
                       fullWidth
@@ -686,23 +695,23 @@ export function RecipeForm({
                       onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
                       placeholder="z.B. 1,5"
                     />
-                  </Grid>
-                  <Grid size={{ xs: 6, sm: 2 }}>
+                  </Box>
+                  <Box>
                     <TextField label="Einheit" fullWidth value={ingredient.unit} onChange={(e) => updateIngredient(index, 'unit', e.target.value)} placeholder="z.B. g, ml, EL" />
-                  </Grid>
-                  <Grid size={{ xs: 10, sm: 7 }}>
+                  </Box>
+                  <Box>
                     <TextField label="Zutat" fullWidth value={ingredient.name} onChange={(e) => updateIngredient(index, 'name', e.target.value)} placeholder="z.B. Mehl" />
-                  </Grid>
-                  <Grid size={{ xs: 2, sm: 1 }}>
+                  </Box>
+                  <Box sx={{ pb: 0.15 }}>
                     <Tooltip title="Zutat entfernen">
                       <span>
-                        <IconButton aria-label="Zutat entfernen" onClick={() => removeIngredient(index)} disabled={ingredients.length === 1} color="error">
+                        <IconButton aria-label="Zutat entfernen" onClick={() => removeIngredient(index)} disabled={ingredients.length === 1} color="inherit" sx={{ color: 'text.secondary', '&:hover, &:focus-visible': { color: 'error.main' } }}>
                           <DeleteIcon />
                         </IconButton>
                       </span>
                     </Tooltip>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               ))}
               <Box>
                 <Button startIcon={<AddIcon />} onClick={addIngredient} variant="outlined" size="small">Zutat hinzufügen</Button>
@@ -716,12 +725,12 @@ export function RecipeForm({
                 <Stack key={index} direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
                   <Box
                     sx={{
-                      minWidth: 36,
-                      height: 36,
+                      minWidth: 32,
+                      height: 32,
                       mt: 1,
-                      borderRadius: 1,
+                      borderRadius: '10px',
                       bgcolor: 'primary.main',
-                      color: 'white',
+                      color: 'primary.contrastText',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -734,7 +743,7 @@ export function RecipeForm({
                   <TextField label="Anweisung" fullWidth multiline minRows={2} value={step.instruction} onChange={(e) => updateStep(index, e.target.value)} placeholder="Beschreibe diesen Schritt..." />
                   <Tooltip title="Schritt entfernen">
                     <span>
-                      <IconButton aria-label="Schritt entfernen" onClick={() => removeStep(index)} disabled={steps.length === 1} color="error" sx={{ mt: 1 }}>
+                      <IconButton aria-label="Schritt entfernen" onClick={() => removeStep(index)} disabled={steps.length === 1} color="inherit" sx={{ mt: 1, color: 'text.secondary', '&:hover, &:focus-visible': { color: 'error.main' } }}>
                         <DeleteIcon />
                       </IconButton>
                     </span>
@@ -784,7 +793,7 @@ export function RecipeForm({
 
       {/* Sticky action bar: the form is long, save must stay reachable. */}
       <Box sx={{ position: 'sticky', bottom: 0, zIndex: 2, pb: 1.5, mt: 3 }}>
-        <Paper elevation={4} sx={{ p: { xs: 1.5, md: 2 } }}>
+        <Paper elevation={4} sx={{ p: { xs: 1.5, md: 2 }, border: '1px solid', borderColor: 'divider', boxShadow: '0 12px 36px rgba(60, 28, 40, .14)' }}>
           <Stack spacing={1.5}>
             {problems.length > 0 && (
               <Alert severity="warning">

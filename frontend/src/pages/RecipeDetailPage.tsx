@@ -1,4 +1,4 @@
-import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
 import { useRecipe, useDeleteRecipe, useDuplicateRecipe, usePublishRecipe, useArchiveRecipe, useToggleFavorite, useUpdateRecipeNotes } from '../hooks/useRecipes';
@@ -7,6 +7,7 @@ import { useCreateRating, useDeleteRating, useRecipeRatings } from '../hooks/use
 import { RatingDisplay, InteractiveRating } from '../components/Rating';
 import { useAuth } from '../auth/AuthContext';
 import AccessTime from '@mui/icons-material/AccessTime';
+import ArrowBack from '@mui/icons-material/ArrowBack';
 import Add from '@mui/icons-material/Add';
 import AddShoppingCart from '@mui/icons-material/AddShoppingCart';
 import CalendarMonth from '@mui/icons-material/CalendarMonth';
@@ -45,6 +46,8 @@ const formatAmount = (amount: number) =>
   }).format(amount);
 
 export function RecipeDetailPage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const { slug } = useParams();
   const navigate = useNavigate();
   const { data: recipe, isLoading, error } = useRecipe(slug || '');
@@ -284,10 +287,10 @@ export function RecipeDetailPage() {
   return (
     <>
       <Stack spacing={3.5}>
-        <Stack
+        {!isMobile && <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={1.5}
-          sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}
+          sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'space-between', alignItems: { sm: 'center' } }}
         >
           <Button component={RouterLink} to="/" variant="text">Zurück zur Übersicht</Button>
           <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
@@ -325,7 +328,7 @@ export function RecipeDetailPage() {
                 </Menu>
               </>
             )}
-            <Button startIcon={<LocalDining />} variant="outlined" onClick={() => setCookingModeOpen(true)}>
+            <Button startIcon={<LocalDining />} variant="tonal" onClick={() => setCookingModeOpen(true)}>
               Kochmodus
             </Button>
             <Tooltip title="Weitere Aktionen">
@@ -394,17 +397,51 @@ export function RecipeDetailPage() {
               )}
             </Menu>
           </Stack>
-        </Stack>
+        </Stack>}
 
-        <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            overflow: 'hidden',
+            borderRadius: { xs: 0, sm: 4 },
+            width: { xs: 'calc(100% + 32px)', sm: '100%' },
+            transform: { xs: 'translateX(-16px)', sm: 'none' },
+            borderLeft: { xs: 0, sm: '1px solid' },
+            borderRight: { xs: 0, sm: '1px solid' },
+            borderColor: 'divider',
+          }}
+        >
           {recipe.img && (
             <Box sx={{ position: 'relative' }}>
               <CardMedia
                 component="img"
                 image={renderImage ?? recipe.img}
                 alt={recipe.title}
-                sx={{ height: { xs: 250, sm: 350, md: 450 }, width: '100%', objectFit: 'cover' }}
+                sx={{ height: { xs: 280, sm: 360, md: 400 }, width: '100%', objectFit: 'cover' }}
               />
+              {isMobile && <Stack
+                direction="row"
+                sx={{
+                  display: { xs: 'flex', sm: 'none' },
+                  position: 'absolute',
+                  inset: '14px 14px auto',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <IconButton component={RouterLink} to="/" aria-label="Zurück zur Übersicht" sx={{ bgcolor: 'rgba(255,255,255,.94)', color: 'hsl(340,25%,14%)', minWidth: 44, minHeight: 44 }}>
+                  <ArrowBack />
+                </IconButton>
+                {user && (
+                  <IconButton
+                    aria-label={recipe.isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
+                    onClick={handleToggleFavorite}
+                    disabled={toggleFavorite.isPending}
+                    sx={{ bgcolor: 'rgba(255,255,255,.94)', color: 'hsl(340,25%,14%)', minWidth: 44, minHeight: 44 }}
+                  >
+                    {recipe.isFavorite ? <Favorite color="error" /> : <FavoriteBorder />}
+                  </IconButton>
+                )}
+              </Stack>}
               {renderImage && (
                 <Box
                   component="img"
@@ -426,6 +463,16 @@ export function RecipeDetailPage() {
               )}
             </Box>
           )}
+          {isMobile && <Stack direction="row" spacing={1.25} sx={{ px: 2, pt: 2 }}>
+            <Button startIcon={<LocalDining />} variant="tonal" onClick={() => setCookingModeOpen(true)} sx={{ flex: 1, minHeight: 44 }}>
+              Kochmodus
+            </Button>
+            {user && (
+              <Button startIcon={<CalendarMonth />} variant="outlined" onClick={(event) => setWeekPlanAnchor(event.currentTarget)} sx={{ flex: 1, minHeight: 44 }}>
+                Wochenplan
+              </Button>
+            )}
+          </Stack>}
           <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
             <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 2, flexWrap: 'wrap' }}>
               {recipe.tag && (
@@ -435,9 +482,9 @@ export function RecipeDetailPage() {
                 label={recipe.difficulty}
                 size="small"
                 color={difficultyColor[recipe.difficulty]}
-                variant="outlined"
+                variant="filled"
               />
-              <Chip label={recipe.category} size="small" variant="outlined" />
+              <Chip label={recipe.category} size="small" />
             </Stack>
 
             <Typography
@@ -476,19 +523,19 @@ export function RecipeDetailPage() {
               sx={{ mb: 3, flexWrap: 'wrap' }}
             >
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <AccessTime color="action" fontSize="small" />
+                <AccessTime color="primary" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
                   {totalTime} Min.
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <Restaurant color="action" fontSize="small" />
+                <Restaurant color="primary" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
                   {recipe.preparationTime} Min. Vorbereitung
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <People color="action" fontSize="small" />
+                <People color="primary" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
                   {selectedServings} Portionen
                 </Typography>
@@ -715,11 +762,11 @@ export function RecipeDetailPage() {
                       <Stack direction="row" spacing={3} sx={{ alignItems: 'flex-start' }}>
                         <Box
                           sx={{
-                            minWidth: 36,
-                            height: 36,
-                            borderRadius: 1,
+                            minWidth: 32,
+                            height: 32,
+                            borderRadius: '10px',
                             bgcolor: 'primary.main',
-                            color: 'white',
+                            color: 'primary.contrastText',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

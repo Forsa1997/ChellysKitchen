@@ -8,6 +8,12 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import { gray, brand } from '../themePrimitives.ts';
 
+declare module '@mui/material/Button' {
+    interface ButtonPropsVariantOverrides {
+        tonal: true;
+    }
+}
+
 export const inputsCustomizations: Components<Theme> = {
     MuiButtonBase: {
         defaultProps: {
@@ -31,6 +37,8 @@ export const inputsCustomizations: Components<Theme> = {
                 boxShadow: 'none',
                 borderRadius: (theme.vars || theme).shape.borderRadius,
                 textTransform: 'none',
+                fontWeight: 650,
+                letterSpacing: '-0.01em',
                 variants: [
                     {
                         props: {
@@ -46,7 +54,7 @@ export const inputsCustomizations: Components<Theme> = {
                             size: 'medium',
                         },
                         style: {
-                            height: '2.5rem', // 40px
+                            height: '2.625rem',
                         },
                     },
                     {
@@ -55,32 +63,48 @@ export const inputsCustomizations: Components<Theme> = {
                             variant: 'contained',
                         },
                         style: {
-                            color: 'white',
+                            color: brand[50],
                             backgroundColor: brand[500],
                             backgroundImage: 'none',
-                            boxShadow: 'none',
-                            border: `1px solid ${brand[500]}`,
+                            boxShadow: '0 4px 14px hsla(342, 72%, 42%, 0.25)',
+                            border: '1px solid transparent',
                             '&:hover': {
                                 backgroundColor: brand[600],
                                 borderColor: brand[600],
-                                boxShadow: 'none',
+                                boxShadow: '0 6px 18px hsla(342, 72%, 42%, 0.3)',
                             },
                             '&:active': {
                                 backgroundColor: brand[700],
                             },
                             ...theme.applyStyles('dark', {
-                                color: brand[50],
+                                color: brand[900],
                                 backgroundColor: brand[400],
                                 backgroundImage: 'none',
-                                boxShadow: 'none',
-                                border: `1px solid ${brand[400]}`,
+                                boxShadow: '0 4px 16px hsla(342, 80%, 45%, 0.22)',
+                                border: '1px solid transparent',
                                 '&:hover': {
+                                    backgroundImage: 'none',
                                     backgroundColor: brand[300],
-                                    boxShadow: 'none',
+                                    boxShadow: '0 6px 20px hsla(342, 80%, 45%, 0.28)',
                                 },
                                 '&:active': {
-                                    backgroundColor: brand[500],
+                                    backgroundColor: brand[200],
                                 },
+                            }),
+                        },
+                    },
+                    {
+                        props: { variant: 'tonal' },
+                        style: {
+                            color: brand[700],
+                            backgroundColor: brand[100],
+                            border: '1px solid transparent',
+                            '&:hover': { backgroundColor: brand[200] },
+                            '&:active': { backgroundColor: brand[200] },
+                            ...theme.applyStyles('dark', {
+                                color: brand[400],
+                                backgroundColor: 'hsl(342, 32%, 19%)',
+                                '&:hover': { backgroundColor: 'hsl(342, 34%, 23%)' },
                             }),
                         },
                     },
@@ -111,26 +135,26 @@ export const inputsCustomizations: Components<Theme> = {
                         },
                         style: {
                             color: (theme.vars || theme).palette.text.primary,
-                            border: '1px solid',
-                            borderColor: gray[200],
+                            border: '1.5px solid',
+                            borderColor: (theme.vars || theme).palette.divider,
                             backgroundColor: (theme.vars || theme).palette.background.paper,
                             '&:hover': {
-                                backgroundColor: gray[100],
-                                borderColor: gray[300],
+                            backgroundColor: brand[100],
+                            borderColor: brand[200],
                             },
                             '&:active': {
                                 backgroundColor: gray[200],
                             },
                             ...theme.applyStyles('dark', {
-                                backgroundColor: (theme.vars || theme).palette.background.paper,
-                                borderColor: (theme.vars || theme).palette.divider,
+                                backgroundColor: 'transparent',
+                                borderColor: gray[700],
 
                                 '&:hover': {
-                                    backgroundColor: (theme.vars || theme).palette.action.hover,
-                                    borderColor: gray[500],
+                                    backgroundColor: 'hsl(342, 32%, 19%)',
+                                    borderColor: brand[800],
                                 },
                                 '&:active': {
-                                    backgroundColor: (theme.vars || theme).palette.action.selected,
+                                    backgroundColor: gray[900],
                                 },
                             }),
                         },
@@ -238,14 +262,14 @@ export const inputsCustomizations: Components<Theme> = {
                     backgroundColor: gray[200],
                 },
                 ...theme.applyStyles('dark', {
-                    backgroundColor: (theme.vars || theme).palette.background.paper,
-                    borderColor: (theme.vars || theme).palette.divider,
+                    backgroundColor: gray[800],
+                    borderColor: gray[700],
                     '&:hover': {
-                        backgroundColor: (theme.vars || theme).palette.action.hover,
-                        borderColor: gray[500],
+                        backgroundColor: gray[900],
+                        borderColor: gray[600],
                     },
                     '&:active': {
-                        backgroundColor: (theme.vars || theme).palette.action.selected,
+                        backgroundColor: gray[900],
                     },
                 }),
                 variants: [
@@ -276,7 +300,7 @@ export const inputsCustomizations: Components<Theme> = {
     MuiToggleButtonGroup: {
         styleOverrides: {
             root: ({ theme }) => ({
-                borderRadius: '10px',
+                borderRadius: '999px',
                 backgroundColor: 'transparent',
                 border: 'none',
                 [`& .${toggleButtonGroupClasses.selected}`]: {
@@ -286,8 +310,8 @@ export const inputsCustomizations: Components<Theme> = {
                     [`& .${toggleButtonGroupClasses.selected}`]: {
                         color: brand[200],
                     },
-                    backgroundColor: alpha(gray[900], 0.8),
-                    border: `1px solid ${alpha(gray[700], 0.8)}`,
+                    backgroundColor: 'transparent',
+                    border: 'none',
                 }),
             }),
         },
@@ -295,24 +319,28 @@ export const inputsCustomizations: Components<Theme> = {
     MuiToggleButton: {
         styleOverrides: {
             root: ({ theme }) => ({
-                padding: '12px 16px',
+                padding: '6px 14px',
+                minHeight: 32,
                 textTransform: 'none',
-                borderRadius: (theme.vars || theme).shape.borderRadius,
-                fontWeight: 500,
+                borderRadius: '999px',
+                border: 'none',
+                backgroundColor: gray[100],
+                color: gray[500],
+                fontWeight: 600,
                 '&.Mui-selected': {
-                    backgroundColor: alpha(brand[100], 0.75),
-                    color: brand[700],
+                    backgroundColor: brand[500],
+                    color: brand[50],
                 },
                 '&.Mui-selected:hover': {
-                    backgroundColor: brand[100],
+                    backgroundColor: brand[600],
                 },
                 ...theme.applyStyles('dark', {
                     color: gray[400],
-                    borderColor: alpha(gray[700], 0.8),
-                    backgroundColor: 'transparent',
+                    borderColor: 'transparent',
+                    backgroundColor: gray[800],
                     [`&.${toggleButtonClasses.selected}`]: {
-                        color: brand[300],
-                        backgroundColor: alpha(gray[700], 0.45),
+                        color: brand[900],
+                        backgroundColor: brand[400],
                     },
                 }),
             }),
@@ -395,9 +423,12 @@ export const inputsCustomizations: Components<Theme> = {
                 transition: 'none',
                 pointerEvents: 'auto',
                 maxWidth: 'none',
-                marginBottom: 6,
-                fontSize: theme.typography.body2.fontSize,
-                fontWeight: 500,
+                marginBottom: 7,
+                fontSize: 11,
+                lineHeight: 1.2,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
                 color: (theme.vars || theme).palette.text.secondary,
             }),
         },
@@ -411,19 +442,25 @@ export const inputsCustomizations: Components<Theme> = {
                 padding: '8px 12px',
                 color: (theme.vars || theme).palette.text.primary,
                 borderRadius: (theme.vars || theme).shape.borderRadius,
-                border: `1px solid ${(theme.vars || theme).palette.divider}`,
-                backgroundColor: (theme.vars || theme).palette.background.paper,
+                border: '1.5px solid transparent',
+                backgroundColor: gray[100],
                 transition: 'border 120ms ease-in',
                 '&:hover': {
-                    borderColor: gray[400],
+                    borderColor: gray[300],
                 },
                 [`&.${outlinedInputClasses.focused}`]: {
-                    outline: `3px solid ${alpha(brand[500], 0.5)}`,
-                    borderColor: brand[400],
+                    outline: `3px solid ${alpha(brand[500], 0.18)}`,
+                    borderColor: brand[500],
+                    backgroundColor: (theme.vars || theme).palette.background.paper,
                 },
                 ...theme.applyStyles('dark', {
+                    backgroundColor: gray[800],
                     '&:hover': {
-                        borderColor: gray[500],
+                        borderColor: gray[600],
+                    },
+                    [`&.${outlinedInputClasses.focused}`]: {
+                        borderColor: brand[400],
+                        backgroundColor: 'hsl(336, 12%, 12%)',
                     },
                 }),
                 variants: [

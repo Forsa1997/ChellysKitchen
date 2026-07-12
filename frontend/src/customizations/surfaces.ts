@@ -1,4 +1,4 @@
-import { Theme, Components } from '@mui/material/styles';
+import { alpha, Theme, Components } from '@mui/material/styles';
 import { gray } from '../themePrimitives.ts';
 
 export const surfacesCustomizations: Components<Theme> = {
@@ -39,7 +39,7 @@ export const surfacesCustomizations: Components<Theme> = {
                 '&:hover': { backgroundColor: gray[50] },
                 '&:focus-visible': { backgroundColor: 'transparent' },
                 ...theme.applyStyles('dark', {
-                    '&:hover': { backgroundColor: (theme.vars || theme).palette.action.hover },
+                    '&:hover': { backgroundColor: gray[800] },
                 }),
             }),
         },
@@ -53,6 +53,20 @@ export const surfacesCustomizations: Components<Theme> = {
         defaultProps: {
             elevation: 0,
         },
+        styleOverrides: {
+            root: ({ theme }) => ({
+                backgroundImage: 'none',
+                borderRadius: 16,
+                variants: [
+                    {
+                        props: { variant: 'outlined' },
+                        style: {
+                            border: `1px solid ${(theme.vars || theme).palette.divider}`,
+                        },
+                    },
+                ],
+            }),
+        },
     },
     MuiCard: {
         styleOverrides: {
@@ -60,12 +74,12 @@ export const surfacesCustomizations: Components<Theme> = {
                 return {
                     transition: 'all 100ms ease',
                     backgroundColor: (theme.vars || theme).palette.background.paper,
-                    borderRadius: (theme.vars || theme).shape.borderRadius,
+                    borderRadius: 16,
                     border: `1px solid ${(theme.vars || theme).palette.divider}`,
                     boxShadow: 'none',
                     overflow: 'hidden',
                     ...theme.applyStyles('dark', {
-                        backgroundColor: (theme.vars || theme).palette.background.paper,
+                        backgroundColor: 'hsl(336, 12%, 12%)',
                     }),
                     variants: [
                         {
@@ -77,7 +91,7 @@ export const surfacesCustomizations: Components<Theme> = {
                                 boxShadow: 'none',
                                 background: 'hsl(0, 0%, 100%)',
                                 ...theme.applyStyles('dark', {
-                                    background: 'hsl(220, 22%, 13%)',
+                                    background: alpha(gray[900], 0.4),
                                 }),
                             },
                         },

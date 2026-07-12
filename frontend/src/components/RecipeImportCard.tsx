@@ -382,10 +382,10 @@ export function RecipeImportCard({ onApply, onUndo }: RecipeImportCardProps) {
               }}
             />
             <Button
-              variant="outlined"
+              variant="tonal"
               onClick={handleUrlImport}
               disabled={!url.trim()}
-              sx={{ flexShrink: 0, bgcolor: 'background.paper' }}
+              sx={{ flexShrink: 0 }}
             >
               Importieren
             </Button>
