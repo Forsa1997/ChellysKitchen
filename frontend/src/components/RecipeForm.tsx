@@ -512,16 +512,20 @@ export function RecipeForm({
       >
         <Stack
           spacing={2}
-          sx={{
+          sx={(theme) => ({
             minWidth: 0,
+            '--ck-import-flash': 'hsl(48, 95%, 88%)',
+            ...theme.applyStyles('dark', {
+              '--ck-import-flash': 'hsl(342, 32%, 23%)',
+            }),
             ...(flashImported && {
               '@keyframes ckImportFlash': {
-                from: { backgroundColor: 'hsl(48, 95%, 88%)' },
+                from: { backgroundColor: 'var(--ck-import-flash)' },
                 to: { backgroundColor: 'transparent' },
               },
               '& .MuiInputBase-root': { animation: 'ckImportFlash 1.6s ease-out' },
             }),
-          }}
+          })}
         >
           {importEnabled && (
             <RecipeImportCard onApply={applyImportedValues} onUndo={undoImport} />

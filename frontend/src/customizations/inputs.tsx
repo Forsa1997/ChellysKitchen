@@ -6,7 +6,7 @@ import { toggleButtonClasses } from '@mui/material/ToggleButton';
 import CheckBoxOutlineBlankRoundedIcon from '@mui/icons-material/CheckBoxOutlineBlankRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
-import { gray, brand } from '../themePrimitives.ts';
+import { brand, gray, green, interactionColors, orange, red } from '../themePrimitives.ts';
 
 declare module '@mui/material/Button' {
     interface ButtonPropsVariantOverrides {
@@ -39,6 +39,9 @@ export const inputsCustomizations: Components<Theme> = {
                 textTransform: 'none',
                 fontWeight: 650,
                 letterSpacing: '-0.01em',
+                '@media (pointer: coarse)': {
+                    minHeight: 44,
+                },
                 variants: [
                     {
                         props: {
@@ -114,23 +117,30 @@ export const inputsCustomizations: Components<Theme> = {
                             variant: 'contained',
                         },
                         style: {
-                            color: 'white',
-                            backgroundColor: brand[300],
+                            color: gray[900],
+                            backgroundColor: orange[500],
                             backgroundImage: 'none',
                             boxShadow: 'none',
-                            border: `1px solid ${brand[400]}`,
+                            border: '1px solid transparent',
                             '&:hover': {
-                                backgroundColor: brand[700],
+                                backgroundColor: orange[600],
                                 boxShadow: 'none',
                             },
                             '&:active': {
-                                backgroundColor: brand[700],
+                                backgroundColor: orange[700],
                                 backgroundImage: 'none',
                             },
+                            ...theme.applyStyles('dark', {
+                                color: gray[900],
+                                backgroundColor: orange[400],
+                                '&:hover': { backgroundColor: orange[300] },
+                                '&:active': { backgroundColor: orange[500] },
+                            }),
                         },
                     },
                     {
                         props: {
+                            color: 'primary',
                             variant: 'outlined',
                         },
                         style: {
@@ -139,19 +149,19 @@ export const inputsCustomizations: Components<Theme> = {
                             borderColor: (theme.vars || theme).palette.divider,
                             backgroundColor: (theme.vars || theme).palette.background.paper,
                             '&:hover': {
-                            backgroundColor: brand[100],
-                            borderColor: brand[200],
+                                backgroundColor: brand[100],
+                                borderColor: brand[200],
                             },
                             '&:active': {
                                 backgroundColor: gray[200],
                             },
                             ...theme.applyStyles('dark', {
                                 backgroundColor: 'transparent',
-                                borderColor: gray[700],
+                                borderColor: interactionColors.dark.outlinedBorder,
 
                                 '&:hover': {
                                     backgroundColor: 'hsl(342, 32%, 19%)',
-                                    borderColor: brand[800],
+                                    borderColor: brand[400],
                                 },
                                 '&:active': {
                                     backgroundColor: gray[900],
@@ -165,34 +175,35 @@ export const inputsCustomizations: Components<Theme> = {
                             variant: 'outlined',
                         },
                         style: {
-                            color: brand[700],
+                            color: orange[700],
                             border: '1px solid',
-                            borderColor: brand[200],
-                            backgroundColor: brand[50],
+                            borderColor: orange[200],
+                            backgroundColor: orange[50],
                             '&:hover': {
-                                backgroundColor: brand[100],
-                                borderColor: brand[400],
+                                backgroundColor: orange[100],
+                                borderColor: orange[500],
                             },
                             '&:active': {
-                                backgroundColor: alpha(brand[200], 0.7),
+                                backgroundColor: orange[200],
                             },
                             ...theme.applyStyles('dark', {
-                                color: brand[50],
+                                color: orange[400],
                                 border: '1px solid',
-                                borderColor: brand[900],
-                                backgroundColor: alpha(brand[900], 0.3),
+                                borderColor: orange[700],
+                                backgroundColor: orange[900],
                                 '&:hover': {
-                                    borderColor: brand[700],
-                                    backgroundColor: alpha(brand[900], 0.6),
+                                    borderColor: orange[400],
+                                    backgroundColor: orange[800],
                                 },
                                 '&:active': {
-                                    backgroundColor: alpha(brand[900], 0.5),
+                                    backgroundColor: orange[700],
                                 },
                             }),
                         },
                     },
                     {
                         props: {
+                            color: 'primary',
                             variant: 'text',
                         },
                         style: {
@@ -220,20 +231,20 @@ export const inputsCustomizations: Components<Theme> = {
                             variant: 'text',
                         },
                         style: {
-                            color: brand[700],
+                            color: orange[700],
                             '&:hover': {
-                                backgroundColor: alpha(brand[100], 0.5),
+                                backgroundColor: alpha(orange[100], 0.7),
                             },
                             '&:active': {
-                                backgroundColor: alpha(brand[200], 0.7),
+                                backgroundColor: orange[200],
                             },
                             ...theme.applyStyles('dark', {
-                                color: brand[100],
+                                color: orange[400],
                                 '&:hover': {
-                                    backgroundColor: alpha(brand[900], 0.5),
+                                    backgroundColor: orange[900],
                                 },
                                 '&:active': {
-                                    backgroundColor: alpha(brand[900], 0.3),
+                                    backgroundColor: orange[800],
                                 },
                             }),
                         },
@@ -263,7 +274,7 @@ export const inputsCustomizations: Components<Theme> = {
                 },
                 ...theme.applyStyles('dark', {
                     backgroundColor: gray[800],
-                    borderColor: gray[700],
+                    borderColor: gray[600],
                     '&:hover': {
                         backgroundColor: gray[900],
                         borderColor: gray[600],
@@ -293,7 +304,56 @@ export const inputsCustomizations: Components<Theme> = {
                             height: '2.5rem',
                         },
                     },
+                    {
+                        props: { color: 'primary' },
+                        style: {
+                            color: brand[500],
+                            ...theme.applyStyles('dark', { color: brand[400] }),
+                        },
+                    },
+                    {
+                        props: { color: 'secondary' },
+                        style: {
+                            color: orange[500],
+                            ...theme.applyStyles('dark', { color: orange[400] }),
+                        },
+                    },
+                    {
+                        props: { color: 'error' },
+                        style: {
+                            color: red[500],
+                            ...theme.applyStyles('dark', { color: red[300] }),
+                        },
+                    },
+                    {
+                        props: { color: 'success' },
+                        style: {
+                            color: green[500],
+                            ...theme.applyStyles('dark', { color: green[400] }),
+                        },
+                    },
                 ],
+                '@media (pointer: coarse)': {
+                    minWidth: 44,
+                    minHeight: 44,
+                },
+                '&&[data-floating-action="true"]': {
+                    color: interactionColors.light.floatingForeground,
+                    backgroundColor: interactionColors.light.floatingBackground,
+                    border: `1.5px solid ${brand[200]}`,
+                    boxShadow: '0 4px 16px rgba(40, 20, 28, .24)',
+                    '&:hover': {
+                        color: brand[700],
+                        backgroundColor: brand[100],
+                        borderColor: brand[300],
+                        transform: 'translateY(-1px)',
+                    },
+                    '&[aria-pressed="true"]': {
+                        color: brand[500],
+                        backgroundColor: brand[100],
+                        borderColor: brand[300],
+                    },
+                },
             }),
         },
     },
@@ -327,6 +387,9 @@ export const inputsCustomizations: Components<Theme> = {
                 backgroundColor: gray[100],
                 color: gray[500],
                 fontWeight: 600,
+                '@media (pointer: coarse)': {
+                    minHeight: 44,
+                },
                 '&.Mui-selected': {
                     backgroundColor: brand[500],
                     color: brand[50],
@@ -406,8 +469,8 @@ export const inputsCustomizations: Components<Theme> = {
             },
             input: {
                 '&::placeholder': {
-                    opacity: 0.7,
-                    color: gray[500],
+                    opacity: 1,
+                    color: 'var(--template-palette-text-secondary)',
                 },
             },
         },
@@ -452,6 +515,17 @@ export const inputsCustomizations: Components<Theme> = {
                     outline: `3px solid ${alpha(brand[500], 0.18)}`,
                     borderColor: brand[500],
                     backgroundColor: (theme.vars || theme).palette.background.paper,
+                },
+                '&.Mui-error': {
+                    borderColor: (theme.vars || theme).palette.error.main,
+                    backgroundColor: alpha(theme.palette.error.main, 0.04),
+                },
+                '&.Mui-error:hover': {
+                    borderColor: (theme.vars || theme).palette.error.dark,
+                },
+                [`&.Mui-error.${outlinedInputClasses.focused}`]: {
+                    borderColor: (theme.vars || theme).palette.error.main,
+                    outline: `3px solid ${alpha(theme.palette.error.main, 0.2)}`,
                 },
                 ...theme.applyStyles('dark', {
                     backgroundColor: gray[800],

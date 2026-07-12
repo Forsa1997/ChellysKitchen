@@ -93,6 +93,12 @@ export const dataDisplayCustomizations: Components<Theme> = {
             root: ({ theme }) => ({
                 border: '1px solid',
                 borderRadius: '999px',
+                '@media (pointer: coarse)': {
+                    '&.MuiChip-clickable, &.MuiChip-deletable': {
+                        minHeight: 44,
+                        maxHeight: 'none',
+                    },
+                },
                 [`& .${chipClasses.label}`]: {
                     fontWeight: 600,
                 },

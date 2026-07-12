@@ -126,12 +126,12 @@ export function RecipePreviewCard({
           {tag && <Chip size="small" variant="outlined" label={tag} />}
         </Stack>
 
-        <Typography sx={{ fontSize: 19, fontWeight: 800, lineHeight: 1.25, color: title ? 'text.primary' : 'text.disabled' }}>
+        <Typography sx={{ fontSize: 19, fontWeight: 800, lineHeight: 1.25, color: title ? 'text.primary' : 'text.secondary' }}>
           {title || 'Noch kein Titel'}
         </Typography>
         <Typography
           variant="body2"
-          sx={{ color: shortDescription ? 'text.secondary' : 'text.disabled' }}
+          sx={{ color: 'text.secondary' }}
         >
           {shortDescription || 'Die Kurzbeschreibung erscheint hier.'}
         </Typography>

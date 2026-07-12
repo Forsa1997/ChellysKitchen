@@ -19,7 +19,7 @@ export function RatingDisplay({ value, count, size = 'medium', showCount = true 
         precision={0.5}
         readOnly
         size={size}
-        emptyIcon={<Star style={{ opacity: 0.3 }} fontSize="inherit" />}
+        emptyIcon={<Star style={{ opacity: 0.75 }} sx={{ color: 'text.secondary' }} fontSize="inherit" />}
       />
       {showCount && count !== undefined && (
         <Typography variant="body2" color="text.secondary">

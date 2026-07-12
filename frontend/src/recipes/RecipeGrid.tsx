@@ -30,14 +30,9 @@ function FavoriteButton({ recipe, onToggleFavorite, size = 'small' as const }: R
   return (
     <IconButton
       aria-label={recipe.isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
-      size="small"
-      sx={{
-        border: 'none',
-        bgcolor: 'rgba(255,255,255,.94)',
-        color: 'hsl(340, 25%, 14%)',
-        boxShadow: '0 3px 12px rgba(40, 20, 28, .14)',
-        '&:hover': { bgcolor: 'white', transform: 'scale(1.04)' },
-      }}
+      aria-pressed={!!recipe.isFavorite}
+      data-floating-action="true"
+      size={size}
       onClick={(event) => {
         // The whole card is a link; the heart must not navigate.
         event.preventDefault();
@@ -46,7 +41,7 @@ function FavoriteButton({ recipe, onToggleFavorite, size = 'small' as const }: R
       }}
     >
       {recipe.isFavorite
-        ? <FavoriteIcon fontSize={size} color="error" />
+        ? <FavoriteIcon fontSize={size} />
         : <FavoriteBorderIcon fontSize={size} />}
     </IconButton>
   );
@@ -57,14 +52,11 @@ function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
 
   return (
     <Card
-      component={RouterLink}
-      to={`/recipes/${recipe.slug}`}
+      data-recipe-card
       sx={{
         height: '100%',
-        textDecoration: 'none',
+        position: 'relative',
         overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
         borderRadius: 4,
         transition: 'border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease',
         '&:hover': {
@@ -74,69 +66,79 @@ function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
         },
       }}
     >
-      {recipe.img ? (
-        <Box data-recipe-media sx={{ position: 'relative' }}>
-          <CardMedia
-            image={renderImage ?? recipe.img}
-            component="img"
-            alt={recipe.title}
-            sx={{ aspectRatio: '16 / 10', height: 'auto', objectFit: 'cover' }}
-          />
-          {renderImage && (
-            <Box
+      <Box
+        component={RouterLink}
+        to={`/recipes/${recipe.slug}`}
+        sx={{ height: '100%', color: 'inherit', textDecoration: 'none', display: 'flex', flexDirection: 'column' }}
+      >
+        {recipe.img ? (
+          <Box data-recipe-media sx={{ position: 'relative' }}>
+            <CardMedia
+              image={renderImage ?? recipe.img}
               component="img"
-              src={recipe.img}
-              alt={`Illustration: ${recipe.title}`}
-              sx={{
-                position: 'absolute',
-                right: 10,
-                bottom: 10,
-                width: 76,
-                aspectRatio: '16 / 10',
-                objectFit: 'cover',
-                borderRadius: 1.5,
-                border: '2px solid',
-                borderColor: 'background.paper',
-                boxShadow: 2,
-              }}
+              alt={recipe.title}
+              sx={{ aspectRatio: '16 / 10', height: 'auto', objectFit: 'cover' }}
             />
-          )}
-          <Box sx={{ position: 'absolute', top: 12, right: 12 }}>
-            <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} size="medium" />
+            {renderImage && (
+              <Box
+                component="img"
+                src={recipe.img}
+                alt={`Illustration: ${recipe.title}`}
+                sx={{
+                  position: 'absolute',
+                  right: 10,
+                  bottom: 10,
+                  width: 76,
+                  aspectRatio: '16 / 10',
+                  objectFit: 'cover',
+                  borderRadius: 1.5,
+                  border: '2px solid',
+                  borderColor: 'background.paper',
+                  boxShadow: 2,
+                }}
+              />
+            )}
           </Box>
-        </Box>
-      ) : (
-        <Box data-recipe-media sx={{ position: 'relative', aspectRatio: '16 / 10', bgcolor: 'grey.100' }}>
-          <Box sx={{ position: 'absolute', top: 12, right: 12 }}>
-            <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} size="medium" />
-          </Box>
-        </Box>
-      )}
-      <CardContent sx={{ p: 2.25, display: 'flex', minHeight: 188, flexDirection: 'column' }}>
-        <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-          {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
-          <Chip
-            label={recipe.difficulty}
-            size="small"
-            color={recipe.difficulty.toLowerCase().includes('einfach') ? 'success' : recipe.difficulty.toLowerCase().includes('schwer') ? 'error' : 'secondary'}
+        ) : (
+          <Box
+            data-recipe-media
+            sx={(theme) => ({
+              position: 'relative',
+              aspectRatio: '16 / 10',
+              bgcolor: 'grey.100',
+              ...theme.applyStyles('dark', { bgcolor: 'grey.800' }),
+            })}
           />
-        </Stack>
-        <Typography variant="h6" sx={{ mb: 0.5 }}>
-          {recipe.title}
-        </Typography>
-        <Box sx={{ mb: 0.75 }}>
-          <RatingDisplay value={recipe.averageRating ?? 0} count={recipe.totalRatings ?? 0} size="small" />
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
-          {recipe.shortDescription}
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-          {totalRecipeMinutes(recipe.preparationTime, recipe.cookingTime)} Minuten · {recipe.servings} Portionen
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
-          Von {recipe.createdBy?.name ?? 'Unbekannt'} · {dateFormatter.format(new Date(recipe.createdAt))}
-        </Typography>
-      </CardContent>
+        )}
+        <CardContent sx={{ p: 2.25, display: 'flex', minHeight: 188, flexDirection: 'column' }}>
+          <Stack direction="row" spacing={1} useFlexGap sx={{ mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            {recipe.tag && <Chip label={recipe.tag} size="small" color="secondary" />}
+            <Chip
+              label={recipe.difficulty}
+              size="small"
+              color={recipe.difficulty.toLowerCase().includes('einfach') ? 'success' : recipe.difficulty.toLowerCase().includes('schwer') ? 'error' : 'secondary'}
+            />
+          </Stack>
+          <Typography variant="h6" sx={{ mb: 0.5 }}>
+            {recipe.title}
+          </Typography>
+          <Box sx={{ mb: 0.75 }}>
+            <RatingDisplay value={recipe.averageRating ?? 0} count={recipe.totalRatings ?? 0} size="small" />
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
+            {recipe.shortDescription}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            {totalRecipeMinutes(recipe.preparationTime, recipe.cookingTime)} Minuten · {recipe.servings} Portionen
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
+            Von {recipe.createdBy?.name ?? 'Unbekannt'} · {dateFormatter.format(new Date(recipe.createdAt))}
+          </Typography>
+        </CardContent>
+      </Box>
+      <Box sx={{ position: 'absolute', zIndex: 1, top: 12, right: 12 }}>
+        <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} size="medium" />
+      </Box>
     </Card>
   );
 }
@@ -150,29 +152,34 @@ function RecipeListItem({ recipe, onToggleFavorite }: RecipeCardProps) {
 
   return (
     <Card
-      component={RouterLink}
-      to={`/recipes/${recipe.slug}`}
+      data-recipe-card
       sx={{
         textDecoration: 'none',
         overflow: 'hidden',
         borderRadius: 3,
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'stretch',
+        position: 'relative',
       }}
     >
-      {imageSrc ? (
-        <CardMedia
-          image={imageSrc}
-          component="img"
-          alt={recipe.title}
-          sx={{ width: 92, height: 92, flexShrink: 0, objectFit: 'cover' }}
-        />
-      ) : (
-        <Box sx={{ width: 92, height: 92, flexShrink: 0, bgcolor: 'grey.100' }} />
-      )}
-      <CardContent sx={{ p: 1.5, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.5, '&:last-child': { pb: 1.5 } }}>
-        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+      <Box component={RouterLink} to={`/recipes/${recipe.slug}`} sx={{ color: 'inherit', textDecoration: 'none', display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
+        {imageSrc ? (
+          <CardMedia
+            image={imageSrc}
+            component="img"
+            alt={recipe.title}
+            sx={{ width: 92, height: 92, flexShrink: 0, objectFit: 'cover' }}
+          />
+        ) : (
+          <Box
+            sx={(theme) => ({
+              width: 92,
+              height: 92,
+              flexShrink: 0,
+              bgcolor: 'grey.100',
+              ...theme.applyStyles('dark', { bgcolor: 'grey.800' }),
+            })}
+          />
+        )}
+        <CardContent sx={{ p: 1.5, pr: 6.5, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.5, '&:last-child': { pb: 1.5 } }}>
           <Typography
             variant="subtitle1"
             sx={{
@@ -187,16 +194,18 @@ function RecipeListItem({ recipe, onToggleFavorite }: RecipeCardProps) {
           >
             {recipe.title}
           </Typography>
-          <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} />
-        </Stack>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-          <Chip label={recipe.difficulty} size="small" color={recipe.difficulty.toLowerCase().includes('einfach') ? 'success' : recipe.difficulty.toLowerCase().includes('schwer') ? 'error' : 'secondary'} />
-          <Typography variant="caption" color="text.secondary">
-            {totalRecipeMinutes(recipe.preparationTime, recipe.cookingTime)} Min.
-          </Typography>
-          <RatingDisplay value={recipe.averageRating ?? 0} count={recipe.totalRatings ?? 0} size="small" showCount={false} />
-        </Stack>
-      </CardContent>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Chip label={recipe.difficulty} size="small" color={recipe.difficulty.toLowerCase().includes('einfach') ? 'success' : recipe.difficulty.toLowerCase().includes('schwer') ? 'error' : 'secondary'} />
+            <Typography variant="caption" color="text.secondary">
+              {totalRecipeMinutes(recipe.preparationTime, recipe.cookingTime)} Min.
+            </Typography>
+            <RatingDisplay value={recipe.averageRating ?? 0} count={recipe.totalRatings ?? 0} size="small" showCount={false} />
+          </Stack>
+        </CardContent>
+      </Box>
+      <Box sx={{ position: 'absolute', zIndex: 1, top: 8, right: 8 }}>
+        <FavoriteButton recipe={recipe} onToggleFavorite={onToggleFavorite} />
+      </Box>
     </Card>
   );
 }

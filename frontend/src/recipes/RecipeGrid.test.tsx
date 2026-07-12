@@ -130,7 +130,11 @@ describe('RecipeGrid', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('button', { name: 'Als Favorit markieren' }).closest('[data-recipe-media]')).not.toBeNull();
+    const favoriteButton = screen.getByRole('button', { name: 'Als Favorit markieren' });
+    expect(favoriteButton.closest('[data-recipe-card]')).not.toBeNull();
+    expect(favoriteButton).toHaveAttribute('data-floating-action', 'true');
+    expect(favoriteButton).toHaveAttribute('aria-pressed', 'false');
+    expect(favoriteButton.closest('a')).toBeNull();
   });
 
   it('labels the heart button for removal when the recipe is already a favorite', () => {
@@ -140,7 +144,7 @@ describe('RecipeGrid', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('button', { name: 'Favorit entfernen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Favorit entfernen' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('shows the rendered photo together with the SVG illustration for bundled recipes', () => {

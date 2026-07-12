@@ -17,7 +17,7 @@ import {
 } from '@mui/icons-material';
 import { apiClient } from '../api/client';
 import type { RecipeFormInitialValues } from './RecipeForm';
-import { brand } from '../themePrimitives';
+import { brand, green } from '../themePrimitives';
 
 type ImportPhase = 'idle' | 'analyzing' | 'done' | 'error';
 type ImportAction = { kind: 'photo'; file: File } | { kind: 'url'; url: string };
@@ -34,10 +34,6 @@ interface RecipeImportCardProps {
   /** Restores the form state from before the last import. */
   onUndo: () => void;
 }
-
-const SUCCESS_BG = 'hsl(160, 60%, 95%)';
-const SUCCESS_BORDER = 'hsl(160, 50%, 80%)';
-const SUCCESS_TEXT = 'hsl(160, 70%, 20%)';
 
 function stepLabels(action: ImportAction): [string, string, string] {
   if (action.kind === 'photo') {
@@ -222,7 +218,7 @@ export function RecipeImportCard({ onApply, onUndo }: RecipeImportCardProps) {
                       fontWeight: state === 'pending' ? 400 : 600,
                       color:
                         state === 'done'
-                          ? 'hsl(160, 60%, 28%)'
+                          ? 'success.main'
                           : state === 'active'
                             ? 'text.primary'
                             : 'text.secondary',
@@ -246,25 +242,37 @@ export function RecipeImportCard({ onApply, onUndo }: RecipeImportCardProps) {
         <Stack
           direction="row"
           spacing={1.25}
-          sx={{
+          sx={(theme) => ({
             mt: 2,
             alignItems: 'center',
             borderRadius: 3,
-            bgcolor: SUCCESS_BG,
-            border: `1px solid ${SUCCESS_BORDER}`,
+            bgcolor: green[100],
+            border: `1px solid ${green[200]}`,
             p: 1.75,
             flexWrap: 'wrap',
             rowGap: 1,
-          }}
+            ...theme.applyStyles('dark', {
+              bgcolor: green[900],
+              borderColor: green[700],
+            }),
+          })}
         >
-          <CheckCircleIcon sx={{ color: 'hsl(160, 60%, 34%)' }} />
-          <Typography variant="body2" sx={{ flex: 1, minWidth: 200, color: SUCCESS_TEXT }}>
+          <CheckCircleIcon sx={{ color: 'success.main' }} />
+          <Typography
+            variant="body2"
+            sx={(theme) => ({
+              flex: 1,
+              minWidth: 200,
+              color: green[600],
+              ...theme.applyStyles('dark', { color: green[300] }),
+            })}
+          >
             Rezept erkannt: <b>{summary.title || 'Ohne Titel'}</b> —{' '}
             {pluralize(summary.ingredientCount, 'Zutat', 'Zutaten')},{' '}
             {pluralize(summary.stepCount, 'Schritt', 'Schritte')} übernommen. Bitte prüfe die
             markierten Felder.
           </Typography>
-          <Button size="small" onClick={handleUndo} sx={{ color: SUCCESS_TEXT, fontWeight: 700, flexShrink: 0 }}>
+          <Button size="small" color="success" onClick={handleUndo} sx={{ fontWeight: 700, flexShrink: 0 }}>
             Rückgängig
           </Button>
         </Stack>

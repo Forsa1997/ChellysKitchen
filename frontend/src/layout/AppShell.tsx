@@ -17,6 +17,8 @@ import { Link as RouterLink } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import ColorModeIconDropdown from '../ColorModeIconDropdown';
 
+export const APP_SHELL_DESKTOP_BREAKPOINT = 'lg' as const;
+
 export function AppShell({ children }: PropsWithChildren) {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -142,13 +144,13 @@ export function AppShell({ children }: PropsWithChildren) {
             <Stack
               direction="row"
               spacing={1}
-              sx={{ alignItems: 'center', display: { xs: 'none', md: 'flex' } }}
+              sx={{ alignItems: 'center', display: { xs: 'none', [APP_SHELL_DESKTOP_BREAKPOINT]: 'flex' } }}
             >
               {desktopActions}
               <ColorModeIconDropdown aria-label="Farbschema ändern" />
             </Stack>
 
-            <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'flex', md: 'none' } }}>
+            <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'flex', [APP_SHELL_DESKTOP_BREAKPOINT]: 'none' } }}>
               <ColorModeIconDropdown aria-label="Farbschema ändern" />
               {/* Mobile menu toggle */}
               <IconButton
@@ -169,7 +171,7 @@ export function AppShell({ children }: PropsWithChildren) {
         open={mobileOpen}
         onClose={closeMenu}
         ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: 'block', md: 'none' } }}
+        sx={{ display: { xs: 'block', [APP_SHELL_DESKTOP_BREAKPOINT]: 'none' } }}
         slotProps={{ paper: { sx: { width: 'min(80vw, 320px)' } } }}
       >
         <Box sx={{ p: 2 }}>

@@ -2,7 +2,7 @@ import { afterEach } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { AppShell } from './AppShell';
+import { APP_SHELL_DESKTOP_BREAKPOINT, AppShell } from './AppShell';
 
 const useAuthMock = vi.fn();
 
@@ -16,6 +16,10 @@ afterEach(() => {
 });
 
 describe('AppShell', () => {
+  it('keeps the compact navigation through tablet and small-laptop widths', () => {
+    expect(APP_SHELL_DESKTOP_BREAKPOINT).toBe('lg');
+  });
+
   it('shows the Chellys Kitchen logo linking to the home page', () => {
     useAuthMock.mockReturnValue({ user: null, logout: vi.fn() });
 

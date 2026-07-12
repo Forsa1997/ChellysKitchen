@@ -428,17 +428,19 @@ export function RecipeDetailPage() {
                   justifyContent: 'space-between',
                 }}
               >
-                <IconButton component={RouterLink} to="/" aria-label="Zurück zur Übersicht" sx={{ bgcolor: 'rgba(255,255,255,.94)', color: 'hsl(340,25%,14%)', minWidth: 44, minHeight: 44 }}>
+                <IconButton component={RouterLink} to="/" aria-label="Zurück zur Übersicht" data-floating-action="true" sx={{ minWidth: 44, minHeight: 44 }}>
                   <ArrowBack />
                 </IconButton>
                 {user && (
                   <IconButton
                     aria-label={recipe.isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
+                    aria-pressed={!!recipe.isFavorite}
+                    data-floating-action="true"
                     onClick={handleToggleFavorite}
                     disabled={toggleFavorite.isPending}
-                    sx={{ bgcolor: 'rgba(255,255,255,.94)', color: 'hsl(340,25%,14%)', minWidth: 44, minHeight: 44 }}
+                    sx={{ minWidth: 44, minHeight: 44 }}
                   >
-                    {recipe.isFavorite ? <Favorite color="error" /> : <FavoriteBorder />}
+                    {recipe.isFavorite ? <Favorite /> : <FavoriteBorder />}
                   </IconButton>
                 )}
               </Stack>}

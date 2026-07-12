@@ -93,6 +93,27 @@ export const red = {
     900: 'hsl(0, 93%, 6%)',
 };
 
+export const interactionColors = {
+    light: {
+        floatingBackground: brand[50],
+        floatingForeground: brand[700],
+        outlinedBorder: gray[400],
+        fieldBackground: gray[100],
+        placeholder: gray[500],
+        tonalBackground: brand[100],
+        tonalForeground: brand[700],
+    },
+    dark: {
+        floatingBackground: brand[50],
+        floatingForeground: brand[700],
+        outlinedBorder: gray[500],
+        fieldBackground: gray[800],
+        placeholder: gray[400],
+        tonalBackground: 'hsl(342, 32%, 19%)',
+        tonalForeground: brand[400],
+    },
+};
+
 export const getDesignTokens = (mode: PaletteMode) => {
     customShadows[1] =
         mode === 'dark'
@@ -132,10 +153,10 @@ export const getDesignTokens = (mode: PaletteMode) => {
                 dark: brand[600],
                 contrastText: gray[50],
                 ...(mode === 'dark' && {
-                    contrastText: brand[300],
-                    light: brand[500],
-                    main: brand[700],
-                    dark: brand[900],
+                    contrastText: brand[900],
+                    light: brand[300],
+                    main: brand[400],
+                    dark: brand[600],
                 }),
             },
             warning: {
@@ -153,9 +174,9 @@ export const getDesignTokens = (mode: PaletteMode) => {
                 main: red[400],
                 dark: red[800],
                 ...(mode === 'dark' && {
-                    light: red[400],
-                    main: red[500],
-                    dark: red[700],
+                    light: red[200],
+                    main: red[300],
+                    dark: red[500],
                 }),
             },
             success: {
@@ -163,9 +184,9 @@ export const getDesignTokens = (mode: PaletteMode) => {
                 main: green[500],
                 dark: green[800],
                 ...(mode === 'dark' && {
-                    light: green[400],
+                    light: green[300],
                     main: green[400],
-                    dark: green[700],
+                    dark: green[500],
                 }),
             },
             grey: {
@@ -186,9 +207,13 @@ export const getDesignTokens = (mode: PaletteMode) => {
             action: {
                 hover: alpha(gray[200], 0.2),
                 selected: `${alpha(gray[200], 0.3)}`,
+                disabled: alpha(gray[500], 0.55),
+                disabledBackground: alpha(gray[300], 0.35),
                 ...(mode === 'dark' && {
                     hover: alpha(gray[600], 0.2),
                     selected: alpha(gray[600], 0.3),
+                    disabled: alpha(gray[400], 0.55),
+                    disabledBackground: alpha(gray[600], 0.28),
                 }),
             },
         },
@@ -306,9 +331,11 @@ export const colorSchemes = {
             action: {
                 hover: alpha(gray[200], 0.2),
                 selected: `${alpha(gray[200], 0.3)}`,
+                disabled: alpha(gray[500], 0.55),
+                disabledBackground: alpha(gray[300], 0.35),
             },
             baseShadow:
-                'hsla(220, 30%, 5%, 0.07) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.07) 0px 8px 16px -5px',
+                'hsla(340, 25%, 14%, 0.07) 0px 4px 16px 0px, hsla(340, 25%, 14%, 0.07) 0px 8px 16px -5px',
         },
     },
     dark: {
@@ -319,11 +346,17 @@ export const colorSchemes = {
                 main: brand[400],
                 dark: brand[700],
             },
+            secondary: {
+                light: orange[300],
+                main: orange[400],
+                dark: orange[700],
+                contrastText: gray[900],
+            },
             info: {
-                contrastText: brand[300],
-                light: brand[500],
-                main: brand[700],
-                dark: brand[900],
+                contrastText: brand[900],
+                light: brand[300],
+                main: brand[400],
+                dark: brand[600],
             },
             warning: {
                 light: orange[400],
@@ -331,14 +364,14 @@ export const colorSchemes = {
                 dark: orange[700],
             },
             error: {
-                light: red[400],
-                main: red[500],
-                dark: red[700],
+                light: red[200],
+                main: red[300],
+                dark: red[500],
             },
             success: {
-                light: green[400],
-                main: green[500],
-                dark: green[700],
+                light: green[300],
+                main: green[400],
+                dark: green[500],
             },
             grey: {
                 ...gray,
@@ -355,9 +388,11 @@ export const colorSchemes = {
             action: {
                 hover: alpha(gray[600], 0.2),
                 selected: alpha(gray[600], 0.3),
+                disabled: alpha(gray[400], 0.55),
+                disabledBackground: alpha(gray[600], 0.28),
             },
             baseShadow:
-                'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px',
+                'hsla(336, 30%, 4%, 0.7) 0px 4px 16px 0px, hsla(336, 25%, 8%, 0.8) 0px 8px 16px -5px',
         },
     },
 };
