@@ -123,6 +123,7 @@ function clientIp(req) {
 
 const ROLE_RANK = { GUEST: 0, MEMBER: 1, EDITOR: 2, ADMIN: 3 };
 const VALID_ROLES = Object.keys(ROLE_RANK);
+const VALID_RECIPE_STATUSES = new Set(['DRAFT', 'PUBLISHED', 'ARCHIVED']);
 
 function hasMinRole(user, role) {
   return !!user && (ROLE_RANK[user.role] ?? -1) >= (ROLE_RANK[role] ?? Infinity);
@@ -140,6 +141,80 @@ function findRecipeByIdOrSlug(idOrSlug) {
   return recipeStore.find(
     (entry) => entry.id === idOrSlug || (entry.slug ?? toSlug(entry.title)) === idOrSlug,
   ) ?? null;
+}
+
+function findViewableRecipe(idOrSlug, requester) {
+  const recipe = findRecipeByIdOrSlug(idOrSlug);
+  return recipe && canViewRecipe(recipe, requester) ? recipe : null;
+}
+
+function validateRecipePayload(payload, { partial = false } = {}) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return 'Rezeptdaten müssen ein Objekt sein.';
+  }
+
+  for (const [field, label] of [
+    ['title', 'Titel'],
+    ['shortDescription', 'Beschreibung'],
+    ['category', 'Kategorie'],
+  ]) {
+    const value = payload[field];
+    if ((!partial || value !== undefined) && (typeof value !== 'string' || !value.trim())) {
+      return `${label} ist erforderlich.`;
+    }
+  }
+
+  for (const [field, label, minimum] of [
+    ['servings', 'Portionen', 1],
+    ['preparationTime', 'Vorbereitungszeit', 0],
+    ['cookingTime', 'Kochzeit', 0],
+  ]) {
+    const value = payload[field];
+    if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < minimum)) {
+      return `${label} muss eine ganze Zahl ab ${minimum} sein.`;
+    }
+  }
+
+  if (payload.ingredients !== undefined && !Array.isArray(payload.ingredients)) {
+    return 'Zutaten müssen als Liste übergeben werden.';
+  }
+  if (Array.isArray(payload.ingredients)) {
+    for (const ingredient of payload.ingredients) {
+      if (!ingredient || typeof ingredient !== 'object' || Array.isArray(ingredient)) {
+        return 'Jede Zutat muss ein Objekt sein.';
+      }
+      if (typeof ingredient.name !== 'string' || !ingredient.name.trim()) {
+        return 'Jede Zutat benötigt einen Namen.';
+      }
+      if (typeof ingredient.amount !== 'number' || !Number.isFinite(ingredient.amount) || ingredient.amount < 0) {
+        return 'Jede Zutatenmenge muss eine Zahl ab 0 sein.';
+      }
+      if (typeof ingredient.unit !== 'string') {
+        return 'Jede Zutat benötigt eine Einheit als Text.';
+      }
+    }
+  }
+  if (payload.steps !== undefined && !Array.isArray(payload.steps)) {
+    return 'Zubereitungsschritte müssen als Liste übergeben werden.';
+  }
+  if (Array.isArray(payload.steps)) {
+    for (const step of payload.steps) {
+      if (!step || typeof step !== 'object' || Array.isArray(step)) {
+        return 'Jeder Zubereitungsschritt muss ein Objekt sein.';
+      }
+      if (!Number.isInteger(step.stepNumber) || step.stepNumber < 1) {
+        return 'Jeder Zubereitungsschritt benötigt eine positive Nummer.';
+      }
+      if (typeof step.instruction !== 'string' || !step.instruction.trim()) {
+        return 'Jeder Zubereitungsschritt benötigt eine Anweisung.';
+      }
+    }
+  }
+  if (payload.status !== undefined && !VALID_RECIPE_STATUSES.has(String(payload.status).toUpperCase())) {
+    return 'Unbekannter Rezeptstatus.';
+  }
+
+  return null;
 }
 
 function uniqueSlug(title, currentId) {
@@ -666,6 +741,11 @@ const server = createServer(async (req, res) => {
 
     try {
       const payload = await parseJsonBody(req);
+      const validationError = validateRecipePayload(payload);
+      if (validationError) {
+        jsonResponse(res, 400, { error: validationError });
+        return;
+      }
       const {
         title,
         shortDescription,
@@ -680,11 +760,6 @@ const server = createServer(async (req, res) => {
         img,
       } = payload;
 
-      if (!title || !shortDescription || !category) {
-        jsonResponse(res, 400, { error: 'Titel, Beschreibung und Kategorie sind erforderlich.' });
-        return;
-      }
-
       const newRecipe = {
         id: `r_${randomBytes(8).toString('hex')}`,
         slug: uniqueSlug(title),
@@ -694,9 +769,9 @@ const server = createServer(async (req, res) => {
         category: String(category).trim(),
         tag: String(tag ?? 'Neu').trim() || 'Neu',
         difficulty: normalizeDifficulty(difficulty),
-        servings: Number(servings ?? 2),
-        preparationTime: Number(preparationTime ?? 10),
-        cookingTime: Number(cookingTime ?? 20),
+        servings: servings ?? 2,
+        preparationTime: preparationTime ?? 10,
+        cookingTime: cookingTime ?? 20,
         img: String(img ?? 'https://picsum.photos/800/450?random=50'),
         ingredients: Array.isArray(ingredients) ? ingredients : [],
         steps: Array.isArray(steps) ? steps : [],
@@ -734,7 +809,7 @@ const server = createServer(async (req, res) => {
     try {
       const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
       const slug = requestUrl.pathname.split('/')[3];
-      const recipe = recipeStore.find((entry) => entry.id === slug || entry.slug === slug);
+      const recipe = findViewableRecipe(slug, user);
 
       if (!recipe) {
         jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
@@ -743,7 +818,7 @@ const server = createServer(async (req, res) => {
 
       const { stars } = await parseJsonBody(req);
 
-      if (!stars || stars < 1 || stars > 5) {
+      if (typeof stars !== 'number' || !Number.isInteger(stars) || stars < 1 || stars > 5) {
         jsonResponse(res, 400, { error: 'Sternebewertung muss zwischen 1 und 5 liegen.' });
         return;
       }
@@ -758,7 +833,7 @@ const server = createServer(async (req, res) => {
         id: `rating_${randomBytes(8).toString('hex')}`,
         userId: user.id,
         recipeId: recipe.id,
-        stars: Number(stars),
+        stars,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -794,7 +869,7 @@ const server = createServer(async (req, res) => {
     try {
       const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
       const slug = requestUrl.pathname.split('/')[3];
-      const recipe = recipeStore.find((entry) => entry.id === slug || entry.slug === slug);
+      const recipe = findViewableRecipe(slug, user);
 
       if (!recipe) {
         jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
@@ -829,7 +904,7 @@ const server = createServer(async (req, res) => {
     try {
       const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
       const slug = requestUrl.pathname.split('/')[3];
-      const recipe = recipeStore.find((entry) => entry.id === slug || entry.slug === slug);
+      const recipe = findViewableRecipe(slug, user);
 
       if (!recipe) {
         jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
@@ -865,7 +940,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const recipe = findRecipeByIdOrSlug(decodeURIComponent(req.url.split('/')[3]));
+    const recipe = findViewableRecipe(decodeURIComponent(req.url.split('/')[3]), user);
     if (!recipe) {
       jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
       return;
@@ -905,7 +980,7 @@ const server = createServer(async (req, res) => {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    const recipe = findViewableRecipe(requestUrl.pathname.split('/')[3], user);
     if (!recipe) {
       jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
       return;
@@ -938,7 +1013,7 @@ const server = createServer(async (req, res) => {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    const recipe = findViewableRecipe(requestUrl.pathname.split('/')[3], user);
     if (!recipe) {
       jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
       return;
@@ -1093,7 +1168,7 @@ const server = createServer(async (req, res) => {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    const recipe = findViewableRecipe(requestUrl.pathname.split('/')[3], user);
     if (!recipe) {
       jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
       return;
@@ -1116,7 +1191,7 @@ const server = createServer(async (req, res) => {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    const recipe = findViewableRecipe(requestUrl.pathname.split('/')[3], user);
     if (!recipe) {
       jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
       return;
@@ -1138,7 +1213,7 @@ const server = createServer(async (req, res) => {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    const recipe = findViewableRecipe(requestUrl.pathname.split('/')[3], user);
     if (!recipe) {
       jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
       return;
@@ -1152,6 +1227,11 @@ const server = createServer(async (req, res) => {
 
     try {
       const payload = await parseJsonBody(req);
+      const validationError = validateRecipePayload(payload, { partial: true });
+      if (validationError) {
+        jsonResponse(res, 400, { error: validationError });
+        return;
+      }
 
       if (payload.title !== undefined) {
         recipe.title = String(payload.title).trim();
@@ -1162,9 +1242,9 @@ const server = createServer(async (req, res) => {
       if (payload.category !== undefined) recipe.category = String(payload.category).trim();
       if (payload.tag !== undefined) recipe.tag = String(payload.tag ?? '').trim() || 'Neu';
       if (payload.difficulty !== undefined) recipe.difficulty = normalizeDifficulty(payload.difficulty);
-      if (payload.servings !== undefined) recipe.servings = Number(payload.servings);
-      if (payload.preparationTime !== undefined) recipe.preparationTime = Number(payload.preparationTime);
-      if (payload.cookingTime !== undefined) recipe.cookingTime = Number(payload.cookingTime);
+      if (payload.servings !== undefined) recipe.servings = payload.servings;
+      if (payload.preparationTime !== undefined) recipe.preparationTime = payload.preparationTime;
+      if (payload.cookingTime !== undefined) recipe.cookingTime = payload.cookingTime;
       if (payload.img !== undefined) recipe.img = String(payload.img);
       if (payload.ingredients !== undefined) recipe.ingredients = Array.isArray(payload.ingredients) ? payload.ingredients : [];
       if (payload.steps !== undefined) recipe.steps = Array.isArray(payload.steps) ? payload.steps : [];
@@ -1192,7 +1272,7 @@ const server = createServer(async (req, res) => {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const recipe = findRecipeByIdOrSlug(requestUrl.pathname.split('/')[3]);
+    const recipe = findViewableRecipe(requestUrl.pathname.split('/')[3], user);
     if (!recipe) {
       jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
       return;
@@ -1273,14 +1353,14 @@ const server = createServer(async (req, res) => {
       for (const day of WEEK_DAYS) {
         weekPlanStore[day] = weekPlanStore[day].filter((entry) =>
           recipeStore.some((recipe) => recipe.id === entry.recipeId));
-        days[day] = weekPlanStore[day].map((entry) => {
-          const recipe = recipeStore.find((r) => r.id === entry.recipeId);
-          return {
+        days[day] = weekPlanStore[day]
+          .map((entry) => ({ entry, recipe: recipeStore.find((r) => r.id === entry.recipeId) }))
+          .filter(({ recipe }) => recipe && canViewRecipe(recipe, user))
+          .map(({ entry, recipe }) => ({
             recipeId: entry.recipeId,
             servings: entry.servings ?? recipe.servings,
             recipe: weekPlanRecipeSummary(recipe),
-          };
-        });
+          }));
       }
       jsonResponse(res, 200, { days });
       return;
@@ -1297,7 +1377,7 @@ const server = createServer(async (req, res) => {
         }
 
         const { recipeId, servings } = await parseJsonBody(req);
-        const recipe = findRecipeByIdOrSlug(String(recipeId ?? ''));
+        const recipe = findViewableRecipe(String(recipeId ?? ''), user);
         if (!recipe) {
           jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
           return;
@@ -1334,7 +1414,12 @@ const server = createServer(async (req, res) => {
         jsonResponse(res, 400, { error: 'Unbekannter Wochentag.' });
         return;
       }
-      weekPlanStore[day] = weekPlanStore[day].filter((entry) => entry.recipeId !== decodeURIComponent(recipeId));
+      const recipe = findViewableRecipe(decodeURIComponent(recipeId), user);
+      if (!recipe) {
+        jsonResponse(res, 404, { error: 'Rezept nicht gefunden.' });
+        return;
+      }
+      weekPlanStore[day] = weekPlanStore[day].filter((entry) => entry.recipeId !== recipe.id);
       persist();
       jsonResponse(res, 200, { ok: true });
       return;
@@ -1343,7 +1428,12 @@ const server = createServer(async (req, res) => {
     // DELETE /api/weekplan - Clear the whole week
     if (req.method === 'DELETE' && req.url === '/api/weekplan') {
       for (const day of WEEK_DAYS) {
-        weekPlanStore[day] = [];
+        weekPlanStore[day] = hasMinRole(user, 'EDITOR')
+          ? []
+          : weekPlanStore[day].filter((entry) => {
+            const recipe = recipeStore.find((candidate) => candidate.id === entry.recipeId);
+            return recipe && !canViewRecipe(recipe, user);
+          });
       }
       persist();
       jsonResponse(res, 200, { ok: true });

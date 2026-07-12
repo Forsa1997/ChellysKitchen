@@ -19,6 +19,8 @@ wenn keiner weiß, was es heute geben soll.
   Fotorezepte werden beim Import ins Deutsche übersetzt.
 - Bewertungen (1–5 Sterne), Rollen (Mitglied/Editor/Admin), Admin-Dashboard
 - **Backup**: kompletter Export/Import (inkl. Bilder) im Admin-Dashboard
+- **Kochmodus** mit Schrittansicht, Wake-Lock und direkt startbaren Timern aus
+  Zeitangaben im Rezepttext
 - Als PWA auf dem Handy-Homescreen installierbar
 
 ## Stack
@@ -26,13 +28,14 @@ wenn keiner weiß, was es heute geben soll.
 | Teil | Technologie |
 | --- | --- |
 | Frontend | React 19 + Vite + Material UI (`frontend/`) |
-| Backend | Node.js ohne Abhängigkeiten (`backend/server.mjs`), JSON-Datei-Store |
+| Backend | Node.js (`backend/server.mjs`), PostgreSQL in Produktion und JSON-Datei-Store lokal |
 | Hosting | Render (siehe `render.yaml`), Deploy-Hooks via GitHub Actions |
 
-Das Backend speichert alles in einer JSON-Datei unter `DATA_DIR` (Standard
-`./.data`). Auf dem Render-Free-Tier ist dieses Verzeichnis **ephemer** —
-vor jedem Redeploy im Admin-Dashboard ein Backup herunterladen und danach
-wieder einspielen.
+Mit `DATABASE_URL` speichert das Backend Rezepte, Benutzer und Bilder dauerhaft
+in PostgreSQL. Ohne Datenbankverbindung nutzt die lokale Entwicklung weiterhin
+eine JSON-Datei unter `DATA_DIR` (Standard `./.data`). Der Backup-Export im
+Admin-Dashboard ist in beiden Betriebsarten als zusätzliche Absicherung
+empfohlen, etwa vor größeren Änderungen oder einem Umzug.
 
 ## Entwicklung
 

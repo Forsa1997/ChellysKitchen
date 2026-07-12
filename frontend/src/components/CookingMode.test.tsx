@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { CookingMode } from './CookingMode';
 import type { Recipe } from '../types/domain';
 
@@ -15,6 +15,7 @@ const installWakeLockMock = () => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   Reflect.deleteProperty(navigator, 'wakeLock');
 });
@@ -39,6 +40,14 @@ const recipe = {
   createdAt: '2026-04-30T12:00:00.000Z',
   updatedAt: '2026-04-30T12:00:00.000Z',
 } as Recipe;
+
+const recipeWithSteps = (...instructions: string[]): Recipe => ({
+  ...recipe,
+  steps: instructions.map((instruction, index) => ({
+    stepNumber: index + 1,
+    instruction,
+  })),
+});
 
 describe('CookingMode', () => {
   const renderCookingMode = (props: Partial<Parameters<typeof CookingMode>[0]> = {}) =>
@@ -134,5 +143,121 @@ describe('CookingMode', () => {
     );
 
     expect(screen.getByText('Zutaten für 2 Portionen')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['30 Sekunden ziehen lassen.', '30 Sekunden'],
+    ['Noch 45 Sek. köcheln lassen.', '45 Sek.'],
+    ['Für 5 Minuten ruhen lassen.', '5 Minuten'],
+    ['Weitere 10 Min. backen.', '10 Min.'],
+    ['Den Teig 2 Stunden kalt stellen.', '2 Stunden'],
+    ['Mindestens 3 Std. durchziehen lassen.', '3 Std.'],
+    ['Für 1 Stunde 15 Minuten in den Kühlschrank stellen.', '1 Stunde 15 Minuten'],
+    ['Für 1 Stunde und 15 Minuten in den Kühlschrank stellen.', '1 Stunde und 15 Minuten'],
+  ])('renders the recognized duration "%s" as an accessible start button', (instruction, duration) => {
+    const screen = renderCookingMode({ recipe: recipeWithSteps(instruction) });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+    expect(screen.getByRole('button', { name: `Timer für ${duration} starten` })).toBeInTheDocument();
+  });
+
+  it('does not mistake temperatures or ingredient amounts for timers', () => {
+    const instruction = '200 g Mehl mit 2 EL Öl mischen und bei 180 °C backen.';
+    const screen = renderCookingMode({ recipe: recipeWithSteps(instruction) });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+    expect(screen.getByText(instruction)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Timer .* starten/i })).not.toBeInTheDocument();
+  });
+
+  it('starts, pauses and resumes a countdown before announcing completion', () => {
+    vi.useFakeTimers();
+    const screen = renderCookingMode({ recipe: recipeWithSteps('5 Sekunden ziehen lassen.') });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Timer für 5 Sekunden starten' }));
+    expect(screen.getByText('00:05')).toBeInTheDocument();
+    expect(screen.getByText('00:05').closest('[aria-live]')).toBeNull();
+
+    act(() => vi.advanceTimersByTime(2_000));
+    expect(screen.getByText('00:03')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Timer pausieren' }));
+    act(() => vi.advanceTimersByTime(2_000));
+    expect(screen.getByText('00:03')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Timer fortsetzen' }));
+    act(() => vi.advanceTimersByTime(3_000));
+    expect(screen.getByRole('status')).toHaveTextContent('Zeit ist um');
+  });
+
+  it('starts a replacement timer with a fresh full-second tick', () => {
+    vi.useFakeTimers();
+    const screen = renderCookingMode({ recipe: recipeWithSteps('5 Sekunden ziehen lassen.') });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+    const startButton = screen.getByRole('button', { name: 'Timer für 5 Sekunden starten' });
+    fireEvent.click(startButton);
+    act(() => vi.advanceTimersByTime(900));
+
+    fireEvent.click(startButton);
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.getByText('00:05')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(800));
+    expect(screen.getByText('00:04')).toBeInTheDocument();
+  });
+
+  it('keeps an active timer running while the cooking step changes', () => {
+    vi.useFakeTimers();
+    const screen = renderCookingMode({
+      recipe: recipeWithSteps('5 Sekunden ziehen lassen.', 'Danach direkt servieren.'),
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Timer für 5 Sekunden starten' }));
+    act(() => vi.advanceTimersByTime(2_000));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+    expect(screen.getByText('Schritt 2 von 2')).toBeInTheDocument();
+    expect(screen.getByText('00:03')).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(screen.getByText('00:02')).toBeInTheDocument();
+  });
+
+  it('resets the timer after closing and reopening cooking mode', () => {
+    vi.useFakeTimers();
+    const timedRecipe = recipeWithSteps('5 Sekunden ziehen lassen.');
+    const screen = renderCookingMode({ recipe: timedRecipe });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Timer für 5 Sekunden starten' }));
+    act(() => vi.advanceTimersByTime(2_000));
+    expect(screen.getByText('00:03')).toBeInTheDocument();
+
+    screen.rerender(
+      <CookingMode recipe={timedRecipe} servings={timedRecipe.servings} open={false} onClose={() => undefined} />,
+    );
+    screen.rerender(
+      <CookingMode recipe={timedRecipe} servings={timedRecipe.servings} open onClose={() => undefined} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+    expect(screen.getByRole('button', { name: 'Timer für 5 Sekunden starten' })).toBeInTheDocument();
+    expect(screen.queryByText('00:03')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Timer pausieren' })).not.toBeInTheDocument();
+  });
+
+  it('keeps instructions without a duration normally readable', () => {
+    const instruction = 'Mit Salz abschmecken und direkt servieren.';
+    const screen = renderCookingMode({ recipe: recipeWithSteps(instruction) });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+    expect(screen.getByText(instruction)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Timer .* starten/i })).not.toBeInTheDocument();
   });
 });

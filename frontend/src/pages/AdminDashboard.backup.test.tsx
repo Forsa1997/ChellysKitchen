@@ -53,6 +53,15 @@ describe('AdminDashboard backup section', () => {
     importBackupMock.mockReset();
   });
 
+  it('describes backups as an additional safeguard without claiming redeploy data loss', () => {
+    useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
+
+    renderDashboard();
+
+    expect(screen.getByText(/zusätzliche Absicherung/i)).toBeInTheDocument();
+    expect(screen.queryByText(/bei jedem Redeploy verloren/i)).not.toBeInTheDocument();
+  });
+
   it('downloads the exported backup as a JSON file', async () => {
     useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
     exportBackupMock.mockResolvedValue({ type: 'chellys-kitchen-backup', version: 1 });

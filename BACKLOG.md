@@ -77,7 +77,7 @@ beschleunigt.
       (Screen Wake Lock API), Schritt-für-Schritt statt Fließtext — umgesetzt
       als „Kochmodus"-Button auf der Detailseite (Zutatenübersicht in der
       gewählten Portionsgröße, dann ein Schritt pro Seite)
-- [ ] Timer direkt aus dem Rezepttext: Zeitangaben klickbar → startet Countdown
+- [x] Timer direkt aus dem Rezepttext: Zeitangaben klickbar → startet Countdown
 - [ ] Mengen-/Einheiten-Umrechner (g ↔ ml ↔ Tasse/EL, °C ↔ Umluft-Hinweis)
 
 ### Familien-Organisation

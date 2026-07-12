@@ -30,6 +30,65 @@ async function api(path, { token, method = 'GET', body } = {}) {
   return { status: res.status, body: json, res };
 }
 
+function validRecipePayload(overrides = {}) {
+  return {
+    title: 'Validierungsrezept',
+    shortDescription: 'Ein valides Rezept für API-Vertragstests.',
+    category: 'Cooking',
+    difficulty: 'EINFACH',
+    servings: 2,
+    preparationTime: 5,
+    cookingTime: 10,
+    ingredients: [{ name: 'Salz', amount: 1, unit: 'g' }],
+    steps: [{ stepNumber: 1, instruction: 'Kochen.' }],
+    ...overrides,
+  };
+}
+
+const INVALID_RECIPE_FIELDS = [
+  ['title whitespace', { title: '   ' }],
+  ['shortDescription whitespace', { shortDescription: '   ' }],
+  ['category whitespace', { category: '   ' }],
+  ['servings non-finite', { servings: 'abc' }],
+  ['servings negative', { servings: -1 }],
+  ['servings fractional', { servings: 1.5 }],
+  ['preparationTime non-finite', { preparationTime: 'abc' }],
+  ['preparationTime negative', { preparationTime: -1 }],
+  ['preparationTime fractional', { preparationTime: 1.5 }],
+  ['cookingTime non-finite', { cookingTime: 'abc' }],
+  ['cookingTime negative', { cookingTime: -1 }],
+  ['cookingTime fractional', { cookingTime: 1.5 }],
+  ['ingredients not an array', { ingredients: { name: 'Salz' } }],
+  ['ingredients contain null', { ingredients: [null] }],
+  ['ingredient name empty', { ingredients: [{ name: ' ', amount: 1, unit: 'g' }] }],
+  ['ingredient amount invalid', { ingredients: [{ name: 'Salz', amount: 'viel', unit: 'g' }] }],
+  ['steps not an array', { steps: 'Kochen' }],
+  ['steps contain null', { steps: [null] }],
+  ['step instruction empty', { steps: [{ stepNumber: 1, instruction: ' ' }] }],
+  ['step number invalid', { steps: [{ stepNumber: 1.5, instruction: 'Kochen.' }] }],
+];
+
+function archivedSubresourceRequests(recipe, { stars, notes, servings }) {
+  return [
+    ['rating:post', `/api/recipes/${recipe.slug}/rating`, { method: 'POST', body: { stars } }],
+    ['rating:get', `/api/recipes/${recipe.slug}/rating`, {}],
+    ['rating:delete', `/api/recipes/${recipe.slug}/rating`, { method: 'DELETE' }],
+    ['duplicate', `/api/recipes/${recipe.slug}/duplicate`, { method: 'POST' }],
+    ['favorite:put', `/api/recipes/${recipe.slug}/favorite`, { method: 'PUT' }],
+    ['favorite:delete', `/api/recipes/${recipe.slug}/favorite`, { method: 'DELETE' }],
+    ['notes', `/api/recipes/${recipe.slug}/notes`, { method: 'PATCH', body: { notes } }],
+    ['weekplan', '/api/weekplan/sunday', { method: 'POST', body: { recipeId: recipe.id, servings } }],
+  ];
+}
+
+async function collectStatuses(requests, token) {
+  const statuses = {};
+  for (const [label, path, options] of requests) {
+    statuses[label] = (await api(path, { ...options, token })).status;
+  }
+  return statuses;
+}
+
 // Public registration no longer exists — the admin provisions every account.
 async function createMember(name) {
   const adminLogin = await api('/api/auth/login', {
@@ -408,4 +467,238 @@ test('unauthenticated upload is rejected', async () => {
     body: { filename: 'pic.png', data: 'data:image/png;base64,AAAA' },
   });
   assert.equal(upload.status, 401);
+});
+
+test('members cannot access archived recipe subresources while editors retain access', async () => {
+  const member = await createMember('ArchiveMember');
+  const editor = await createMember('ArchiveEditor');
+  const adminLogin = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+  const adminToken = adminLogin.body.accessToken;
+
+  const promoted = await api(`/api/admin/users/${editor.user.id}/role`, {
+    method: 'PATCH',
+    token: adminToken,
+    body: { role: 'EDITOR' },
+  });
+  assert.equal(promoted.status, 200);
+
+  const title = `Archivierter Sicherheitsvertrag ${Date.now()}`;
+  const created = await api('/api/recipes', {
+    method: 'POST',
+    token: adminToken,
+    body: validRecipePayload({ title }),
+  });
+  assert.equal(created.status, 201);
+
+  // Create member-owned subresources while the recipe is still public. After
+  // archiving, GET/DELETE must return 404 because the objects really exist.
+  assert.equal((await api(`/api/recipes/${created.body.slug}/rating`, {
+    method: 'POST', token: member.token, body: { stars: 5 },
+  })).status, 200);
+  assert.equal((await api(`/api/recipes/${created.body.slug}/favorite`, {
+    method: 'PUT', token: member.token,
+  })).status, 200);
+  assert.equal((await api('/api/weekplan/sunday', {
+    method: 'POST', token: member.token, body: { recipeId: created.body.id, servings: 2 },
+  })).status, 200);
+
+  const archived = await api(`/api/recipes/${created.body.id}/archive`, {
+    method: 'PATCH',
+    token: adminToken,
+  });
+  assert.equal(archived.status, 200);
+
+  const memberRequests = archivedSubresourceRequests(created.body, {
+    stars: 4,
+    notes: 'Darf nicht gespeichert werden.',
+    servings: 6,
+  });
+  const memberStatuses = await collectStatuses(memberRequests, member.token);
+  const memberPatch = await api(`/api/recipes/${created.body.id}`, {
+    method: 'PATCH', token: member.token, body: { title: 'Darf nicht sichtbar werden' },
+  });
+  const memberDelete = await api(`/api/recipes/${created.body.id}`, {
+    method: 'DELETE', token: member.token,
+  });
+  const memberPlanDelete = await api(`/api/weekplan/sunday/${created.body.id}`, {
+    method: 'DELETE', token: member.token,
+  });
+  const memberPlanClear = await api('/api/weekplan', { method: 'DELETE', token: member.token });
+
+  const memberPlan = await api('/api/weekplan', { token: member.token });
+  const memberPlanExposesRecipe = Object.values(memberPlan.body.days)
+    .flat()
+    .some((entry) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
+  const publicBring = await fetch(`${BASE}/api/weekplan/bring`);
+  const publicBringExposesRecipe = (await publicBring.text()).includes(title);
+  const publicVariants = await api(`/api/recipes?q=${encodeURIComponent(title)}&pageSize=100`);
+
+  // A denied MEMBER request must not mutate the existing rating or the recipe.
+  const adminSnapshot = await api(`/api/recipes/${created.body.id}`, { token: adminToken });
+  const editorPlanAfterMemberDeletes = await api('/api/weekplan', { token: editor.token });
+  const hiddenPlanEntryPreserved = Object.values(editorPlanAfterMemberDeletes.body.days)
+    .flat()
+    .some((entry) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
+
+  const editorRequests = archivedSubresourceRequests(created.body, {
+    stars: 4,
+    notes: 'Editor-Notiz',
+    servings: 3,
+  });
+  const editorStatuses = await collectStatuses(editorRequests, editor.token);
+  const editorPlan = await api('/api/weekplan', { token: editor.token });
+  const editorPlanExposesRecipe = Object.values(editorPlan.body.days)
+    .flat()
+    .some((entry) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
+
+  assert.deepEqual({
+    memberStatuses,
+    hiddenRecipeMutations: { patch: memberPatch.status, delete: memberDelete.status },
+    hiddenPlanMutations: {
+      targetedDelete: memberPlanDelete.status,
+      clear: memberPlanClear.status,
+      entryPreserved: hiddenPlanEntryPreserved,
+    },
+    memberPlanExposesRecipe,
+    publicBring: { status: publicBring.status, exposesRecipe: publicBringExposesRecipe },
+    publicVariantCount: publicVariants.body.meta.total,
+    preservedMemberRating: {
+      averageRating: adminSnapshot.body.averageRating,
+      totalRatings: adminSnapshot.body.totalRatings,
+    },
+    preservedNotes: adminSnapshot.body.notes,
+    editorStatuses,
+    editorPlanExposesRecipe,
+  }, {
+    memberStatuses: Object.fromEntries(memberRequests.map(([label]) => [label, 404])),
+    hiddenRecipeMutations: { patch: 404, delete: 404 },
+    hiddenPlanMutations: { targetedDelete: 404, clear: 200, entryPreserved: true },
+    memberPlanExposesRecipe: false,
+    publicBring: { status: 200, exposesRecipe: false },
+    publicVariantCount: 0,
+    preservedMemberRating: { averageRating: 5, totalRatings: 1 },
+    preservedNotes: '',
+    editorStatuses: {
+      'rating:post': 200,
+      'rating:get': 200,
+      'rating:delete': 204,
+      duplicate: 201,
+      'favorite:put': 200,
+      'favorite:delete': 200,
+      notes: 200,
+      weekplan: 200,
+    },
+    editorPlanExposesRecipe: true,
+  });
+});
+
+test('owners cannot mutate their own recipe after an editor archives it', async () => {
+  const member = await createMember('ArchivedOwner');
+  const adminLogin = await api('/api/auth/login', {
+    method: 'POST', body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+  const created = await api('/api/recipes', {
+    method: 'POST', token: member.token, body: validRecipePayload({ title: `Owner-Archiv ${Date.now()}` }),
+  });
+  assert.equal(created.status, 201);
+  assert.equal((await api(`/api/recipes/${created.body.id}/archive`, {
+    method: 'PATCH', token: adminLogin.body.accessToken,
+  })).status, 200);
+
+  const patch = await api(`/api/recipes/${created.body.id}`, {
+    method: 'PATCH', token: member.token, body: { title: 'Versteckte Änderung' },
+  });
+  const remove = await api(`/api/recipes/${created.body.id}`, {
+    method: 'DELETE', token: member.token,
+  });
+
+  assert.deepEqual([patch.status, remove.status], [404, 404]);
+});
+
+test('ratings accept only integer stars from one through five', async () => {
+  const { token } = await createMember('RatingContract');
+  const list = await api('/api/recipes?pageSize=1');
+  const target = list.body.data[0];
+
+  const invalidStatuses = {};
+  for (const stars of ['abc', 1.5, null]) {
+    const response = await api(`/api/recipes/${target.slug}/rating`, {
+      method: 'POST',
+      token,
+      body: { stars },
+    });
+    invalidStatuses[String(stars)] = response.status;
+  }
+  const lowerBound = await api(`/api/recipes/${target.slug}/rating`, {
+    method: 'POST', token, body: { stars: 1 },
+  });
+  const upperBound = await api(`/api/recipes/${target.slug}/rating`, {
+    method: 'POST', token, body: { stars: 5 },
+  });
+
+  assert.deepEqual(invalidStatuses, { abc: 400, '1.5': 400, null: 400 });
+  assert.deepEqual([lowerBound.status, upperBound.status], [200, 200]);
+});
+
+test('recipe creation rejects invalid fields without persisting a recipe', async () => {
+  const { token } = await createMember('CreateContract');
+  const before = await api('/api/recipes?pageSize=1000');
+  const unexpectedStatuses = {};
+
+  for (const [label, override] of INVALID_RECIPE_FIELDS) {
+    const response = await api('/api/recipes', {
+      method: 'POST',
+      token,
+      body: validRecipePayload(override),
+    });
+    if (response.status !== 400) unexpectedStatuses[label] = response.status;
+  }
+
+  const after = await api('/api/recipes?pageSize=1000');
+  assert.deepEqual({
+    unexpectedStatuses,
+    persistedRecipeDelta: after.body.meta.total - before.body.meta.total,
+  }, {
+    unexpectedStatuses: {},
+    persistedRecipeDelta: 0,
+  });
+});
+
+test('recipe patch rejects invalid fields without mutating the recipe', async () => {
+  const { token } = await createMember('PatchContract');
+  const created = await api('/api/recipes', {
+    method: 'POST',
+    token,
+    body: validRecipePayload({ title: `Patch-Vertrag ${Date.now()}` }),
+  });
+  assert.equal(created.status, 201);
+
+  const unexpectedStatuses = {};
+
+  for (const [label, body] of INVALID_RECIPE_FIELDS) {
+    const response = await api(`/api/recipes/${created.body.id}`, {
+      method: 'PATCH',
+      token,
+      body,
+    });
+    if (response.status !== 400) unexpectedStatuses[label] = response.status;
+  }
+
+  const after = await api(`/api/recipes/${created.body.id}`, { token });
+  const fields = [
+    'title', 'shortDescription', 'category', 'servings', 'preparationTime',
+    'cookingTime', 'ingredients', 'steps',
+  ];
+  const project = (recipe) => Object.fromEntries(fields.map((field) => [field, recipe[field]]));
+
+  assert.deepEqual({
+    unexpectedStatuses,
+    recipe: project(after.body),
+  }, {
+    unexpectedStatuses: {},
+    recipe: project(created.body),
+  });
 });

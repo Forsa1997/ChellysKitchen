@@ -392,9 +392,9 @@ export function AdminDashboard() {
           Backup
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-          Lade regelmäßig ein Backup herunter — auf dem kostenlosen Hosting gehen alle Daten
-          (Rezepte, Benutzer, Bilder) bei jedem Redeploy verloren. Nach einem Datenverlust
-          kannst du das Backup hier wieder einspielen.
+          Lade regelmäßig ein Backup als zusätzliche Absicherung herunter. Es schützt vor
+          versehentlichem Löschen und erleichtert einen Umzug; die Produktionsdatenbank bleibt
+          bei normalen Redeploys erhalten.
         </Typography>
       </Box>
 
