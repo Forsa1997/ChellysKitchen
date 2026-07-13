@@ -17,6 +17,7 @@ vi.mock('@react-three/drei', () => ({
   Float: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Html: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   OrbitControls: () => null,
+  Sparkles: () => null,
 }));
 
 const recipes = [
@@ -51,6 +52,15 @@ describe('RecipeWorldPage', () => {
     expect(screen.getByRole('link', { name: /Cremige Pasta entdecken/i })).toHaveAttribute('href', '/recipes/cremige-pasta');
     expect(screen.getByRole('link', { name: /Tomatensuppe entdecken/i })).toHaveAttribute('href', '/recipes/tomatensuppe');
     expect(screen.getByText('Pasta')).toBeInTheDocument();
+  });
+
+  it('shows which little 3D dish each station serves', () => {
+    useQueryRecipesMock.mockReturnValue({ recipes, loading: false, error: null });
+
+    renderPage();
+
+    expect(screen.getByRole('link', { name: /Cremige Pasta entdecken/i })).toHaveTextContent('Pastateller');
+    expect(screen.getByRole('link', { name: /Tomatensuppe entdecken/i })).toHaveTextContent('Suppenschüssel');
   });
 
   it('lets players filter the world by recipe category', () => {
