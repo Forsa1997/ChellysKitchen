@@ -39,6 +39,10 @@ vi.mock('../hooks/useRecipes', () => ({
   useDeleteRecipe: () => mockMutation(),
 }));
 
+vi.mock('../hooks/useBatchImport', () => ({
+  useBatchImportJobs: () => ({ data: { data: [], total: 0 } }),
+}));
+
 vi.mock('../api/client', () => ({
   apiClient: {
     exportBackup: vi.fn(),

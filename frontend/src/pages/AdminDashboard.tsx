@@ -23,6 +23,7 @@ import {
   SelectChangeEvent,
   FormControl,
   InputLabel,
+  LinearProgress,
   Snackbar,
   TextField,
 } from '@mui/material';
@@ -30,6 +31,7 @@ import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUsers, useUpdateUserRole, useUpdateUserName, useCreateUser, useAdminRecipes } from '../hooks/useAdmin';
+import { useBatchImportJobs } from '../hooks/useBatchImport';
 import { usePublishRecipe, useArchiveRecipe, useDeleteRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
 import { apiClient, type User, type UserRole, type Recipe } from '../api/client';
@@ -64,8 +66,12 @@ export function AdminDashboard() {
   const [backupBusy, setBackupBusy] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
+  const { data: batchJobsData } = useBatchImportJobs(currentUser?.role === 'ADMIN');
+
   const users = usersData?.data || [];
   const recipes = recipesData?.data || [];
+  const batchJobs = batchJobsData?.data || [];
+  const latestBatchJob = batchJobs[0];
 
   const handleRoleChange = (userId: string, currentRole: string) => {
     if (currentUser?.role !== 'ADMIN') {
@@ -386,6 +392,50 @@ export function AdminDashboard() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Box>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          Batch-Foto-Import
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          Lade viele Rezeptfotos auf einmal hoch — jedes erkannte Rezept wird als
+          unveröffentlichter Entwurf mit dem Tag „KI-Import“ angelegt und wartet
+          oben in der Moderationsliste auf seine Freigabe.
+        </Typography>
+      </Box>
+
+      <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 } }}>
+        <Stack spacing={1.5}>
+          {latestBatchJob && (
+            <Box>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }} useFlexGap>
+                <Chip
+                  size="small"
+                  label={latestBatchJob.status === 'RUNNING' ? 'Läuft…' : 'Abgeschlossen'}
+                  color={latestBatchJob.status === 'RUNNING' ? 'info' : 'success'}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  Letzter Batch ({new Date(latestBatchJob.createdAt).toLocaleString('de-DE')}):{' '}
+                  {latestBatchJob.processed}/{latestBatchJob.total} Fotos verarbeitet,{' '}
+                  {latestBatchJob.created} Entwürfe erstellt
+                  {latestBatchJob.failed > 0 ? `, ${latestBatchJob.failed} fehlgeschlagen` : ''}
+                </Typography>
+              </Stack>
+              <LinearProgress
+                variant="determinate"
+                value={latestBatchJob.total > 0 ? (latestBatchJob.processed / latestBatchJob.total) * 100 : 0}
+                aria-label="Fortschritt des letzten Batch-Imports"
+                sx={{ mt: 1 }}
+              />
+            </Box>
+          )}
+          <Box>
+            <Button variant="contained" component={RouterLink} to="/admin/batch-import">
+              Batch-Import öffnen
+            </Button>
+          </Box>
+        </Stack>
+      </Paper>
 
       <Box>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>

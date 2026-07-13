@@ -18,6 +18,10 @@ import {
   isPhotoImportConfigured,
 } from './src/photoImport.mjs';
 import {
+  MAX_BATCH_PHOTOS,
+  createBatchPhotoImportJobs,
+} from './src/batchPhotoImport.mjs';
+import {
   extractRecipeFromHtml,
   extractRecipeJsonLd,
   isAllowedImportUrl,
@@ -87,6 +91,52 @@ const persister = createDebouncedPersister(
 const persist = () => persister.schedule();
 
 const metrics = createMetricsRecorder();
+
+// Batch photo import (admin only): every recognized photo becomes an
+// unpublished DRAFT tagged for review, so a big cookbook backlog can be
+// digitized in one go and published recipe by recipe afterwards.
+const BATCH_IMPORT_TAG = 'KI-Import';
+
+const batchPhotoImportJobs = createBatchPhotoImportJobs({
+  extractRecipe: (photo) => extractRecipeFromPhoto({
+    mediaType: photo.mime,
+    base64Data: photo.buffer.toString('base64'),
+  }),
+  createRecipeFromPhoto: async ({ recipe, photo, context }) => {
+    // Keep the source photo as the draft's image so reviewers can compare
+    // the extracted recipe against the original page.
+    const fileName = `${randomBytes(12).toString('hex')}.${photo.ext}`;
+    writeFileSync(join(UPLOADS_DIR, fileName), photo.buffer);
+    if (store.saveUpload) {
+      await store.saveUpload(fileName, photo.buffer);
+    }
+
+    const now = new Date().toISOString();
+    const title = recipe.title || 'Unbenanntes Rezept';
+    const draft = {
+      id: `r_${randomBytes(8).toString('hex')}`,
+      slug: uniqueSlug(title),
+      title,
+      shortDescription: recipe.shortDescription || 'Automatisch aus einem Foto importiert.',
+      category: 'Cooking',
+      tag: BATCH_IMPORT_TAG,
+      difficulty: 'MITTEL',
+      servings: recipe.servings ?? 2,
+      preparationTime: recipe.preparationTime ?? 0,
+      cookingTime: recipe.cookingTime ?? 0,
+      img: `${context.baseUrl}/uploads/${fileName}`,
+      ingredients: recipe.ingredients ?? [],
+      steps: recipe.steps ?? [],
+      status: 'DRAFT',
+      createdBy: context.createdBy,
+      createdAt: now,
+      updatedAt: now,
+    };
+    recipeStore.unshift(draft);
+    persist();
+    return draft;
+  },
+});
 
 // Beim Testlauf (node --test) bleibt stdout für den TAP-Report reserviert.
 const requestLoggingEnabled = !process.env.NODE_TEST_CONTEXT;
@@ -1718,6 +1768,100 @@ const server = createServer(async (req, res) => {
 
     const data = recipeStore.map((recipe) => sanitizeRecipe(recipe, user));
     jsonResponse(res, 200, { data, total: data.length });
+    return;
+  }
+
+  // POST /api/admin/recipes/import/photos - Start a batch photo import
+  // (admin only). Every photo is validated up front; the batch then runs in
+  // the background and its progress is polled via the GET endpoints below.
+  if (req.method === 'POST' && req.url === '/api/admin/recipes/import/photos') {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins können den Batch-Import starten.' });
+      return;
+    }
+    if (!isPhotoImportConfigured()) {
+      jsonResponse(res, 503, {
+        error: 'Der Foto-Import ist auf diesem Server nicht eingerichtet (GEMINI_API_KEY fehlt).',
+      });
+      return;
+    }
+    if (batchPhotoImportJobs.hasRunningJob()) {
+      jsonResponse(res, 409, { error: 'Es läuft bereits ein Batch-Import. Bitte warte, bis er abgeschlossen ist.' });
+      return;
+    }
+
+    let photos;
+    try {
+      // Base64 inflates each image by ~1/3; allow a full batch of max-size photos.
+      const payload = await parseJsonBody(req, MAX_BATCH_PHOTOS * Math.ceil(MAX_UPLOAD_BYTES * 1.4) + 64 * 1024);
+      const rawPhotos = Array.isArray(payload?.photos) ? payload.photos : [];
+      if (rawPhotos.length === 0) {
+        jsonResponse(res, 400, { error: 'Bitte übergib mindestens ein Foto.' });
+        return;
+      }
+      if (rawPhotos.length > MAX_BATCH_PHOTOS) {
+        jsonResponse(res, 400, { error: `Maximal ${MAX_BATCH_PHOTOS} Fotos pro Batch.` });
+        return;
+      }
+      photos = rawPhotos.map((entry, index) => {
+        try {
+          const image = validateImageUpload(entry);
+          return {
+            fileName: String(entry?.filename ?? '').trim() || `Foto ${index + 1}`,
+            ext: image.ext,
+            mime: image.mime,
+            buffer: image.buffer,
+          };
+        } catch (error) {
+          throw new Error(`Foto ${index + 1}: ${error.message}`);
+        }
+      });
+    } catch (error) {
+      jsonResponse(res, 400, { error: error.message });
+      return;
+    }
+
+    const proto = (req.headers['x-forwarded-proto'] || 'http').toString().split(',')[0].trim();
+    const host = req.headers.host ?? `localhost:${port}`;
+    const job = batchPhotoImportJobs.startJob({
+      photos,
+      createdBy: { id: user.id, name: user.name },
+      context: {
+        createdBy: { id: user.id, name: user.name },
+        baseUrl: `${proto}://${host}`,
+      },
+    });
+    jsonResponse(res, 202, { job });
+    return;
+  }
+
+  // GET /api/admin/recipes/import/photos - List batch import jobs (admin only)
+  if (req.method === 'GET' && req.url === '/api/admin/recipes/import/photos') {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+    const data = batchPhotoImportJobs.listJobs();
+    jsonResponse(res, 200, { data, total: data.length });
+    return;
+  }
+
+  // GET /api/admin/recipes/import/photos/:id - Progress of one batch job (admin only)
+  if (req.method === 'GET' && req.url?.match(/^\/api\/admin\/recipes\/import\/photos\/[^/]+$/)) {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+    const jobId = decodeURIComponent(req.url.split('/')[6]);
+    const job = batchPhotoImportJobs.getJob(jobId);
+    if (!job) {
+      jsonResponse(res, 404, { error: 'Batch-Import nicht gefunden.' });
+      return;
+    }
+    jsonResponse(res, 200, { job });
     return;
   }
 

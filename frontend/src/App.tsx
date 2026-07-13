@@ -13,6 +13,7 @@ import { HomePage } from './pages/HomePage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { SignInPage } from './pages/SignInPage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { BatchImportPage } from './pages/BatchImportPage';
 import { WeekPlanPage } from './pages/WeekPlanPage';
 import { ImpressumPage } from './pages/ImpressumPage';
 import { DatenschutzPage } from './pages/DatenschutzPage';
@@ -63,6 +64,14 @@ function App() {
                   element={(
                     <RequireAuth>
                       <AdminDashboard />
+                    </RequireAuth>
+                  )}
+                />
+                <Route
+                  path="/admin/batch-import"
+                  element={(
+                    <RequireAuth>
+                      <BatchImportPage />
                     </RequireAuth>
                   )}
                 />

@@ -284,6 +284,43 @@ export interface ImportRecipeResponse {
   source: string;
 }
 
+// Batch Photo Import Types (admin only)
+export const MAX_BATCH_IMPORT_PHOTOS = 10;
+
+export type BatchImportItemStatus = 'PENDING' | 'PROCESSING' | 'CREATED' | 'NO_RECIPE' | 'FAILED';
+export type BatchImportJobStatus = 'RUNNING' | 'COMPLETED';
+
+export interface BatchImportItem {
+  index: number;
+  fileName: string;
+  status: BatchImportItemStatus;
+  error?: string;
+  recipe?: { id: string; slug: string; title: string };
+}
+
+export interface BatchImportJob {
+  id: string;
+  status: BatchImportJobStatus;
+  createdAt: string;
+  finishedAt: string | null;
+  createdBy: { id: string; name: string };
+  total: number;
+  processed: number;
+  created: number;
+  noRecipe: number;
+  failed: number;
+  items: BatchImportItem[];
+}
+
+export interface BatchImportJobResponse {
+  job: BatchImportJob;
+}
+
+export interface BatchImportJobListResponse {
+  data: BatchImportJob[];
+  total: number;
+}
+
 // Error Types
 export interface ApiError {
   message: string;
@@ -314,6 +351,15 @@ const API_BASE_URL = inferApiBaseUrl();
 /** Public backend base URL, e.g. for links that must bypass the SPA. */
 export function getApiBaseUrl(): string {
   return API_BASE_URL;
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error(`„${file.name}“ konnte nicht gelesen werden.`));
+    reader.readAsDataURL(file);
+  });
 }
 
 class ApiClient {
@@ -877,6 +923,44 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  // ============================================================================
+  // Batch Photo Import Endpoints (admin only)
+  // ============================================================================
+
+  /**
+   * POST /api/admin/recipes/import/photos
+   * Start a batch photo import: each photo goes through Gemini server-side
+   * and every recognized recipe is created as an unpublished draft.
+   */
+  async startBatchPhotoImport(files: File[]): Promise<BatchImportJobResponse> {
+    const photos = await Promise.all(
+      files.map(async (file) => ({
+        filename: file.name,
+        data: await readFileAsDataUrl(file),
+      })),
+    );
+    return this.request<BatchImportJobResponse>('/api/admin/recipes/import/photos', {
+      method: 'POST',
+      body: JSON.stringify({ photos }),
+    });
+  }
+
+  /**
+   * GET /api/admin/recipes/import/photos
+   * List batch import jobs with their progress.
+   */
+  async getBatchImportJobs(): Promise<BatchImportJobListResponse> {
+    return this.request<BatchImportJobListResponse>('/api/admin/recipes/import/photos');
+  }
+
+  /**
+   * GET /api/admin/recipes/import/photos/:id
+   * Progress of a single batch import job.
+   */
+  async getBatchImportJob(id: string): Promise<BatchImportJobResponse> {
+    return this.request<BatchImportJobResponse>(`/api/admin/recipes/import/photos/${encodeURIComponent(id)}`);
   }
 
   // ============================================================================
