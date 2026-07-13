@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { createServer } from 'node:http';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { createReadStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
@@ -12,6 +12,8 @@ import {
   WEEK_DAYS,
   aggregateWeekPlanIngredients,
   createEmptyWeekPlan,
+  isWeekDay,
+  type PlannedMeal,
 } from './src/weekplan.mts';
 import {
   extractRecipeFromPhoto,
@@ -20,6 +22,7 @@ import {
 import {
   MAX_BATCH_PHOTOS,
   createBatchPhotoImportJobs,
+  type BatchPhoto,
 } from './src/batchPhotoImport.mts';
 import {
   extractRecipeFromHtml,
@@ -49,6 +52,20 @@ import {
   resolveSession,
 } from './src/sessions.mts';
 import { createMetricsRecorder, resolveRequestId } from './src/observability.mts';
+import type { BackupUploadEntry } from './src/backup.mts';
+import type { ImportedRecipe } from './src/recipeImport.mts';
+import type { ValidatedImageUpload } from './src/uploads.mts';
+import type {
+  Category,
+  Rating,
+  Recipe,
+  RecipeCreator,
+  Role,
+  SessionEntry,
+  StateStore,
+  User,
+  WeekPlan,
+} from './src/types.mts';
 
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigin = process.env.CORS_ORIGIN;
@@ -58,11 +75,11 @@ const DATA_DIR = process.env.DATA_DIR ?? './.data';
 const UPLOADS_DIR = resolve(DATA_DIR, 'uploads');
 // With DATABASE_URL the state lives in Postgres (Prisma); without it the
 // JSON file store keeps local development and tests dependency-free.
-const store = process.env.DATABASE_URL
+const store: StateStore = process.env.DATABASE_URL
   ? await createPrismaStore(process.env.DATABASE_URL)
   : createStore(resolve(DATA_DIR, 'store.json'));
 
-const DEFAULT_CATEGORIES = [
+const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat_1', name: 'Cooking', slug: 'cooking', description: 'Hauptgerichte und Kochrezepte', icon: '🍳' },
   { id: 'cat_2', name: 'Baking', slug: 'baking', description: 'Backwaren und Desserts', icon: '🧁' },
   { id: 'cat_3', name: 'Barbeque', slug: 'barbeque', description: 'Grillen und BBQ', icon: '🍖' },
@@ -74,14 +91,14 @@ const DEFAULT_CATEGORIES = [
 // Hydrate state from the store (survives restarts); fall back to seed data
 // on first run or an unreadable store.
 const loadedState = await store.load();
-const users = loadedState?.users ?? new Map();
-const sessions = loadedState?.sessions ?? new Map();
-const refreshSessions = loadedState?.refreshSessions ?? new Map();
-const recipeStore = loadedState?.recipeStore ?? [...recipes];
-const ratingsStore = loadedState?.ratingsStore ?? new Map(); // recipeId -> Map<userId, rating>
-const categoriesStore = loadedState?.categoriesStore ?? [...DEFAULT_CATEGORIES];
-const favoritesStore = loadedState?.favoritesStore ?? new Map(); // userId -> Set<recipeId>
-const weekPlanStore = loadedState?.weekPlanStore ?? createEmptyWeekPlan(); // day -> [{ recipeId, servings }]
+const users = loadedState?.users ?? new Map<string, User>();
+const sessions = loadedState?.sessions ?? new Map<string, SessionEntry>();
+const refreshSessions = loadedState?.refreshSessions ?? new Map<string, SessionEntry>();
+const recipeStore: Recipe[] = loadedState?.recipeStore ?? [...recipes];
+const ratingsStore = loadedState?.ratingsStore ?? new Map<string, Map<string, Rating>>(); // recipeId -> Map<userId, rating>
+const categoriesStore: Category[] = loadedState?.categoriesStore ?? [...DEFAULT_CATEGORIES];
+const favoritesStore = loadedState?.favoritesStore ?? new Map<string, Set<string>>(); // userId -> Set<recipeId>
+const weekPlanStore: WeekPlan = loadedState?.weekPlanStore ?? createEmptyWeekPlan(); // day -> [{ recipeId, servings }]
 
 const persister = createDebouncedPersister(
   store,
@@ -97,7 +114,12 @@ const metrics = createMetricsRecorder();
 // digitized in one go and published recipe by recipe afterwards.
 const BATCH_IMPORT_TAG = 'KI-Import';
 
-const batchPhotoImportJobs = createBatchPhotoImportJobs({
+interface BatchImportContext {
+  createdBy: RecipeCreator;
+  baseUrl: string;
+}
+
+const batchPhotoImportJobs = createBatchPhotoImportJobs<BatchImportContext>({
   extractRecipe: (photo) => extractRecipeFromPhoto({
     mediaType: photo.mime,
     base64Data: photo.buffer.toString('base64'),
@@ -113,7 +135,7 @@ const batchPhotoImportJobs = createBatchPhotoImportJobs({
 
     const now = new Date().toISOString();
     const title = recipe.title || 'Unbenanntes Rezept';
-    const draft = {
+    const draft: Recipe = {
       id: `r_${randomBytes(8).toString('hex')}`,
       slug: uniqueSlug(title),
       title,
@@ -141,7 +163,15 @@ const batchPhotoImportJobs = createBatchPhotoImportJobs({
 // Beim Testlauf (node --test) bleibt stdout für den TAP-Report reserviert.
 const requestLoggingEnabled = !process.env.NODE_TEST_CONTEXT;
 
-function logRequest({ requestId, method, path, statusCode, durationMs }) {
+interface RequestLogEntry {
+  requestId: string;
+  method: string | undefined;
+  path: string | undefined;
+  statusCode: number;
+  durationMs: number;
+}
+
+function logRequest({ requestId, method, path, statusCode, durationMs }: RequestLogEntry): void {
   if (!requestLoggingEnabled) return;
   console.log(JSON.stringify({
     level: statusCode >= 500 ? 'error' : 'info',
@@ -163,7 +193,13 @@ const LOGIN_WINDOW_MS = Number(process.env.LOGIN_WINDOW_MS ?? 10 * 60 * 1000);
 const loginLimiter = createRateLimiter({ maxFailures: LOGIN_MAX_FAILURES, windowMs: LOGIN_WINDOW_MS });
 const accountLimiter = createRateLimiter({ maxFailures: LOGIN_MAX_FAILURES * 3, windowMs: LOGIN_WINDOW_MS });
 
-function clientIp(req) {
+function errorMessage(error: unknown): string {
+  // Every throw in this codebase is `new Error(...)`; anything else is
+  // stringified rather than crashing the error path itself.
+  return error instanceof Error ? error.message : String(error);
+}
+
+function clientIp(req: IncomingMessage): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
     return String(forwarded).split(',')[0].trim();
@@ -171,34 +207,36 @@ function clientIp(req) {
   return req.socket?.remoteAddress ?? 'unknown';
 }
 
-const ROLE_RANK = { GUEST: 0, MEMBER: 1, EDITOR: 2, ADMIN: 3 };
+const ROLE_RANK: Record<Role, number> = { GUEST: 0, MEMBER: 1, EDITOR: 2, ADMIN: 3 };
 const VALID_ROLES = Object.keys(ROLE_RANK);
 const VALID_RECIPE_STATUSES = new Set(['DRAFT', 'PUBLISHED', 'ARCHIVED']);
 
-function hasMinRole(user, role) {
+function hasMinRole(user: User | null | undefined, role: Role): user is User {
   return !!user && (ROLE_RANK[user.role] ?? -1) >= (ROLE_RANK[role] ?? Infinity);
 }
 
-function isPublicRecipe(recipe) {
+function isPublicRecipe(recipe: Recipe): boolean {
   return (recipe.status ?? 'PUBLISHED') === 'PUBLISHED';
 }
 
-function canViewRecipe(recipe, requester) {
+function canViewRecipe(recipe: Recipe, requester: User | null | undefined): boolean {
   return isPublicRecipe(recipe) || hasMinRole(requester, 'EDITOR');
 }
 
-function findRecipeByIdOrSlug(idOrSlug) {
+function findRecipeByIdOrSlug(idOrSlug: string): Recipe | null {
   return recipeStore.find(
     (entry) => entry.id === idOrSlug || (entry.slug ?? toSlug(entry.title)) === idOrSlug,
   ) ?? null;
 }
 
-function findViewableRecipe(idOrSlug, requester) {
+function findViewableRecipe(idOrSlug: string, requester: User | null | undefined): Recipe | null {
   const recipe = findRecipeByIdOrSlug(idOrSlug);
   return recipe && canViewRecipe(recipe, requester) ? recipe : null;
 }
 
-function validateRecipePayload(payload, { partial = false } = {}) {
+// Request bodies are validated at runtime; `any` keeps the field checks below
+// exactly as they were instead of re-encoding them as type guards.
+function validateRecipePayload(payload: any, { partial = false }: { partial?: boolean } = {}): string | null {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return 'Rezeptdaten müssen ein Objekt sein.';
   }
@@ -207,7 +245,7 @@ function validateRecipePayload(payload, { partial = false } = {}) {
     ['title', 'Titel'],
     ['shortDescription', 'Beschreibung'],
     ['category', 'Kategorie'],
-  ]) {
+  ] as Array<[string, string]>) {
     const value = payload[field];
     if ((!partial || value !== undefined) && (typeof value !== 'string' || !value.trim())) {
       return `${label} ist erforderlich.`;
@@ -218,7 +256,7 @@ function validateRecipePayload(payload, { partial = false } = {}) {
     ['servings', 'Portionen', 1],
     ['preparationTime', 'Vorbereitungszeit', 0],
     ['cookingTime', 'Kochzeit', 0],
-  ]) {
+  ] as Array<[string, string, number]>) {
     const value = payload[field];
     if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < minimum)) {
       return `${label} muss eine ganze Zahl ab ${minimum} sein.`;
@@ -267,7 +305,7 @@ function validateRecipePayload(payload, { partial = false } = {}) {
   return null;
 }
 
-function uniqueSlug(title, currentId) {
+function uniqueSlug(title: string, currentId?: string): string {
   const base = toSlug(title) || `rezept-${randomBytes(4).toString('hex')}`;
   let candidate = base;
   let counter = 2;
@@ -278,12 +316,12 @@ function uniqueSlug(title, currentId) {
   return candidate;
 }
 
-function jsonResponse(res, statusCode, payload) {
+function jsonResponse(res: ServerResponse, statusCode: number, payload: unknown): void {
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(payload));
 }
 
-function withCors(req, res) {
+function withCors(req: IncomingMessage, res: ServerResponse): void {
   const requestOrigin = req.headers.origin;
   const origin = resolveCorsOrigin({ requestOrigin, allowedOrigin });
 
@@ -298,7 +336,7 @@ function withCors(req, res) {
   }
 }
 
-function sanitizeUser(user) {
+function sanitizeUser(user: User) {
   return {
     id: user.id,
     name: user.name,
@@ -309,7 +347,7 @@ function sanitizeUser(user) {
   };
 }
 
-function toSlug(value) {
+function toSlug(value: unknown): string {
   return String(value)
     .trim()
     .toLowerCase()
@@ -319,17 +357,17 @@ function toSlug(value) {
     .replace(/^-+|-+$/g, '');
 }
 
-function normalizeDifficulty(value) {
+function normalizeDifficulty(value: unknown): string {
   const normalized = String(value ?? '').trim().toLowerCase();
 
   if (normalized === 'einfach') return 'EINFACH';
   if (normalized === 'mittel') return 'MITTEL';
   if (normalized === 'schwer') return 'SCHWER';
 
-  return ['EINFACH', 'MITTEL', 'SCHWER'].includes(value) ? value : 'MITTEL';
+  return typeof value === 'string' && ['EINFACH', 'MITTEL', 'SCHWER'].includes(value) ? value : 'MITTEL';
 }
 
-function createSession(user) {
+function createSession(user: User) {
   // Cheap housekeeping on every login so the persisted maps stay bounded.
   pruneExpiredSessions(sessions);
   pruneExpiredSessions(refreshSessions);
@@ -346,7 +384,7 @@ function createSession(user) {
   };
 }
 
-function sanitizeRecipe(recipe, requester) {
+function sanitizeRecipe(recipe: Recipe, requester: User | null | undefined): Recipe {
   // Calculate average rating for this recipe
   const recipeRatings = ratingsStore.get(recipe.id);
   let averageRating = 0;
@@ -389,7 +427,9 @@ function sanitizeRecipe(recipe, requester) {
   };
 }
 
-async function parseJsonBody(req, maxBytes = 1024 * 1024) {
+// Body fields stay `any` on purpose: every route validates them at runtime
+// before use, exactly as before the TypeScript migration.
+async function parseJsonBody(req: IncomingMessage, maxBytes = 1024 * 1024): Promise<Record<string, any>> {
   let body = '';
 
   for await (const chunk of req) {
@@ -411,7 +451,7 @@ async function parseJsonBody(req, maxBytes = 1024 * 1024) {
   }
 }
 
-function getBearerToken(req) {
+function getBearerToken(req: IncomingMessage): string | null {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return null;
@@ -420,11 +460,11 @@ function getBearerToken(req) {
   return header.slice('Bearer '.length).trim();
 }
 
-function findUserById(userId) {
+function findUserById(userId: string): User | null {
   return Array.from(users.values()).find((entry) => entry.id === userId) ?? null;
 }
 
-function authenticateRequest(req) {
+function authenticateRequest(req: IncomingMessage): User | null {
   const token = getBearerToken(req);
   if (!token) {
     return null;
@@ -434,7 +474,7 @@ function authenticateRequest(req) {
   return userId ? findUserById(userId) : null;
 }
 
-function seedUser({ name, email, role, password }) {
+function seedUser({ name, email, role, password }: { name: string; email: string; role: Role; password: string }): void {
   const normalizedEmail = String(email).trim().toLowerCase();
   if (users.has(normalizedEmail)) {
     return;
@@ -503,7 +543,7 @@ function seedDefaultUsers() {
   // { name, email, password, role? } objects, e.g.
   // SEED_USERS='[{"name":"Chelly","email":"c@example.com","password":"...","role":"EDITOR"}]'
   if (process.env.SEED_USERS) {
-    let entries;
+    let entries: any;
     try {
       entries = JSON.parse(process.env.SEED_USERS);
     } catch {
@@ -691,9 +731,9 @@ const server = createServer(async (req, res) => {
       }
 
       const user = users.get(normalizedEmail);
-      const result = user ? verifyPassword(user, String(password ?? '')) : { valid: false };
+      const result = user ? verifyPassword(user, String(password ?? '')) : { valid: false, needsRehash: false };
 
-      if (!result.valid) {
+      if (!user || !result.valid) {
         loginLimiter.recordFailure(ipKey);
         accountLimiter.recordFailure(normalizedEmail);
         jsonResponse(res, 401, { error: 'Ungültige Anmeldedaten.' });
@@ -718,7 +758,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, session);
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -742,7 +782,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, session);
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -838,7 +878,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 201, sanitizeRecipe(newRecipe, user));
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -874,11 +914,11 @@ const server = createServer(async (req, res) => {
       }
 
       // Store or update rating
-      if (!ratingsStore.has(recipe.id)) {
-        ratingsStore.set(recipe.id, new Map());
+      let recipeRatings = ratingsStore.get(recipe.id);
+      if (!recipeRatings) {
+        recipeRatings = new Map();
+        ratingsStore.set(recipe.id, recipeRatings);
       }
-
-      const recipeRatings = ratingsStore.get(recipe.id);
       recipeRatings.set(user.id, {
         id: `rating_${randomBytes(8).toString('hex')}`,
         userId: user.id,
@@ -902,7 +942,7 @@ const server = createServer(async (req, res) => {
       });
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -937,7 +977,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, userRating);
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -972,7 +1012,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 204, null);
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -998,8 +1038,8 @@ const server = createServer(async (req, res) => {
 
     const now = new Date().toISOString();
     const title = `${recipe.title} (Variante)`;
-    const copy = {
-      ...JSON.parse(JSON.stringify(recipe)),
+    const copy: Recipe = {
+      ...(JSON.parse(JSON.stringify(recipe)) as Recipe),
       id: `r_${randomBytes(8).toString('hex')}`,
       title,
       status: 'PUBLISHED',
@@ -1036,10 +1076,11 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    if (!favoritesStore.has(user.id)) {
-      favoritesStore.set(user.id, new Set());
+    let userFavorites = favoritesStore.get(user.id);
+    if (!userFavorites) {
+      userFavorites = new Set();
+      favoritesStore.set(user.id, userFavorites);
     }
-    const userFavorites = favoritesStore.get(user.id);
 
     if (req.method === 'PUT') {
       userFavorites.add(recipe.id);
@@ -1077,7 +1118,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, sanitizeRecipe(recipe, user));
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1117,7 +1158,7 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      const newCategory = {
+      const newCategory: Category = {
         id: `cat_${randomBytes(8).toString('hex')}`,
         name: String(name).trim(),
         slug,
@@ -1132,7 +1173,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 201, newCategory);
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1171,7 +1212,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, category);
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1200,7 +1241,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 204, null);
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1308,7 +1349,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, sanitizeRecipe(recipe, user));
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1352,7 +1393,7 @@ const server = createServer(async (req, res) => {
   // Week Plan Endpoints (one shared plan for the whole family)
   // ============================================================================
 
-  const weekPlanRecipeSummary = (recipe) => ({
+  const weekPlanRecipeSummary = (recipe: Recipe) => ({
     id: recipe.id,
     slug: recipe.slug ?? toSlug(recipe.title),
     title: recipe.title,
@@ -1365,7 +1406,7 @@ const server = createServer(async (req, res) => {
   // shopping list of every planned meal. Public like the per-recipe Bring
   // pages, because Bring's crawler fetches it unauthenticated.
   if (req.method === 'GET' && req.url?.startsWith('/api/weekplan/bring')) {
-    const entries = [];
+    const entries: PlannedMeal[] = [];
     for (const day of WEEK_DAYS) {
       for (const entry of weekPlanStore[day]) {
         const recipe = recipeStore.find((r) => r.id === entry.recipeId);
@@ -1399,13 +1440,14 @@ const server = createServer(async (req, res) => {
     // GET /api/weekplan - The full plan with recipe summaries. Entries whose
     // recipe was deleted are pruned on read.
     if (req.method === 'GET' && req.url === '/api/weekplan') {
-      const days = {};
+      const days: Record<string, unknown[]> = {};
       for (const day of WEEK_DAYS) {
         weekPlanStore[day] = weekPlanStore[day].filter((entry) =>
           recipeStore.some((recipe) => recipe.id === entry.recipeId));
         days[day] = weekPlanStore[day]
           .map((entry) => ({ entry, recipe: recipeStore.find((r) => r.id === entry.recipeId) }))
-          .filter(({ recipe }) => recipe && canViewRecipe(recipe, user))
+          .filter((item): item is { entry: (typeof item)['entry']; recipe: Recipe } =>
+            Boolean(item.recipe && canViewRecipe(item.recipe, user)))
           .map(({ entry, recipe }) => ({
             recipeId: entry.recipeId,
             servings: entry.servings ?? recipe.servings,
@@ -1421,7 +1463,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && req.url?.match(/^\/api\/weekplan\/[^/]+$/)) {
       try {
         const day = req.url.split('/')[3];
-        if (!WEEK_DAYS.includes(day)) {
+        if (!isWeekDay(day)) {
           jsonResponse(res, 400, { error: 'Unbekannter Wochentag.' });
           return;
         }
@@ -1452,7 +1494,7 @@ const server = createServer(async (req, res) => {
         jsonResponse(res, 200, { day, ...entry });
         return;
       } catch (error) {
-        jsonResponse(res, 400, { error: error.message });
+        jsonResponse(res, 400, { error: errorMessage(error) });
         return;
       }
     }
@@ -1460,7 +1502,7 @@ const server = createServer(async (req, res) => {
     // DELETE /api/weekplan/:day/:recipeId - Remove one planned meal
     if (req.method === 'DELETE' && req.url?.match(/^\/api\/weekplan\/[^/]+\/[^/]+$/)) {
       const [, , , day, recipeId] = req.url.split('/');
-      if (!WEEK_DAYS.includes(day)) {
+      if (!isWeekDay(day)) {
         jsonResponse(res, 400, { error: 'Unbekannter Wochentag.' });
         return;
       }
@@ -1516,16 +1558,16 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    let image;
+    let image: ValidatedImageUpload;
     try {
       const payload = await parseJsonBody(req, Math.ceil(MAX_UPLOAD_BYTES * 1.4) + 1024);
       image = validateImageUpload(payload);
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
 
-    let recipe;
+    let recipe: ImportedRecipe | null;
     try {
       recipe = await extractRecipeFromPhoto({
         mediaType: contentTypeForExt(image.ext),
@@ -1564,7 +1606,7 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      let response;
+      let response: Response;
       try {
         response = await fetch(url, {
           signal: AbortSignal.timeout(10_000),
@@ -1594,7 +1636,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, { recipe, source: url });
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1611,7 +1653,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const recipeCountsByUserId = new Map();
+    const recipeCountsByUserId = new Map<string, number>();
     for (const recipe of recipeStore) {
       const ownerId = recipe.createdBy?.id;
       if (!ownerId) continue;
@@ -1658,7 +1700,7 @@ const server = createServer(async (req, res) => {
 
       const credential = hashPassword(String(password));
       const now = new Date().toISOString();
-      const user = {
+      const user: User = {
         id: `user_${randomBytes(8).toString('hex')}`,
         name: String(name).trim(),
         email: normalizedEmail,
@@ -1675,7 +1717,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 201, sanitizeUser(user));
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1718,7 +1760,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, sanitizeUser(targetUser));
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1753,7 +1795,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 200, sanitizeUser(targetUser));
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1791,7 +1833,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    let photos;
+    let photos: BatchPhoto[];
     try {
       // Base64 inflates each image by ~1/3; allow a full batch of max-size photos.
       const payload = await parseJsonBody(req, MAX_BATCH_PHOTOS * Math.ceil(MAX_UPLOAD_BYTES * 1.4) + 64 * 1024);
@@ -1804,7 +1846,7 @@ const server = createServer(async (req, res) => {
         jsonResponse(res, 400, { error: `Maximal ${MAX_BATCH_PHOTOS} Fotos pro Batch.` });
         return;
       }
-      photos = rawPhotos.map((entry, index) => {
+      photos = rawPhotos.map((entry: any, index: number) => {
         try {
           const image = validateImageUpload(entry);
           return {
@@ -1814,11 +1856,11 @@ const server = createServer(async (req, res) => {
             buffer: image.buffer,
           };
         } catch (error) {
-          throw new Error(`Foto ${index + 1}: ${error.message}`);
+          throw new Error(`Foto ${index + 1}: ${errorMessage(error)}`);
         }
       });
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
 
@@ -1875,7 +1917,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const uploads = [];
+    const uploads: BackupUploadEntry[] = [];
     try {
       for (const fileName of readdirSync(UPLOADS_DIR)) {
         try {
@@ -1959,7 +2001,7 @@ const server = createServer(async (req, res) => {
       });
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }
@@ -1990,7 +2032,7 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 201, { url: `${proto}://${host}/uploads/${fileName}` });
       return;
     } catch (error) {
-      jsonResponse(res, 400, { error: error.message });
+      jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
   }

@@ -4,6 +4,15 @@
 
 import type { Ingredient, Recipe } from './types.mts';
 
+/**
+ * What the Bring! export actually needs from a recipe — the week-plan
+ * shopping list passes a synthetic object with only these fields.
+ */
+export type BringRecipe = Pick<
+  Recipe,
+  'title' | 'servings' | 'preparationTime' | 'cookingTime' | 'img' | 'ingredients'
+> & { shortDescription?: string };
+
 export interface RecipeJsonLd {
   '@context': 'https://schema.org';
   '@type': 'Recipe';
@@ -34,7 +43,7 @@ export function formatIngredientLine(ingredient: Ingredient, scale: number): str
   return parts.filter(Boolean).join(' ');
 }
 
-function resolveServings(recipe: Recipe, servings: string | number | undefined): number {
+function resolveServings(recipe: BringRecipe, servings: string | number | undefined): number {
   const requested = Number(servings);
   if (Number.isFinite(requested) && requested >= 1) {
     return Math.round(requested);
@@ -42,7 +51,7 @@ function resolveServings(recipe: Recipe, servings: string | number | undefined):
   return Math.max(1, Number(recipe.servings) || 1);
 }
 
-export function buildRecipeJsonLd(recipe: Recipe, { servings }: BringExportOptions = {}): RecipeJsonLd {
+export function buildRecipeJsonLd(recipe: BringRecipe, { servings }: BringExportOptions = {}): RecipeJsonLd {
   const targetServings = resolveServings(recipe, servings);
   const scale = targetServings / Math.max(Number(recipe.servings) || 1, 1);
 
@@ -78,7 +87,7 @@ function escapeHtml(value: unknown): string {
     .replaceAll('"', '&quot;');
 }
 
-export function renderBringHtml(recipe: Recipe, { servings }: BringExportOptions = {}): string {
+export function renderBringHtml(recipe: BringRecipe, { servings }: BringExportOptions = {}): string {
   const jsonLd = buildRecipeJsonLd(recipe, { servings });
   // Escaping "<" keeps user-supplied strings (titles, ingredient names) from
   // closing the script tag and injecting markup into the page.

@@ -1,15 +1,16 @@
 import { recipes } from '../data/recipes.mts';
+import type { Recipe } from '../src/types.mts';
 
 const defaultApiBaseUrl = 'https://chellys-kitchen-api.onrender.com';
 const defaultEmail = 'demo@chellys-kitchen.local';
 const defaultPassword = 'demo1234';
 
-export function selectMissingRecipes(localRecipes, remoteRecipes) {
+export function selectMissingRecipes(localRecipes: Recipe[], remoteRecipes: Array<Pick<Recipe, 'slug'>>): Recipe[] {
   const remoteSlugs = new Set(remoteRecipes.map((recipe) => recipe.slug));
   return localRecipes.filter((recipe) => recipe.slug && !remoteSlugs.has(recipe.slug));
 }
 
-function toApiPayload(recipe) {
+function toApiPayload(recipe: Recipe) {
   return {
     title: recipe.title,
     shortDescription: recipe.shortDescription,
@@ -26,7 +27,9 @@ function toApiPayload(recipe) {
   };
 }
 
-async function requestJson(url, options = {}) {
+// API responses are used loosely here (accessToken, data, slug) — the
+// server owns their shapes.
+async function requestJson(url: string, options: RequestInit = {}): Promise<any> {
   const response = await fetch(url, options);
 
   if (!response.ok) {
@@ -57,7 +60,7 @@ export async function uploadMissingRecipes({
     headers: { Authorization: `Bearer ${login.accessToken}` },
   });
   const missingRecipes = selectMissingRecipes(localRecipes, remote.data ?? []);
-  const uploaded = [];
+  const uploaded: any[] = [];
 
   for (const recipe of missingRecipes) {
     const created = await requestJson(`${apiBaseUrl}/api/recipes`, {

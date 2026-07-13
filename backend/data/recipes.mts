@@ -1,4 +1,6 @@
-export const recipes = [
+import type { Recipe } from '../src/types.mts';
+
+export const recipes: Recipe[] = [
   {
     id: 'r1',
     img: '/recipe-images/pasta-spinat-lachs.svg',

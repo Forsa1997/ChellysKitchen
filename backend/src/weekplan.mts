@@ -7,6 +7,10 @@ import type { Ingredient, Recipe, WeekDay, WeekPlan, WeekPlanEntry } from './typ
 
 export const WEEK_DAYS: readonly WeekDay[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+export function isWeekDay(value: string): value is WeekDay {
+  return (WEEK_DAYS as readonly string[]).includes(value);
+}
+
 export function createEmptyWeekPlan(): WeekPlan {
   const plan = {} as WeekPlan;
   for (const day of WEEK_DAYS) {

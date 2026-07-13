@@ -1,6 +1,6 @@
-import { deserializeState, serializeState, type SerializedState } from './persistence.mts';
+import { deserializeState, serializeState, type PersistableState, type SerializedState } from './persistence.mts';
 import { MAX_UPLOAD_BYTES } from './uploads.mts';
-import type { Category, Rating, Recipe, ServerState, User, WeekPlan } from './types.mts';
+import type { Category, Rating, Recipe, User, WeekPlan } from './types.mts';
 
 export const BACKUP_TYPE = 'chellys-kitchen-backup';
 export const BACKUP_VERSION = 1;
@@ -36,7 +36,7 @@ export interface BackupPayload {
  * `uploads` is a list of `{ fileName, data }` entries with base64-encoded
  * image bytes so the backup also covers uploaded recipe photos.
  */
-export function createExportPayload(state: ServerState, uploads: BackupUploadEntry[] = []): BackupPayload {
+export function createExportPayload(state: PersistableState, uploads: BackupUploadEntry[] = []): BackupPayload {
   const serialized = serializeState({
     ...state,
     sessions: new Map(),

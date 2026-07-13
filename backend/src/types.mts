@@ -82,8 +82,10 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
-  description?: string;
-  icon?: string;
+  description?: string | null;
+  icon?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface User {
@@ -101,6 +103,7 @@ export interface User {
 
 export interface Rating {
   stars: number;
+  id?: string;
   userId?: string;
   recipeId?: string;
   createdAt?: string;
@@ -116,7 +119,8 @@ export type SessionMap = Map<string, SessionEntry>;
 
 export interface WeekPlanEntry {
   recipeId: string;
-  servings: number | null;
+  /** undefined only in-memory (recipe without base servings); persisted as null. */
+  servings: number | null | undefined;
 }
 
 export type WeekPlan = Record<WeekDay, WeekPlanEntry[]>;
