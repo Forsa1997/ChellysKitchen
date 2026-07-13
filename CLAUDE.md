@@ -34,14 +34,15 @@ Keep Testing and QA distinct: Testing defines what must be proven before code; Q
 
 ## Project Overview
 
-Chellys Kitchen is a family recipe app with a deliberately slim Node.js backend (`backend/server.mjs`) and a React frontend (Vite + Material UI). The server works on in-memory structures; persistence is pluggable: a JSON file store by default (dev/tests, no database needed) or Postgres via Prisma when `DATABASE_URL` is set (production on Render).
+Chellys Kitchen is a family recipe app with a deliberately slim Node.js backend (`backend/server.mts`) and a React frontend (Vite + Material UI). The server works on in-memory structures; persistence is pluggable: a JSON file store by default (dev/tests, no database needed) or Postgres via Prisma when `DATABASE_URL` is set (production on Render).
 
 ## Development Commands
 
 ### Backend (in `backend/` directory)
 - `npm run dev` - Start development server with --watch (http://localhost:4000)
-- `npm run start` - Run the server (same entry point, `server.mjs`)
+- `npm run start` - Run the server (same entry point, `server.mts`)
 - `npm test` - Run all backend tests (node:test, incl. end-to-end smoke tests that boot the real server)
+- `npm run typecheck` - `tsc --noEmit` over the whole backend (strict)
 
 ### Frontend (in `frontend/` directory)
 - `npm run dev` - Start Vite dev server
@@ -53,22 +54,22 @@ Chellys Kitchen is a family recipe app with a deliberately slim Node.js backend 
 
 ### Backend - Single-file server with extracted modules
 
-`backend/server.mjs` is a plain `node:http` server (no npm dependencies). Testable logic lives in `backend/src/*.mjs` modules, each with a sibling `*.test.mjs`:
+`backend/server.mts` is a plain `node:http` server (no runtime npm dependencies). The whole backend is TypeScript executed directly by Node's native type stripping (Node >= 22.18, no build step), which limits the code to erasable TS syntax — no enums, namespaces or parameter properties (`erasableSyntaxOnly` in `tsconfig.json` enforces this). `tsc` is typecheck-only (`npm run typecheck`); shared domain types live in `backend/src/types.mts`. Testable logic lives in `backend/src/*.mts` modules, each with a sibling `*.test.mts`:
 
-- `queryRecipes.mjs` - shared list filtering (q incl. ingredients, category, difficulty, status, maxTotalMinutes, favorites) + pagination/sorting
-- `randomRecipe.mjs` - random pick over ALL matching recipes (`GET /api/recipes/random`, `exclude` param)
-- `persistence.mjs` - JSON store serialization, debounced writes (sync file store or async Postgres store)
-- `prismaStore.mjs` - Postgres persistence via Prisma (active when `DATABASE_URL` is set): loads the full state at boot, full-replace sync on write, uploads mirrored as `Bytes` and rematerialized to disk on boot; pure row mappers are unit-tested without a DB
-- `backup.mjs` - full export/import payloads incl. uploaded images (admin endpoints)
-- `bringExport.mjs` - schema.org/Recipe JSON-LD page for the Bring! shopping-list import (`GET /api/recipes/:slug/bring`, `servings` param scales amounts)
-- `weekplan.mjs` - shared family week plan (day -> planned recipes + servings) and ingredient aggregation for the weekly Bring! list (`/api/weekplan`, public `/api/weekplan/bring`)
-- `recipeImport.mjs` - import recipes from external sites: fetch server-side, extract schema.org JSON-LD, parse ingredient lines/durations; falls back to plain HTML parsing (microdata `itemprop`s, then "Zutaten"/"Zubereitung"-style headings) for pages without JSON-LD; SSRF guard (`POST /api/recipes/import`, `IMPORT_ALLOW_PRIVATE=1` only for tests)
-- `photoImport.mjs` - import recipes from a photo (cookbook page, handwritten note) via Google Gemini with structured output (`POST /api/recipes/import/photo`); enabled by `GEMINI_API_KEY`, 503 without the key. Model overridable via `PHOTO_IMPORT_MODEL`; tests mock the API via `GEMINI_BASE_URL`
-- `batchPhotoImport.mjs` - admin-only batch photo import (`POST/GET /api/admin/recipes/import/photos[/:id]`, frontend at `/admin/batch-import`): up to 10 photos per job, processed sequentially via `photoImport.mjs`; every recognized recipe becomes an unpublished DRAFT tagged `KI-Import` with the source photo as its image, for review/publish in the admin dashboard. Jobs (progress state) are in-memory only, one running job at a time (409)
-- `passwords.mjs` - scrypt hashing, transparent migration of legacy SHA-256 hashes on login
-- `rateLimit.mjs` - sliding-window limiter for failed logins (per IP+account and per account, in-memory; `LOGIN_MAX_FAILURES`/`LOGIN_WINDOW_MS` tunable for tests)
-- `sessions.mjs` - token maps with TTL (access 1d, refresh 30d, rotation on refresh)
-- `uploads.mjs`, `cors.mjs` - image upload validation, CORS origin resolution
+- `queryRecipes.mts` - shared list filtering (q incl. ingredients, category, difficulty, status, maxTotalMinutes, favorites) + pagination/sorting
+- `randomRecipe.mts` - random pick over ALL matching recipes (`GET /api/recipes/random`, `exclude` param)
+- `persistence.mts` - JSON store serialization, debounced writes (sync file store or async Postgres store)
+- `prismaStore.mts` - Postgres persistence via Prisma (active when `DATABASE_URL` is set): loads the full state at boot, full-replace sync on write, uploads mirrored as `Bytes` and rematerialized to disk on boot; pure row mappers are unit-tested without a DB
+- `backup.mts` - full export/import payloads incl. uploaded images (admin endpoints)
+- `bringExport.mts` - schema.org/Recipe JSON-LD page for the Bring! shopping-list import (`GET /api/recipes/:slug/bring`, `servings` param scales amounts)
+- `weekplan.mts` - shared family week plan (day -> planned recipes + servings) and ingredient aggregation for the weekly Bring! list (`/api/weekplan`, public `/api/weekplan/bring`)
+- `recipeImport.mts` - import recipes from external sites: fetch server-side, extract schema.org JSON-LD, parse ingredient lines/durations; falls back to plain HTML parsing (microdata `itemprop`s, then "Zutaten"/"Zubereitung"-style headings) for pages without JSON-LD; SSRF guard (`POST /api/recipes/import`, `IMPORT_ALLOW_PRIVATE=1` only for tests)
+- `photoImport.mts` - import recipes from a photo (cookbook page, handwritten note) via Google Gemini with structured output (`POST /api/recipes/import/photo`); enabled by `GEMINI_API_KEY`, 503 without the key. Model overridable via `PHOTO_IMPORT_MODEL`; tests mock the API via `GEMINI_BASE_URL`
+- `batchPhotoImport.mts` - admin-only batch photo import (`POST/GET /api/admin/recipes/import/photos[/:id]`, frontend at `/admin/batch-import`): up to 10 photos per job, processed sequentially via `photoImport.mts`; every recognized recipe becomes an unpublished DRAFT tagged `KI-Import` with the source photo as its image, for review/publish in the admin dashboard. Jobs (progress state) are in-memory only, one running job at a time (409)
+- `passwords.mts` - scrypt hashing, transparent migration of legacy SHA-256 hashes on login
+- `rateLimit.mts` - sliding-window limiter for failed logins (per IP+account and per account, in-memory; `LOGIN_MAX_FAILURES`/`LOGIN_WINDOW_MS` tunable for tests)
+- `sessions.mts` - token maps with TTL (access 1d, refresh 30d, rotation on refresh)
+- `uploads.mts`, `cors.mts` - image upload validation, CORS origin resolution
 
 End-to-end smoke tests in `backend/test/` spawn the real server against a temp `DATA_DIR`.
 

@@ -6,7 +6,7 @@ Die App läuft auf Render, konfiguriert über `render.yaml` (Blueprint):
   Hier leben alle Daten: Rezepte, Benutzer, Bewertungen, Favoriten,
   Wochenplan und hochgeladene Bilder.
 - **chellys-kitchen-api** — Node-Web-Service (Frankfurt), startet
-  `backend/server.mjs`. Beim Start läuft `prisma migrate deploy`, danach
+  `backend/server.mts`. Beim Start läuft `prisma migrate deploy`, danach
   lädt der Server den kompletten Zustand aus Postgres.
 - **chellys-kitchen-web** — statische Site aus `frontend/dist` (globales
   CDN, keine Region nötig).

@@ -1,6 +1,8 @@
 # Chellys Kitchen Backend
 
-Ein bewusst schlanker Node.js-HTTP-Server (`server.mjs`). Persistenz ist
+Ein bewusst schlanker Node.js-HTTP-Server (`server.mts`) in TypeScript —
+Node (>= 22.18) führt die `.mts`-Dateien direkt per nativem Type-Stripping
+aus, ohne Build-Schritt; `tsc` dient nur dem Typecheck. Persistenz ist
 steckbar: ohne `DATABASE_URL` eine JSON-Datei unter `DATA_DIR` (Standard
 `./.data`, Bilder daneben in `uploads/`), mit `DATABASE_URL` PostgreSQL
 über Prisma (Schema in `prisma/`, Migrationen eingecheckt; Bilder liegen
@@ -10,9 +12,10 @@ zurückgeschrieben).
 ## Start
 
 ```bash
-npm run dev    # mit --watch
-npm start      # Produktion
-npm test       # node:test inkl. End-to-End-Smoke-Tests
+npm run dev        # mit --watch
+npm start          # Produktion
+npm test           # node:test inkl. End-to-End-Smoke-Tests
+npm run typecheck  # tsc --noEmit (strict)
 ```
 
 Server-Standard: `http://localhost:4000`

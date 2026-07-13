@@ -126,7 +126,7 @@ Du musst **keine** `DATABASE_URL` manuell setzen. Die Zuordnung passiert im Blue
 2. In Render DB-Verbindungsstring kopieren (Internal/External URL)
 3. Im Backend-Service als Environment Variable setzen, z. B.:
    - `DATABASE_URL=postgres://...`
-4. Backend-Code auf DB umstellen (aktuell nutzt dieses Repo noch lokale Daten in `backend/data/recipes.mjs`)
+4. Backend-Code auf DB umstellen (aktuell nutzt dieses Repo noch lokale Daten in `backend/data/recipes.mts`)
 
 ---
 
