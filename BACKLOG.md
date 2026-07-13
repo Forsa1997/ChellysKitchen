@@ -88,6 +88,11 @@ beschleunigt.
 - [ ] Essensplan-Vorlagen speichern und wiederverwenden
 - [ ] Wochenplan als iCal-Feed exportieren (Familienkalender-Sync)
 
+### Rezeptwelt (3D-Foodtruck-Festival)
+- [ ] „Besucher-Modus": mit Steuerkreuz/Joystick in Ego-Perspektive über den
+      Festivalplatz laufen statt nur um ihn zu orbiten; Trucks öffnen das
+      Rezept beim Herantreten/Antippen
+
 ### Rezeptqualität & Auffindbarkeit
 - [ ] Nährwert-Schätzung (Kalorien/Makros pro Portion)
 - [ ] Vorrats-/Saison-Filter: "Was kann ich aus dem kochen, was ich zuhause habe?"
