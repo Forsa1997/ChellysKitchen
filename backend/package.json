@@ -10,6 +10,7 @@
   ],
   "license": "MIT",
   "main": "server.mts",
+  "type": "module",
   "name": "chellys-kitchen-backend",
   "scripts": {
     "dev": "node --watch server.mts",

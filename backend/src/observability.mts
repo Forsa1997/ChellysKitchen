@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
-export function resolveRequestId(headerValue) {
+export function resolveRequestId(headerValue: unknown): string {
   if (typeof headerValue === 'string' && REQUEST_ID_PATTERN.test(headerValue)) {
     return headerValue;
   }
@@ -13,13 +13,29 @@ export function resolveRequestId(headerValue) {
 // Latenz-Stichprobe begrenzen, damit der Speicher bei langem Betrieb konstant bleibt.
 const MAX_LATENCY_SAMPLES = 1000;
 
-export function createMetricsRecorder() {
+export interface MetricsSnapshot {
+  totalRequests: number;
+  statusCounts: Record<string, number>;
+  errorRate: number;
+  latencyMs: {
+    avg: number;
+    p95: number;
+    max: number;
+  };
+}
+
+export interface MetricsRecorder {
+  record(statusCode: number, durationMs: number): void;
+  snapshot(): MetricsSnapshot;
+}
+
+export function createMetricsRecorder(): MetricsRecorder {
   let totalRequests = 0;
-  const statusCounts = { '1xx': 0, '2xx': 0, '3xx': 0, '4xx': 0, '5xx': 0 };
-  const durations = [];
+  const statusCounts: Record<string, number> = { '1xx': 0, '2xx': 0, '3xx': 0, '4xx': 0, '5xx': 0 };
+  const durations: number[] = [];
 
   return {
-    record(statusCode, durationMs) {
+    record(statusCode: number, durationMs: number): void {
       totalRequests += 1;
 
       const statusClass = `${Math.floor(statusCode / 100)}xx`;
@@ -33,7 +49,7 @@ export function createMetricsRecorder() {
       }
     },
 
-    snapshot() {
+    snapshot(): MetricsSnapshot {
       const sorted = [...durations].sort((a, b) => a - b);
       const sum = sorted.reduce((acc, value) => acc + value, 0);
       const avg = sorted.length ? sum / sorted.length : 0;

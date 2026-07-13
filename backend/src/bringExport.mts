@@ -2,9 +2,27 @@
 // and parses schema.org/Recipe markup from it. This module builds that
 // markup for a recipe so /api/recipes/:slug/bring can serve it.
 
-export function formatIngredientLine(ingredient, scale) {
+import type { Ingredient, Recipe } from './types.mts';
+
+export interface RecipeJsonLd {
+  '@context': 'https://schema.org';
+  '@type': 'Recipe';
+  name: string;
+  recipeYield: string;
+  recipeIngredient: string[];
+  description?: string;
+  totalTime?: string;
+  image?: string;
+}
+
+export interface BringExportOptions {
+  /** Requested portion count; amounts are scaled from the recipe's base servings. */
+  servings?: string | number;
+}
+
+export function formatIngredientLine(ingredient: Ingredient, scale: number): string {
   const amount = Number(ingredient.amount) * scale;
-  const parts = [];
+  const parts: string[] = [];
   if (Number.isFinite(amount) && amount > 0) {
     // Round to 2 decimals but drop trailing zeros ("0.5", not "0.50").
     parts.push(String(Number(amount.toFixed(2))));
@@ -16,7 +34,7 @@ export function formatIngredientLine(ingredient, scale) {
   return parts.filter(Boolean).join(' ');
 }
 
-function resolveServings(recipe, servings) {
+function resolveServings(recipe: Recipe, servings: string | number | undefined): number {
   const requested = Number(servings);
   if (Number.isFinite(requested) && requested >= 1) {
     return Math.round(requested);
@@ -24,11 +42,11 @@ function resolveServings(recipe, servings) {
   return Math.max(1, Number(recipe.servings) || 1);
 }
 
-export function buildRecipeJsonLd(recipe, { servings } = {}) {
+export function buildRecipeJsonLd(recipe: Recipe, { servings }: BringExportOptions = {}): RecipeJsonLd {
   const targetServings = resolveServings(recipe, servings);
   const scale = targetServings / Math.max(Number(recipe.servings) || 1, 1);
 
-  const jsonLd = {
+  const jsonLd: RecipeJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Recipe',
     name: recipe.title,
@@ -52,7 +70,7 @@ export function buildRecipeJsonLd(recipe, { servings } = {}) {
   return jsonLd;
 }
 
-function escapeHtml(value) {
+function escapeHtml(value: unknown): string {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -60,7 +78,7 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;');
 }
 
-export function renderBringHtml(recipe, { servings } = {}) {
+export function renderBringHtml(recipe: Recipe, { servings }: BringExportOptions = {}): string {
   const jsonLd = buildRecipeJsonLd(recipe, { servings });
   // Escaping "<" keeps user-supplied strings (titles, ingredient names) from
   // closing the script tag and injecting markup into the page.

@@ -2,11 +2,28 @@
 // a restart clearing the counters is acceptable, brute-forcing a password
 // is not. Only FAILED attempts count; a successful login resets its key.
 
-export function createRateLimiter({ maxFailures, windowMs }) {
-  // key -> array of failure timestamps (ms), oldest first
-  const failures = new Map();
+export interface RateLimiterOptions {
+  maxFailures: number;
+  windowMs: number;
+}
 
-  const prune = (now) => {
+export interface BlockCheck {
+  blocked: boolean;
+  retryAfterSeconds?: number;
+}
+
+export interface RateLimiter {
+  isBlocked(key: string, now?: number): BlockCheck;
+  recordFailure(key: string, now?: number): void;
+  reset(key: string): void;
+  size(): number;
+}
+
+export function createRateLimiter({ maxFailures, windowMs }: RateLimiterOptions): RateLimiter {
+  // key -> array of failure timestamps (ms), oldest first
+  const failures = new Map<string, number[]>();
+
+  const prune = (now: number): void => {
     for (const [key, timestamps] of failures) {
       const fresh = timestamps.filter((t) => now - t < windowMs);
       if (fresh.length === 0) {
@@ -18,7 +35,7 @@ export function createRateLimiter({ maxFailures, windowMs }) {
   };
 
   return {
-    isBlocked(key, now = Date.now()) {
+    isBlocked(key: string, now: number = Date.now()): BlockCheck {
       const fresh = (failures.get(key) ?? []).filter((t) => now - t < windowMs);
       if (fresh.length < maxFailures) {
         return { blocked: false };
@@ -30,18 +47,18 @@ export function createRateLimiter({ maxFailures, windowMs }) {
       };
     },
 
-    recordFailure(key, now = Date.now()) {
+    recordFailure(key: string, now: number = Date.now()): void {
       prune(now);
       const timestamps = failures.get(key) ?? [];
       timestamps.push(now);
       failures.set(key, timestamps);
     },
 
-    reset(key) {
+    reset(key: string): void {
       failures.delete(key);
     },
 
-    size() {
+    size(): number {
       return failures.size;
     },
   };

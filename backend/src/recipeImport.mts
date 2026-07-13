@@ -3,6 +3,36 @@
 // The server fetches the page (browsers can't, because of CORS), extracts
 // the JSON-LD and maps it onto our recipe shape for the create form.
 
+import type { Ingredient, RecipeStep } from './types.mts';
+
+/** A schema.org/Recipe JSON-LD node; every field is untrusted input. */
+export interface RecipeJsonLdNode {
+  '@type'?: unknown;
+  '@graph'?: unknown;
+  name?: unknown;
+  description?: unknown;
+  prepTime?: unknown;
+  cookTime?: unknown;
+  totalTime?: unknown;
+  recipeYield?: unknown;
+  image?: unknown;
+  recipeIngredient?: unknown;
+  recipeInstructions?: unknown;
+  [key: string]: unknown;
+}
+
+/** The recipe shape handed to the create form (same for JSON-LD and HTML). */
+export interface ImportedRecipe {
+  title: string;
+  shortDescription: string;
+  servings: number;
+  preparationTime: number;
+  cookingTime: number;
+  img?: string;
+  ingredients: Ingredient[];
+  steps: RecipeStep[];
+}
+
 const UNIT_WORDS = new Set([
   'g', 'gramm', 'kg', 'mg',
   'ml', 'l', 'liter',
@@ -13,7 +43,7 @@ const UNIT_WORDS = new Set([
   'scheibe', 'scheiben', 'tasse', 'tassen', 'zweig', 'zweige', 'blatt', 'blätter',
 ]);
 
-const NAMED_ENTITIES = {
+const NAMED_ENTITIES: Record<string, string> = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
   auml: 'ä', ouml: 'ö', uuml: 'ü', Auml: 'Ä', Ouml: 'Ö', Uuml: 'Ü', szlig: 'ß',
   eacute: 'é', egrave: 'è', agrave: 'à', ccedil: 'ç',
@@ -21,27 +51,27 @@ const NAMED_ENTITIES = {
   frac12: '½', frac14: '¼', frac34: '¾',
 };
 
-function decodeEntities(text) {
+function decodeEntities(text: string): string {
   return String(text)
-    .replace(/&#x([0-9a-f]+);/gi, (match, hex) => {
+    .replace(/&#x([0-9a-f]+);/gi, (match, hex: string) => {
       const code = parseInt(hex, 16);
       return code <= 0x10ffff ? String.fromCodePoint(code) : match;
     })
-    .replace(/&#(\d+);/g, (match, dec) => {
+    .replace(/&#(\d+);/g, (match, dec: string) => {
       const code = Number(dec);
       return code <= 0x10ffff ? String.fromCodePoint(code) : match;
     })
-    .replace(/&([a-zA-Z]+\d*);/g, (match, name) => NAMED_ENTITIES[name] ?? match);
+    .replace(/&([a-zA-Z]+\d*);/g, (match, name: string) => NAMED_ENTITIES[name] ?? match);
 }
 
-function isRecipeNode(node) {
+function isRecipeNode(node: unknown): node is RecipeJsonLdNode {
   if (!node || typeof node !== 'object') return false;
-  const type = node['@type'];
+  const type = (node as RecipeJsonLdNode)['@type'];
   if (Array.isArray(type)) return type.includes('Recipe');
   return type === 'Recipe';
 }
 
-function findRecipeNode(node) {
+function findRecipeNode(node: unknown): RecipeJsonLdNode | null {
   if (!node || typeof node !== 'object') return null;
   if (isRecipeNode(node)) return node;
   if (Array.isArray(node)) {
@@ -51,18 +81,19 @@ function findRecipeNode(node) {
     }
     return null;
   }
-  if (Array.isArray(node['@graph'])) {
-    return findRecipeNode(node['@graph']);
+  const graph = (node as RecipeJsonLdNode)['@graph'];
+  if (Array.isArray(graph)) {
+    return findRecipeNode(graph);
   }
   return null;
 }
 
-export function extractRecipeJsonLd(html) {
+export function extractRecipeJsonLd(html: string): RecipeJsonLdNode | null {
   const scripts = String(html).matchAll(
     /<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
   );
   for (const match of scripts) {
-    let parsed;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(match[1].trim());
     } catch {
@@ -74,14 +105,14 @@ export function extractRecipeJsonLd(html) {
   return null;
 }
 
-export function parseIsoDurationToMinutes(value) {
+export function parseIsoDurationToMinutes(value: unknown): number | undefined {
   if (typeof value !== 'string') return undefined;
   const match = value.match(/^P(?:\d+D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:\d+S)?)?$/i);
   if (!match || (match[1] === undefined && match[2] === undefined)) return undefined;
   return Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0);
 }
 
-export function parseIngredientText(text) {
+export function parseIngredientText(text: string): Ingredient {
   const cleaned = decodeEntities(text).replace(/\s+/g, ' ').trim();
 
   // Leading amount: "200", "1,5", "1.5" or a simple fraction like "1/2".
@@ -90,7 +121,7 @@ export function parseIngredientText(text) {
     return { amount: 0, unit: '', name: cleaned };
   }
 
-  let amount;
+  let amount: number;
   const amountText = amountMatch[1];
   if (amountText.includes('/')) {
     const [numerator, denominator] = amountText.split('/').map((part) => Number(part.trim()));
@@ -110,22 +141,22 @@ export function parseIngredientText(text) {
   return { amount, unit, name: rest };
 }
 
-function parseServings(recipeYield) {
+function parseServings(recipeYield: unknown): number {
   const first = Array.isArray(recipeYield) ? recipeYield[0] : recipeYield;
   const match = String(first ?? '').match(/\d+/);
   const servings = match ? Number(match[0]) : NaN;
   return Number.isFinite(servings) && servings >= 1 ? servings : 2;
 }
 
-function parseImage(image) {
-  const first = Array.isArray(image) ? image[0] : image;
-  const url = typeof first === 'object' && first !== null ? first.url : first;
+function parseImage(image: unknown): string | undefined {
+  const first: unknown = Array.isArray(image) ? image[0] : image;
+  const url = typeof first === 'object' && first !== null ? (first as { url?: unknown }).url : first;
   return typeof url === 'string' && /^https?:\/\//.test(url) ? url : undefined;
 }
 
-function flattenInstructions(instructions) {
-  const steps = [];
-  const visit = (node) => {
+function flattenInstructions(instructions: unknown): RecipeStep[] {
+  const steps: string[] = [];
+  const visit = (node: unknown): void => {
     if (!node) return;
     if (Array.isArray(node)) {
       node.forEach(visit);
@@ -137,11 +168,12 @@ function flattenInstructions(instructions) {
       return;
     }
     if (typeof node === 'object') {
-      if (Array.isArray(node.itemListElement)) {
-        visit(node.itemListElement); // HowToSection
+      const entry = node as { itemListElement?: unknown; text?: unknown; name?: unknown };
+      if (Array.isArray(entry.itemListElement)) {
+        visit(entry.itemListElement); // HowToSection
         return;
       }
-      const text = decodeEntities(node.text ?? node.name ?? '').trim();
+      const text = decodeEntities(String(entry.text ?? entry.name ?? '')).trim();
       if (text) steps.push(text);
     }
   };
@@ -149,21 +181,21 @@ function flattenInstructions(instructions) {
   return steps.map((instruction, index) => ({ stepNumber: index + 1, instruction }));
 }
 
-export function mapJsonLdToRecipe(jsonLd) {
+export function mapJsonLdToRecipe(jsonLd: RecipeJsonLdNode): ImportedRecipe {
   const prep = parseIsoDurationToMinutes(jsonLd.prepTime);
   const cook = parseIsoDurationToMinutes(jsonLd.cookTime);
   const total = parseIsoDurationToMinutes(jsonLd.totalTime);
 
   return {
-    title: decodeEntities(jsonLd.name ?? '').trim(),
-    shortDescription: decodeEntities(jsonLd.description ?? '').trim(),
+    title: decodeEntities(String(jsonLd.name ?? '')).trim(),
+    shortDescription: decodeEntities(String(jsonLd.description ?? '')).trim(),
     servings: parseServings(jsonLd.recipeYield),
     preparationTime: prep ?? 0,
     // With only a total time, book it all as cooking time.
     cookingTime: cook ?? (total !== undefined ? Math.max(total - (prep ?? 0), 0) : 0),
     img: parseImage(jsonLd.image),
     ingredients: (Array.isArray(jsonLd.recipeIngredient) ? jsonLd.recipeIngredient : [])
-      .map((line) => parseIngredientText(line))
+      .map((line) => parseIngredientText(String(line)))
       .filter((ingredient) => ingredient.name),
     steps: flattenInstructions(jsonLd.recipeInstructions),
   };
@@ -173,18 +205,18 @@ export function mapJsonLdToRecipe(jsonLd) {
 // Two heuristics, in order: schema.org microdata (itemprop attributes) and
 // content sections under "Zutaten"/"Zubereitung"-style headings.
 
-function stripTags(html) {
+function stripTags(html: string): string {
   return decodeEntities(String(html).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
-function metaContent(html, key) {
+function metaContent(html: string, key: string): string | undefined {
   const tag = html.match(new RegExp(`<meta\\b[^>]*(?:property|name)\\s*=\\s*["']${key}["'][^>]*>`, 'i'))?.[0];
   const content = tag?.match(/content\s*=\s*["']([^"']*)["']/i)?.[1];
   const text = content ? decodeEntities(content).trim() : '';
   return text || undefined;
 }
 
-function microdataValues(html, prop) {
+function microdataValues(html: string, prop: string): string[] {
   const matches = html.matchAll(
     new RegExp(`<([a-z][a-z0-9]*)\\b[^>]*\\bitemprop\\s*=\\s*["']${prop}["'][^>]*>([\\s\\S]*?)<\\/\\1>`, 'gi'),
   );
@@ -192,7 +224,7 @@ function microdataValues(html, prop) {
 }
 
 // Markup between a heading whose text matches `keywords` and the next heading.
-function sectionAfterHeading(html, keywords) {
+function sectionAfterHeading(html: string, keywords: RegExp): string | null {
   const headings = [...html.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi)];
   for (let i = 0; i < headings.length; i++) {
     if (!keywords.test(stripTags(headings[i][1]))) continue;
@@ -203,7 +235,7 @@ function sectionAfterHeading(html, keywords) {
   return null;
 }
 
-function listItems(sectionHtml) {
+function listItems(sectionHtml: string | null): string[] | null {
   const list = sectionHtml?.match(/<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/i);
   if (!list) return null;
   const items = [...list[2].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
@@ -212,7 +244,7 @@ function listItems(sectionHtml) {
   return items.length ? items : null;
 }
 
-function paragraphTexts(sectionHtml) {
+function paragraphTexts(sectionHtml: string | null): string[] | null {
   const items = [...(sectionHtml ?? '').matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
     .map((match) => stripTags(match[1]))
     .filter(Boolean);
@@ -224,7 +256,7 @@ function paragraphTexts(sectionHtml) {
  * as mapJsonLdToRecipe, or null when no ingredient list is recognizable —
  * without ingredients an "import" would be an empty form.
  */
-export function extractRecipeFromHtml(html) {
+export function extractRecipeFromHtml(html: string): ImportedRecipe | null {
   const source = String(html);
 
   const ingredientLines =
@@ -264,8 +296,8 @@ export function extractRecipeFromHtml(html) {
  * IMPORT_ALLOW_PRIVATE=1 to bypass (used by the end-to-end tests, which
  * serve their fixture pages from localhost).
  */
-export function isAllowedImportUrl(url, { allowPrivate = process.env.IMPORT_ALLOW_PRIVATE === '1' } = {}) {
-  let parsed;
+export function isAllowedImportUrl(url: string, { allowPrivate = process.env.IMPORT_ALLOW_PRIVATE === '1' }: { allowPrivate?: boolean } = {}): boolean {
+  let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {

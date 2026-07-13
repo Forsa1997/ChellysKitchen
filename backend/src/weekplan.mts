@@ -3,29 +3,41 @@
 // names. Each entry pins a recipe and the planned servings so the aggregated
 // Bring! shopping list can scale amounts.
 
-export const WEEK_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+import type { Ingredient, Recipe, WeekDay, WeekPlan, WeekPlanEntry } from './types.mts';
 
-export function createEmptyWeekPlan() {
-  return Object.fromEntries(WEEK_DAYS.map((day) => [day, []]));
+export const WEEK_DAYS: readonly WeekDay[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+export function createEmptyWeekPlan(): WeekPlan {
+  const plan = {} as WeekPlan;
+  for (const day of WEEK_DAYS) {
+    plan[day] = [];
+  }
+  return plan;
 }
 
-function normalizeServings(value) {
+function normalizeServings(value: unknown): number | null {
   const servings = Number(value);
   return Number.isFinite(servings) && servings >= 1 ? Math.round(servings) : null;
 }
 
-export function normalizeWeekPlan(raw) {
+export function normalizeWeekPlan(raw: unknown): WeekPlan {
   const plan = createEmptyWeekPlan();
   if (!raw || typeof raw !== 'object') {
     return plan;
   }
+  const record = raw as Record<string, unknown>;
   for (const day of WEEK_DAYS) {
-    const entries = Array.isArray(raw[day]) ? raw[day] : [];
+    const entries = Array.isArray(record[day]) ? (record[day] as Array<Partial<WeekPlanEntry>>) : [];
     plan[day] = entries
       .filter((entry) => entry && typeof entry.recipeId === 'string')
-      .map((entry) => ({ recipeId: entry.recipeId, servings: normalizeServings(entry.servings) }));
+      .map((entry) => ({ recipeId: entry.recipeId as string, servings: normalizeServings(entry.servings) }));
   }
   return plan;
+}
+
+export interface PlannedMeal {
+  recipe: Recipe;
+  servings: number | null | undefined;
 }
 
 /**
@@ -33,8 +45,8 @@ export function normalizeWeekPlan(raw) {
  * Amounts are scaled from the recipe's base servings to the planned servings
  * and summed per (name, unit) pair, case-insensitively.
  */
-export function aggregateWeekPlanIngredients(entries) {
-  const byKey = new Map();
+export function aggregateWeekPlanIngredients(entries: PlannedMeal[]): Ingredient[] {
+  const byKey = new Map<string, Ingredient>();
 
   for (const { recipe, servings } of entries) {
     const base = Math.max(Number(recipe.servings) || 1, 1);

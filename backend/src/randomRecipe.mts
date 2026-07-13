@@ -1,4 +1,10 @@
-import { filterRecipes } from './queryRecipes.mts';
+import { filterRecipes, type RecipeQueryParams } from './queryRecipes.mts';
+import type { Recipe } from './types.mts';
+
+export interface RandomRecipeOptions {
+  random?: () => number;
+  excludeSlug?: string;
+}
 
 /**
  * Pick one random recipe from ALL recipes matching the given filters
@@ -9,7 +15,7 @@ import { filterRecipes } from './queryRecipes.mts';
  * the pool as long as at least one other candidate remains, so "roll again"
  * never returns the same recipe unless it is the only match.
  */
-export function pickRandomRecipe(recipes, queryParams = {}, { random = Math.random, excludeSlug } = {}) {
+export function pickRandomRecipe(recipes: Recipe[], queryParams: RecipeQueryParams = {}, { random = Math.random, excludeSlug }: RandomRecipeOptions = {}): Recipe | null {
   let candidates = filterRecipes(recipes, queryParams);
 
   if (excludeSlug) {

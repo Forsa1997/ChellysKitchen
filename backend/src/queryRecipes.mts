@@ -1,16 +1,52 @@
+import type { Recipe } from './types.mts';
+
 const ALLOWED_SORTS = new Set(['newest', 'oldest', 'title_asc', 'title_desc']);
 const ALLOWED_DIFFICULTIES = new Set(['EINFACH', 'MITTEL', 'SCHWER', 'Einfach', 'Mittel', 'Schwer']);
 
-function toPositiveInt(value, fallback) {
+/**
+ * Raw query parameters as they arrive from the URL (all strings) or from
+ * internal callers (numbers allowed for convenience).
+ */
+export interface RecipeQueryParams {
+  q?: string;
+  category?: string;
+  difficulty?: string;
+  status?: string;
+  maxTotalMinutes?: string | number;
+  favorites?: string;
+  page?: string | number;
+  pageSize?: string | number;
+  sort?: string;
+  [key: string]: string | number | undefined;
+}
+
+export interface RecipeQueryMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  q: string;
+  category: string;
+  sort: string;
+  difficulty: string;
+  maxTotalMinutes: number | null;
+}
+
+export interface RecipeQueryResult {
+  data: Recipe[];
+  meta: RecipeQueryMeta;
+}
+
+function toPositiveInt(value: unknown, fallback: number): number {
   const parsed = Number.parseInt(String(value ?? ''), 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function normalizeSort(sort) {
+function normalizeSort(sort: string): string {
   return ALLOWED_SORTS.has(sort) ? sort : 'newest';
 }
 
-function normalizeDifficulty(difficulty) {
+function normalizeDifficulty(difficulty: string): string {
   if (!ALLOWED_DIFFICULTIES.has(difficulty)) {
     return 'all';
   }
@@ -24,11 +60,12 @@ function normalizeDifficulty(difficulty) {
   return difficulty;
 }
 
-function sortRecipes(recipes, sort) {
+function sortRecipes(recipes: Recipe[], sort: string): Recipe[] {
   const copied = [...recipes];
 
   if (sort === 'oldest') {
-    copied.sort((a, b) => new Date(a.createdAt ?? a.creationDate).getTime() - new Date(b.createdAt ?? b.creationDate).getTime());
+    // `?? NaN` keeps the previous undefined -> Invalid Date behavior.
+    copied.sort((a, b) => new Date(a.createdAt ?? a.creationDate ?? NaN).getTime() - new Date(b.createdAt ?? b.creationDate ?? NaN).getTime());
     return copied;
   }
 
@@ -42,13 +79,13 @@ function sortRecipes(recipes, sort) {
     return copied;
   }
 
-  copied.sort((a, b) => new Date(b.createdAt ?? b.creationDate).getTime() - new Date(a.createdAt ?? a.creationDate).getTime());
+  copied.sort((a, b) => new Date(b.createdAt ?? b.creationDate ?? NaN).getTime() - new Date(a.createdAt ?? a.creationDate ?? NaN).getTime());
   return copied;
 }
 
 // Shared filter used by the list endpoint and the random-recipe endpoint so
 // both apply identical q/category/difficulty/status/time semantics.
-export function filterRecipes(recipes, queryParams = {}) {
+export function filterRecipes(recipes: Recipe[], queryParams: RecipeQueryParams = {}): Recipe[] {
   const q = String(queryParams.q ?? '').trim().toLowerCase();
   const category = String(queryParams.category ?? 'all').trim();
   const difficulty = normalizeDifficulty(String(queryParams.difficulty ?? 'all').trim());
@@ -80,7 +117,7 @@ export function filterRecipes(recipes, queryParams = {}) {
   });
 }
 
-export function queryRecipes(recipes, queryParams = {}) {
+export function queryRecipes(recipes: Recipe[], queryParams: RecipeQueryParams = {}): RecipeQueryResult {
   const q = String(queryParams.q ?? '').trim().toLowerCase();
   const category = String(queryParams.category ?? 'all').trim();
   const page = toPositiveInt(queryParams.page, 1);

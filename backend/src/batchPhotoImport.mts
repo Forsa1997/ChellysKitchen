@@ -8,29 +8,97 @@
 // disappears and can be restarted with the remaining photos.
 
 import { randomBytes } from 'node:crypto';
+import type { ImportedRecipe } from './recipeImport.mts';
+import type { RecipeCreator } from './types.mts';
 
 export const MAX_BATCH_PHOTOS = 10;
 
 const JOB_RETENTION_MS = 24 * 60 * 60 * 1000;
 const MAX_FINISHED_JOBS = 20;
 
-export function createBatchPhotoImportJobs({
+/** A decoded photo upload as the server hands it in. */
+export interface BatchPhoto {
+  fileName?: string;
+  ext: string;
+  mime: string;
+  buffer: Buffer;
+}
+
+export type BatchItemStatus = 'PENDING' | 'PROCESSING' | 'CREATED' | 'NO_RECIPE' | 'FAILED';
+
+export interface BatchJobItem {
+  index: number;
+  fileName: string;
+  status: BatchItemStatus;
+  recipe?: { id: string; slug?: string; title: string };
+  error?: string;
+}
+
+export type BatchJobStatus = 'RUNNING' | 'COMPLETED';
+
+interface BatchJob {
+  id: string;
+  status: BatchJobStatus;
+  createdAt: string;
+  finishedAt: string | null;
+  createdBy: RecipeCreator;
+  items: BatchJobItem[];
+}
+
+export interface BatchJobSnapshot {
+  id: string;
+  status: BatchJobStatus;
+  createdAt: string;
+  finishedAt: string | null;
+  createdBy: RecipeCreator;
+  total: number;
+  processed: number;
+  created: number;
+  noRecipe: number;
+  failed: number;
+  items: BatchJobItem[];
+}
+
+export interface BatchPhotoImportOptions<TContext> {
+  extractRecipe: (photo: BatchPhoto, context: TContext) => Promise<ImportedRecipe | null> | ImportedRecipe | null;
+  createRecipeFromPhoto: (args: {
+    recipe: ImportedRecipe;
+    photo: BatchPhoto;
+    context: TContext;
+  }) => Promise<{ id: string; slug?: string; title: string }> | { id: string; slug?: string; title: string };
+  now?: () => number;
+  retentionMs?: number;
+  maxFinishedJobs?: number;
+}
+
+export interface BatchPhotoImportJobs<TContext> {
+  startJob(args: { photos: BatchPhoto[]; createdBy: RecipeCreator; context?: TContext }): BatchJobSnapshot;
+  hasRunningJob(): boolean;
+  getJob(id: string): BatchJobSnapshot | null;
+  listJobs(): BatchJobSnapshot[];
+  /** Resolves when the job's processing loop has finished (tests/shutdown). */
+  waitForJob(id: string): Promise<void>;
+}
+
+export function createBatchPhotoImportJobs<TContext = Record<string, unknown>>({
   extractRecipe,
   createRecipeFromPhoto,
   now = () => Date.now(),
   retentionMs = JOB_RETENTION_MS,
   maxFinishedJobs = MAX_FINISHED_JOBS,
-}) {
-  const jobs = new Map(); // job id -> mutable job record
-  const runners = new Map(); // job id -> processing promise (for tests/shutdown)
+}: BatchPhotoImportOptions<TContext>): BatchPhotoImportJobs<TContext> {
+  const jobs = new Map<string, BatchJob>(); // job id -> mutable job record
+  const runners = new Map<string, Promise<void>>(); // job id -> processing promise (for tests/shutdown)
 
-  function prune() {
+  function prune(): void {
     const cutoff = now() - retentionMs;
     const finished = [...jobs.values()]
       .filter((job) => job.status === 'COMPLETED')
       .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
     for (const job of finished) {
-      if (Date.parse(job.finishedAt) <= cutoff) jobs.delete(job.id);
+      // Date.parse(null/'') is NaN, and NaN <= cutoff is false: unfinished
+      // jobs are never pruned by age.
+      if (Date.parse(job.finishedAt ?? '') <= cutoff) jobs.delete(job.id);
     }
     const remaining = finished.filter((job) => jobs.has(job.id));
     for (const job of remaining.slice(0, Math.max(0, remaining.length - maxFinishedJobs))) {
@@ -38,7 +106,7 @@ export function createBatchPhotoImportJobs({
     }
   }
 
-  function toSnapshot(job) {
+  function toSnapshot(job: BatchJob): BatchJobSnapshot {
     let created = 0;
     let noRecipe = 0;
     let failed = 0;
@@ -62,7 +130,7 @@ export function createBatchPhotoImportJobs({
     };
   }
 
-  async function processJob(job, photos, context) {
+  async function processJob(job: BatchJob, photos: BatchPhoto[], context: TContext): Promise<void> {
     for (const [index, photo] of photos.entries()) {
       const item = job.items[index];
       item.status = 'PROCESSING';
@@ -77,7 +145,7 @@ export function createBatchPhotoImportJobs({
         item.recipe = { id: draft.id, slug: draft.slug, title: draft.title };
       } catch (error) {
         item.status = 'FAILED';
-        item.error = String(error?.message ?? 'Unbekannter Fehler.').slice(0, 300);
+        item.error = String((error as { message?: unknown } | null | undefined)?.message ?? 'Unbekannter Fehler.').slice(0, 300);
       }
     }
     job.status = 'COMPLETED';
@@ -85,9 +153,9 @@ export function createBatchPhotoImportJobs({
     runners.delete(job.id);
   }
 
-  function startJob({ photos, createdBy, context = {} }) {
+  function startJob({ photos, createdBy, context = {} as TContext }: { photos: BatchPhoto[]; createdBy: RecipeCreator; context?: TContext }): BatchJobSnapshot {
     prune();
-    const job = {
+    const job: BatchJob = {
       id: `batch_${randomBytes(8).toString('hex')}`,
       status: 'RUNNING',
       createdAt: new Date(now()).toISOString(),
@@ -107,7 +175,7 @@ export function createBatchPhotoImportJobs({
   return {
     startJob,
     hasRunningJob: () => [...jobs.values()].some((job) => job.status === 'RUNNING'),
-    getJob: (id) => {
+    getJob: (id: string) => {
       const job = jobs.get(id);
       return job ? toSnapshot(job) : null;
     },
@@ -117,7 +185,6 @@ export function createBatchPhotoImportJobs({
         .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
         .map(toSnapshot);
     },
-    /** Resolves when the job's processing loop has finished (tests/shutdown). */
-    waitForJob: (id) => runners.get(id) ?? Promise.resolve(),
+    waitForJob: (id: string) => runners.get(id) ?? Promise.resolve(),
   };
 }

@@ -1,5 +1,10 @@
-function normalizeOrigin(origin) {
+function normalizeOrigin(origin: string | undefined): string {
   return String(origin ?? '').trim().replace(/\/+$/, '');
+}
+
+export interface CorsOriginInput {
+  requestOrigin?: string;
+  allowedOrigin?: string;
 }
 
 /**
@@ -14,7 +19,7 @@ function normalizeOrigin(origin) {
  * mismatch, which blocked every request whenever CORS_ORIGIN was set with a
  * trailing slash, a different scheme, or a custom domain.
  */
-export function resolveCorsOrigin({ requestOrigin, allowedOrigin }) {
+export function resolveCorsOrigin({ requestOrigin, allowedOrigin }: CorsOriginInput): string {
   const configured = String(allowedOrigin ?? '').trim();
 
   if (!configured) {
@@ -31,7 +36,7 @@ export function resolveCorsOrigin({ requestOrigin, allowedOrigin }) {
   }
 
   const requestNorm = normalizeOrigin(requestOrigin);
-  if (requestNorm && allowList.includes(requestNorm)) {
+  if (requestOrigin && requestNorm && allowList.includes(requestNorm)) {
     // Echo the exact origin the browser sent (with its original casing/slash).
     return requestOrigin;
   }

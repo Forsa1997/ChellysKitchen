@@ -2,11 +2,23 @@
 // Gemini receives the image and returns structured JSON which is normalized
 // onto the create-form shape. Nothing is saved by this module.
 
-import { parseIngredientText } from './recipeImport.mts';
+import { parseIngredientText, type ImportedRecipe } from './recipeImport.mts';
+import type { Ingredient, RecipeStep } from './types.mts';
 
 const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash';
 const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 const REQUEST_TIMEOUT_MS = 120_000;
+
+export interface PhotoInput {
+  mediaType: string;
+  base64Data: string;
+}
+
+export interface PhotoImportOptions {
+  fetchImpl?: typeof fetch;
+  env?: NodeJS.ProcessEnv;
+  model?: string;
+}
 
 // Structured output keeps the answer machine-readable. Application-side
 // normalization still validates the values because a schema-valid response
@@ -62,41 +74,44 @@ Regeln:
 - shortDescription: ein kurzer Satz, was das Gericht ist (aus dem Foto oder
   neutral abgeleitet).`;
 
-export function isPhotoImportConfigured(env = process.env) {
+export function isPhotoImportConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(env.GEMINI_API_KEY);
 }
 
-function toMinutes(value) {
+function toMinutes(value: unknown): number {
   const minutes = Math.round(Number(value));
   return Number.isFinite(minutes) && minutes > 0 ? minutes : 0;
 }
 
-function normalizeIngredient(entry) {
+function normalizeIngredient(entry: unknown): Ingredient | null {
   if (typeof entry === 'string') {
     return parseIngredientText(entry);
   }
   if (!entry || typeof entry !== 'object') return null;
-  const amount = Number(String(entry.amount ?? 0).replace(',', '.'));
+  const record = entry as { amount?: unknown; unit?: unknown; name?: unknown };
+  const amount = Number(String(record.amount ?? 0).replace(',', '.'));
   return {
     amount: Number.isFinite(amount) && amount > 0 ? amount : 0,
-    unit: String(entry.unit ?? '').trim(),
-    name: String(entry.name ?? '').trim(),
+    unit: String(record.unit ?? '').trim(),
+    name: String(record.name ?? '').trim(),
   };
 }
 
-function normalizeStep(entry) {
-  const instruction = typeof entry === 'string' ? entry : String(entry?.instruction ?? '');
+function normalizeStep(entry: unknown): string {
+  const instruction = typeof entry === 'string'
+    ? entry
+    : String((entry as { instruction?: unknown } | null | undefined)?.instruction ?? '');
   return instruction.trim();
 }
 
-function normalizeParsedRecipe(parsed) {
+function normalizeParsedRecipe(parsed: Record<string, unknown>): ImportedRecipe | null {
   if (parsed.containsRecipe === false) return null;
 
   const title = String(parsed.title ?? '').trim();
   const ingredients = (Array.isArray(parsed.ingredients) ? parsed.ingredients : [])
     .map((entry) => normalizeIngredient(entry))
-    .filter((ingredient) => ingredient?.name);
-  const steps = (Array.isArray(parsed.steps) ? parsed.steps : [])
+    .filter((ingredient): ingredient is Ingredient => Boolean(ingredient?.name));
+  const steps: RecipeStep[] = (Array.isArray(parsed.steps) ? parsed.steps : [])
     .map((entry) => normalizeStep(entry))
     .filter(Boolean)
     .map((instruction, index) => ({ stepNumber: index + 1, instruction }));
@@ -116,8 +131,8 @@ function normalizeParsedRecipe(parsed) {
 }
 
 export function buildGeminiPhotoImportRequest(
-  { mediaType, base64Data },
-  { model } = {},
+  { mediaType, base64Data }: PhotoInput,
+  { model }: { model?: string } = {},
 ) {
   return {
     model: model ?? process.env.PHOTO_IMPORT_MODEL ?? DEFAULT_GEMINI_MODEL,
@@ -134,11 +149,26 @@ export function buildGeminiPhotoImportRequest(
   };
 }
 
+interface GeminiContentEntry {
+  type?: unknown;
+  text?: unknown;
+}
+
+interface GeminiStep {
+  type?: unknown;
+  content?: GeminiContentEntry[];
+}
+
+export interface GeminiInteraction {
+  status?: unknown;
+  steps?: GeminiStep[];
+}
+
 /**
  * Parse the final text output of a Gemini Interactions API response.
  * Returns null only for a valid response which contains no usable recipe.
  */
-export function parseGeminiRecipeResponse(interaction) {
+export function parseGeminiRecipeResponse(interaction: GeminiInteraction | null | undefined): ImportedRecipe | null {
   if (!interaction || interaction.status !== 'completed') {
     throw new Error('Gemini hat die Anfrage nicht abgeschlossen.');
   }
@@ -154,37 +184,37 @@ export function parseGeminiRecipeResponse(interaction) {
     throw new Error('Gemini hat keine verwertbare Antwort geliefert.');
   }
 
-  const parsed = JSON.parse(text);
+  const parsed: unknown = JSON.parse(text);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error('Gemini hat kein Rezeptobjekt geliefert.');
   }
-  return normalizeParsedRecipe(parsed);
+  return normalizeParsedRecipe(parsed as Record<string, unknown>);
 }
 
 export async function extractRecipeViaGemini(
-  { mediaType, base64Data },
-  { fetchImpl = fetch, env = process.env, model } = {},
-) {
+  { mediaType, base64Data }: PhotoInput,
+  { fetchImpl = fetch, env = process.env, model }: PhotoImportOptions = {},
+): Promise<ImportedRecipe | null> {
   const baseUrl = (env.GEMINI_BASE_URL ?? DEFAULT_GEMINI_BASE_URL).replace(/\/$/, '');
   const response = await fetchImpl(`${baseUrl}/interactions`, {
     method: 'POST',
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     headers: {
       'Content-Type': 'application/json',
-      'x-goog-api-key': env.GEMINI_API_KEY,
+      'x-goog-api-key': env.GEMINI_API_KEY ?? '',
     },
     body: JSON.stringify(buildGeminiPhotoImportRequest({ mediaType, base64Data }, { model })),
   });
   if (!response.ok) {
     throw new Error(`Gemini antwortete mit HTTP ${response.status}.`);
   }
-  return parseGeminiRecipeResponse(await response.json());
+  return parseGeminiRecipeResponse(await response.json() as GeminiInteraction);
 }
 
 export async function extractRecipeFromPhoto(
-  { mediaType, base64Data },
-  { env = process.env, fetchImpl = fetch } = {},
-) {
+  { mediaType, base64Data }: PhotoInput,
+  { env = process.env, fetchImpl = fetch }: PhotoImportOptions = {},
+): Promise<ImportedRecipe | null> {
   if (!env.GEMINI_API_KEY) {
     throw new Error('Der Foto-Import ist nicht konfiguriert.');
   }
