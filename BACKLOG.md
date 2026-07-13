@@ -34,7 +34,7 @@ Stand Juli 2026: Alle Punkte aus dem App-Review sind umgesetzt.
 - [x] Gemeinsame Notizen pro Rezept
 
 ### 5. Aufräumen
-- [x] Ungenutztes Prisma/Fastify-Backend entfernt — `server.mjs` ist DAS Backend
+- [x] Ungenutztes Prisma/Fastify-Backend entfernt — `server.mts` ist DAS Backend
       (Entscheidung: kein externer Datenbank-Anbieter, Backup/Restore stattdessen)
 - [x] Deprecated Wrapper aus `frontend/src/api/client.ts` entfernt
 - [x] `.idea/` entfernt und ignoriert; `.copilot/` + `.github/copilot/` entfernt

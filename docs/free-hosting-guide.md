@@ -20,7 +20,7 @@ Wenn du stattdessen alles möglichst zentral bei Render betreiben willst, siehe 
 
 ## Wichtiger Hinweis zum aktuellen Stand des Repos
 
-Aktuell verwendet das Backend noch lokale Daten (`backend/data/recipes.mjs`). Eine externe Datenbank ist deshalb **noch nicht zwingend** nötig, bis Backend-Endpunkte auf echte DB-Abfragen umgestellt wurden.
+Aktuell verwendet das Backend noch lokale Daten (`backend/data/recipes.mts`). Eine externe Datenbank ist deshalb **noch nicht zwingend** nötig, bis Backend-Endpunkte auf echte DB-Abfragen umgestellt wurden.
 
 ---
 
@@ -89,7 +89,7 @@ Nur nötig, wenn ihr Backend auf echte DB-Zugriffe erweitert.
 4. In Supabase Verbindungsdaten öffnen (Postgres URI/Host/User/Passwort)
 5. Im Backend-Host (z. B. Render) als Umgebungsvariable setzen, z. B.:
    - `DATABASE_URL=postgresql://...`
-6. Backend-Code so erweitern, dass statt `recipes.mjs` die DB genutzt wird
+6. Backend-Code so erweitern, dass statt `recipes.mts` die DB genutzt wird
 7. Migrationen ausführen und Healthcheck testen
 
 ---

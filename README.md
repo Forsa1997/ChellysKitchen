@@ -28,7 +28,7 @@ wenn keiner weiß, was es heute geben soll.
 | Teil | Technologie |
 | --- | --- |
 | Frontend | React 19 + Vite + Material UI (`frontend/`) |
-| Backend | Node.js (`backend/server.mjs`), PostgreSQL in Produktion und JSON-Datei-Store lokal |
+| Backend | Node.js (`backend/server.mts`), PostgreSQL in Produktion und JSON-Datei-Store lokal |
 | Hosting | Render (siehe `render.yaml`), Deploy-Hooks via GitHub Actions |
 
 Mit `DATABASE_URL` speichert das Backend Rezepte, Benutzer und Bilder dauerhaft
