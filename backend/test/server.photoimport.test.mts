@@ -30,16 +30,16 @@ const GEMINI_RECIPE = {
   steps: ['Alles verrühren.', 'Backen.'],
 };
 
-let child;
-let dataDir;
-let mockServer;
-let memberToken;
+let child: ReturnType<typeof spawn>;
+let dataDir: string;
+let mockServer: any;
+let memberToken: string;
 let geminiMode = 'ok';
 let geminiCalls = 0;
-let lastGeminiRequest = null;
-let lastGeminiApiKey = null;
+let lastGeminiRequest: any = null;
+let lastGeminiApiKey: any = null;
 
-async function api(path, { method = 'GET', token, body } = {}) {
+async function api(path: string, { method = 'GET', token, body }: { token?: string; method?: string; body?: unknown } = {}): Promise<{ status: number; body: any; res?: Response }> {
   const response = await fetch(`${BASE}${path}`, {
     method,
     headers: {
@@ -155,7 +155,7 @@ test('photo import asks Gemini once and maps its answer', async () => {
   assert.equal(lastGeminiApiKey, 'gemini-mock-key');
   assert.equal(lastGeminiRequest.store, false);
   assert.deepEqual(
-    lastGeminiRequest.input.find((entry) => entry.type === 'image'),
+    lastGeminiRequest.input.find((entry: any) => entry.type === 'image'),
     { type: 'image', data: TINY_PNG_BASE64, mime_type: 'image/png' },
   );
 });

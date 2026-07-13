@@ -143,8 +143,10 @@ export interface DebouncedPersister {
  * Wrap a store with a debounced writer so bursts of mutations collapse into a
  * single disk write. `schedule()` is cheap to call after every mutation;
  * `flush()` forces a synchronous write (use on shutdown).
+ *
+ * Generic over the state so it only demands what it uses: a `save()` method.
  */
-export function createDebouncedPersister(store: StateStore, getState: () => ServerState, delay = 200): DebouncedPersister {
+export function createDebouncedPersister<TState = ServerState>(store: { save(state: TState): unknown }, getState: () => TState, delay = 200): DebouncedPersister {
   let timer: NodeJS.Timeout | null = null;
   let pending = false;
 

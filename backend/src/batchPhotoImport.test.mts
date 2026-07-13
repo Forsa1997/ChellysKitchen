@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createBatchPhotoImportJobs, MAX_BATCH_PHOTOS } from './batchPhotoImport.mts';
 
-function photo(name) {
+function photo(name: string) {
   return { fileName: name, ext: 'png', mime: 'image/png', buffer: Buffer.from(name) };
 }
 
 function deferred() {
-  let resolve;
-  let reject;
+  let resolve!: (value: unknown) => void;
+  let reject!: (reason?: unknown) => void;
   const promise = new Promise((res, rej) => {
     resolve = res;
     reject = rej;
@@ -21,7 +21,7 @@ test('MAX_BATCH_PHOTOS bounds a batch', () => {
 });
 
 test('a job processes photos sequentially and records one result per photo', async () => {
-  const calls = [];
+  const calls: Array<string | undefined> = [];
   const jobs = createBatchPhotoImportJobs({
     extractRecipe: async (entry) => {
       calls.push(entry.fileName);
@@ -48,7 +48,7 @@ test('a job processes photos sequentially and records one result per photo', asy
   assert.deepEqual(started.items.map((item) => item.status), ['PROCESSING', 'PENDING', 'PENDING']);
 
   await jobs.waitForJob(started.id);
-  const finished = jobs.getJob(started.id);
+  const finished = jobs.getJob(started.id)!;
 
   assert.equal(finished.status, 'COMPLETED');
   assert.ok(finished.finishedAt);
@@ -62,11 +62,11 @@ test('a job processes photos sequentially and records one result per photo', asy
   assert.deepEqual(finished.items[0].recipe, { id: 'r_1', slug: 'rezept-aus-a-png', title: 'Rezept aus a.png' });
   assert.equal(finished.items[1].status, 'NO_RECIPE');
   assert.equal(finished.items[2].status, 'FAILED');
-  assert.match(finished.items[2].error, /Gemini down/);
+  assert.match(finished.items[2].error!, /Gemini down/);
 });
 
 test('createRecipeFromPhoto receives the photo and the job context', async () => {
-  let received;
+  let received: any;
   const jobs = createBatchPhotoImportJobs({
     extractRecipe: async () => ({ title: 'Pfannkuchen' }),
     createRecipeFromPhoto: async (args) => {

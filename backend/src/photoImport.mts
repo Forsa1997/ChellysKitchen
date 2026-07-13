@@ -14,8 +14,18 @@ export interface PhotoInput {
   base64Data: string;
 }
 
+/**
+ * The slice of fetch this module uses — lets tests pass simple mocks while
+ * the real global fetch still satisfies it.
+ */
+export type FetchLike = (url: string, init?: RequestInit) => Promise<{
+  ok: boolean;
+  status: number;
+  json(): Promise<unknown>;
+}>;
+
 export interface PhotoImportOptions {
-  fetchImpl?: typeof fetch;
+  fetchImpl?: FetchLike;
   env?: NodeJS.ProcessEnv;
   model?: string;
 }

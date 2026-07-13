@@ -15,10 +15,10 @@ const FIXTURE_BASE = `http://127.0.0.1:${FIXTURE_PORT}`;
 const ADMIN_EMAIL = 'admin@test.local';
 const ADMIN_PASSWORD = 'admintest';
 
-let child;
-let dataDir;
-let fixtureServer;
-let memberToken;
+let child: ReturnType<typeof spawn>;
+let dataDir: string;
+let fixtureServer: any;
+let memberToken: string;
 
 const FIXTURE_RECIPE_HTML = `<!doctype html><html><head>
 <script type="application/ld+json">${JSON.stringify({
@@ -47,8 +47,8 @@ const FIXTURE_PLAIN_HTML = `<!doctype html><html><head>
 <ol><li>Möhren schneiden.</li><li>Alles köcheln lassen.</li></ol>
 </body></html>`;
 
-async function api(path, { token, method = 'GET', body } = {}) {
-  const headers = {};
+async function api(path: string, { token, method = 'GET', body }: { token?: string; method?: string; body?: unknown } = {}): Promise<{ status: number; body: any; res?: Response }> {
+  const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
@@ -224,7 +224,7 @@ test('the week plan Bring page aggregates all planned ingredients publicly', asy
   const res = await fetch(`${BASE}/api/weekplan/bring`);
   assert.equal(res.status, 200);
   const html = await res.text();
-  const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+  const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)![1]);
   assert.equal(jsonLd['@type'], 'Recipe');
 
   const firstIngredient = recipe.ingredients[0];
@@ -239,7 +239,7 @@ test('clearing the week plan empties every day', async () => {
   const cleared = await api('/api/weekplan', { method: 'DELETE', token: memberToken });
   assert.equal(cleared.status, 200);
   const plan = await api('/api/weekplan', { token: memberToken });
-  assert.ok(Object.values(plan.body.days).every((entries) => entries.length === 0));
+  assert.ok(Object.values(plan.body.days).every((entries: any) => entries.length === 0));
 });
 
 test('members can duplicate a recipe as their own variant', async () => {

@@ -40,7 +40,8 @@ export function normalizeWeekPlan(raw: unknown): WeekPlan {
 }
 
 export interface PlannedMeal {
-  recipe: Recipe;
+  /** Only the scaling-relevant recipe fields are needed here. */
+  recipe: Pick<Recipe, 'id' | 'servings' | 'ingredients'>;
   servings: number | null | undefined;
 }
 

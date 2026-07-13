@@ -31,15 +31,15 @@ const GEMINI_RECIPE = {
   steps: ['Alles verrühren.', 'Backen.'],
 };
 
-let child;
-let dataDir;
-let mockServer;
-let adminToken;
-let memberToken;
+let child: ReturnType<typeof spawn>;
+let dataDir: string;
+let mockServer: any;
+let adminToken: string;
+let memberToken: string;
 // Each Gemini call consumes the next mode; 'ok' | 'noRecipe' | 'fail'.
-let geminiModes = [];
+let geminiModes: string[] = [];
 
-async function api(path, { method = 'GET', token, body } = {}) {
+async function api(path: string, { method = 'GET', token, body }: { token?: string; method?: string; body?: unknown } = {}): Promise<{ status: number; body: any; res?: Response }> {
   const response = await fetch(`${BASE}${path}`, {
     method,
     headers: {
@@ -70,7 +70,7 @@ async function waitForServer() {
   throw new Error('Server did not start');
 }
 
-async function waitForJobCompletion(jobId, token) {
+async function waitForJobCompletion(jobId: string, token: string) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     const { status, body } = await api(`/api/admin/recipes/import/photos/${jobId}`, { token });
     assert.equal(status, 200);
@@ -241,12 +241,12 @@ test('a batch creates unpublished drafts tagged KI-Import and reports progress',
   // The job shows up in the admin job list.
   const list = await api('/api/admin/recipes/import/photos', { token: adminToken });
   assert.equal(list.status, 200);
-  assert.ok(list.body.data.some((entry) => entry.id === job.id));
+  assert.ok(list.body.data.some((entry: any) => entry.id === job.id));
 
   // The draft exists for admins: unpublished, tagged, owned by the admin,
   // with the source photo stored as its image.
   const adminRecipes = await api('/api/admin/recipes', { token: adminToken });
-  const draft = adminRecipes.body.data.find((recipe) => recipe.id === createdItem.recipe.id);
+  const draft = adminRecipes.body.data.find((recipe: any) => recipe.id === createdItem.recipe.id);
   assert.ok(draft, 'draft must be listed for admins');
   assert.equal(draft.status, 'DRAFT');
   assert.equal(draft.tag, 'KI-Import');
@@ -261,7 +261,7 @@ test('a batch creates unpublished drafts tagged KI-Import and reports progress',
   // Unpublished drafts stay invisible on the public list until reviewed.
   const publicList = await api('/api/recipes?pageSize=100');
   assert.equal(publicList.status, 200);
-  assert.ok(!publicList.body.data.some((recipe) => recipe.id === createdItem.recipe.id));
+  assert.ok(!publicList.body.data.some((recipe: any) => recipe.id === createdItem.recipe.id));
 
   // ...and publishing it afterwards works with the normal review endpoint.
   const published = await api(`/api/recipes/${draft.id}/publish`, { method: 'PATCH', token: adminToken });

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { rowsToState, stateToRows } from './prismaStore.mts';
+import type { Recipe, ServerState, User } from './types.mts';
 
-function sampleState() {
-  const users = new Map([
+function sampleState(): ServerState {
+  const users = new Map<string, User>([
     ['chef@test.local', {
       id: 'user_1',
       name: 'Christoph',
@@ -18,6 +19,7 @@ function sampleState() {
   ]);
   const sessions = new Map([['token-a', { userId: 'user_1', expiresAt: 1780000000000 }]]);
   const refreshSessions = new Map([['token-r', { userId: 'user_1', expiresAt: 1790000000000 }]]);
+  // Deliberately a partial recipe document, as old store rows can be.
   const recipeStore = [{
     id: 'r1',
     slug: 'pasta',
@@ -26,7 +28,7 @@ function sampleState() {
     ingredients: [{ name: 'Nudeln', amount: 500, unit: 'g' }],
     steps: [{ stepNumber: 1, instruction: 'Kochen.' }],
     notes: 'lecker',
-  }];
+  } as Recipe];
   const ratingsStore = new Map([
     ['r1', new Map([['user_1', {
       id: 'rating_1', userId: 'user_1', recipeId: 'r1', stars: 5,
@@ -60,7 +62,7 @@ test('stateToRows produces flat table rows', () => {
     recipeId: 'r1',
     userId: 'user_1',
     stars: 5,
-    data: sampleState().ratingsStore.get('r1').get('user_1'),
+    data: sampleState().ratingsStore.get('r1')!.get('user_1'),
   });
 
   assert.deepEqual(rows.favorites, [{ userId: 'user_1', recipeId: 'r1' }]);
@@ -84,11 +86,11 @@ test('state survives a full rows roundtrip', () => {
   assert.deepEqual(restored.refreshSessions.get('token-r'), original.refreshSessions.get('token-r'));
   assert.deepEqual(restored.recipeStore, original.recipeStore);
   assert.deepEqual(
-    restored.ratingsStore.get('r1').get('user_1'),
-    original.ratingsStore.get('r1').get('user_1'),
+    restored.ratingsStore.get('r1')!.get('user_1'),
+    original.ratingsStore.get('r1')!.get('user_1'),
   );
   assert.deepEqual(restored.categoriesStore, original.categoriesStore);
-  assert.deepEqual([...restored.favoritesStore.get('user_1')], ['r1']);
+  assert.deepEqual([...restored.favoritesStore.get('user_1')!], ['r1']);
   assert.deepEqual(restored.weekPlanStore.monday, [{ recipeId: 'r1', servings: 4 }]);
   assert.deepEqual(restored.weekPlanStore.sunday, [{ recipeId: 'r1', servings: null }]);
   assert.deepEqual(restored.weekPlanStore.friday, []);
@@ -100,12 +102,12 @@ test('rowsToState copes with missing optional user fields', () => {
 
   const restored = rowsToState(rows);
   const user = restored.users.get('chef@test.local');
-  assert.equal(user.salt, undefined);
-  assert.equal(user.algo, undefined);
+  assert.equal(user!.salt, undefined);
+  assert.equal(user!.algo, undefined);
 });
 
 test('session expiry returns as a plain number', () => {
   const restored = rowsToState(stateToRows(sampleState()));
-  assert.equal(restored.sessions.get('token-a').expiresAt, 1780000000000);
-  assert.equal(typeof restored.sessions.get('token-a').expiresAt, 'number');
+  assert.equal(restored.sessions.get('token-a')!.expiresAt, 1780000000000);
+  assert.equal(typeof restored.sessions.get('token-a')!.expiresAt, 'number');
 });

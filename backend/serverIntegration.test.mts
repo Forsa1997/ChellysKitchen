@@ -6,8 +6,8 @@ import { join } from 'node:path';
 
 // Der Server lädt seinen Store beim Import — deshalb erst die Umgebung
 // isolieren und dann dynamisch importieren.
-let server;
-let baseUrl;
+let server: any;
+let baseUrl: string;
 
 before(async () => {
   process.env.DATA_DIR = mkdtempSync(join(tmpdir(), 'chellys-test-'));
@@ -21,7 +21,7 @@ before(async () => {
 
 after(() => new Promise((resolve) => server.close(resolve)));
 
-async function login(email, password) {
+async function login(email: string, password: string) {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -30,8 +30,8 @@ async function login(email, password) {
   return response;
 }
 
-async function loginAs(role) {
-  const credentials = role === 'ADMIN'
+async function loginAs(role: string): Promise<any> {
+  const credentials: [string, string] = role === 'ADMIN'
     ? ['admin@chellys-kitchen.local', 'admin1234']
     : ['demo@chellys-kitchen.local', 'demo1234'];
   const response = await login(...credentials);
@@ -46,7 +46,7 @@ async function loginAs(role) {
 test('jede Antwort enthält einen x-request-id Header', async () => {
   const response = await fetch(`${baseUrl}/health`);
   assert.equal(response.status, 200);
-  assert.match(response.headers.get('x-request-id'), /^req_[a-f0-9]{16}$/);
+  assert.match(response.headers.get('x-request-id')!, /^req_[a-f0-9]{16}$/);
 });
 
 test('eine gültige eingehende Request-ID wird in der Antwort übernommen', async () => {
@@ -71,7 +71,7 @@ test('GET /metrics liefert Request-Zähler und Latenz-Kennzahlen', async () => {
   const response = await fetch(`${baseUrl}/metrics`);
   assert.equal(response.status, 200);
 
-  const body = await response.json();
+  const body: any = await response.json();
   assert.ok(body.totalRequests >= 1);
   assert.ok(body.statusCounts['2xx'] >= 1);
   assert.equal(typeof body.errorRate, 'number');
@@ -141,7 +141,7 @@ test('GET /api/auth/me mit Token liefert den User', async () => {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   assert.equal(response.status, 200);
-  const body = await response.json();
+  const body: any = await response.json();
   assert.equal(body.user.id, user.id);
 });
 
@@ -232,7 +232,7 @@ test('Bewertung außerhalb 1-5 wird abgelehnt', async () => {
   const { accessToken } = await loginAs('MEMBER');
 
   const recipesResponse = await fetch(`${baseUrl}/api/recipes?pageSize=1`);
-  const { data } = await recipesResponse.json();
+  const { data }: any = await recipesResponse.json();
   assert.ok(data.length > 0, 'mindestens ein Rezept wird für den Test benötigt');
 
   const response = await fetch(`${baseUrl}/api/recipes/${data[0].slug}/rating`, {

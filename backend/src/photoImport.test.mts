@@ -22,7 +22,7 @@ const FULL_RECIPE = {
   steps: ['Teig kneten.', 'Äpfel schälen und backen.'],
 };
 
-function geminiInteractionWith(payload) {
+function geminiInteractionWith(payload: unknown) {
   return {
     id: 'interaction_test',
     status: 'completed',
@@ -56,7 +56,7 @@ test('buildGeminiPhotoImportRequest embeds the image and requests stateless stru
 
   const image = request.input.find((entry) => entry.type === 'image');
   assert.deepEqual(image, { type: 'image', data: 'QUJD', mime_type: 'image/jpeg' });
-  const text = request.input.find((entry) => entry.type === 'text');
+  const text = request.input.find((entry) => entry.type === 'text') as { type: string; text: string };
   assert.ok(text.text.length > 0);
   assert.match(text.text, /übersetze.+vollständig ins Deutsche/is);
 
@@ -69,16 +69,16 @@ test('buildGeminiPhotoImportRequest embeds the image and requests stateless stru
 test('parseGeminiRecipeResponse maps and normalizes the final model output', () => {
   const recipe = parseGeminiRecipeResponse(geminiInteractionWith(FULL_RECIPE));
 
-  assert.equal(recipe.title, 'Omas Apfelkuchen');
-  assert.equal(recipe.shortDescription, 'Vom handgeschriebenen Zettel.');
-  assert.equal(recipe.servings, 8);
-  assert.equal(recipe.preparationTime, 30);
-  assert.equal(recipe.cookingTime, 45);
-  assert.deepEqual(recipe.ingredients, [
+  assert.equal(recipe!.title, 'Omas Apfelkuchen');
+  assert.equal(recipe!.shortDescription, 'Vom handgeschriebenen Zettel.');
+  assert.equal(recipe!.servings, 8);
+  assert.equal(recipe!.preparationTime, 30);
+  assert.equal(recipe!.cookingTime, 45);
+  assert.deepEqual(recipe!.ingredients, [
     { amount: 200, unit: 'g', name: 'Mehl' },
     { amount: 3, unit: '', name: 'Äpfel' },
   ]);
-  assert.deepEqual(recipe.steps, [
+  assert.deepEqual(recipe!.steps, [
     { stepNumber: 1, instruction: 'Teig kneten.' },
     { stepNumber: 2, instruction: 'Äpfel schälen und backen.' },
   ]);
@@ -97,16 +97,16 @@ test('parseGeminiRecipeResponse maps and normalizes the final model output', () 
     ],
     steps: ['Kochen.', '', { instruction: 'Abschmecken.' }],
   }));
-  assert.equal(messy.title, 'Suppe');
-  assert.equal(messy.shortDescription, '');
-  assert.equal(messy.servings, 2);
-  assert.equal(messy.preparationTime, 0);
-  assert.equal(messy.cookingTime, 0);
-  assert.deepEqual(messy.ingredients, [
+  assert.equal(messy!.title, 'Suppe');
+  assert.equal(messy!.shortDescription, '');
+  assert.equal(messy!.servings, 2);
+  assert.equal(messy!.preparationTime, 0);
+  assert.equal(messy!.cookingTime, 0);
+  assert.deepEqual(messy!.ingredients, [
     { amount: 250, unit: 'g', name: 'Linsen' },
     { amount: 1.5, unit: 'EL', name: 'Öl' },
   ]);
-  assert.deepEqual(messy.steps, [
+  assert.deepEqual(messy!.steps, [
     { stepNumber: 1, instruction: 'Kochen.' },
     { stepNumber: 2, instruction: 'Abschmecken.' },
   ]);
@@ -129,8 +129,8 @@ test('parseGeminiRecipeResponse returns null for no recipe and rejects broken an
 });
 
 test('extractRecipeViaGemini posts to the configured API with the Gemini key', async () => {
-  const calls = [];
-  const fetchImpl = async (url, init) => {
+  const calls: any[] = [];
+  const fetchImpl = async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
     return {
       ok: true,
@@ -153,7 +153,7 @@ test('extractRecipeViaGemini posts to the configured API with the Gemini key', a
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, 'http://127.0.0.1:9/v1beta/interactions');
   assert.equal(calls[0].init.headers['x-goog-api-key'], 'gemini-secret');
-  assert.equal(recipe.title, 'Omas Apfelkuchen');
+  assert.equal(recipe!.title, 'Omas Apfelkuchen');
 });
 
 test('extractRecipeViaGemini throws on HTTP errors', async () => {
@@ -181,7 +181,7 @@ test('extractRecipeFromPhoto uses Gemini as its only provider', async () => {
     },
   );
 
-  assert.equal(recipe.title, 'Omas Apfelkuchen');
+  assert.equal(recipe!.title, 'Omas Apfelkuchen');
   assert.equal(calls, 1);
 });
 

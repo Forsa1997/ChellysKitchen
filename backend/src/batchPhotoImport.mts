@@ -59,10 +59,11 @@ export interface BatchJobSnapshot {
   items: BatchJobItem[];
 }
 
-export interface BatchPhotoImportOptions<TContext> {
-  extractRecipe: (photo: BatchPhoto, context: TContext) => Promise<ImportedRecipe | null> | ImportedRecipe | null;
+export interface BatchPhotoImportOptions<TContext, TRecipe> {
+  /** The jobs runner never looks inside the recipe — it only hands it on. */
+  extractRecipe: (photo: BatchPhoto, context: TContext) => Promise<TRecipe | null> | TRecipe | null;
   createRecipeFromPhoto: (args: {
-    recipe: ImportedRecipe;
+    recipe: TRecipe;
     photo: BatchPhoto;
     context: TContext;
   }) => Promise<{ id: string; slug?: string; title: string }> | { id: string; slug?: string; title: string };
@@ -80,13 +81,13 @@ export interface BatchPhotoImportJobs<TContext> {
   waitForJob(id: string): Promise<void>;
 }
 
-export function createBatchPhotoImportJobs<TContext = Record<string, unknown>>({
+export function createBatchPhotoImportJobs<TContext = Record<string, unknown>, TRecipe = ImportedRecipe>({
   extractRecipe,
   createRecipeFromPhoto,
   now = () => Date.now(),
   retentionMs = JOB_RETENTION_MS,
   maxFinishedJobs = MAX_FINISHED_JOBS,
-}: BatchPhotoImportOptions<TContext>): BatchPhotoImportJobs<TContext> {
+}: BatchPhotoImportOptions<TContext, TRecipe>): BatchPhotoImportJobs<TContext> {
   const jobs = new Map<string, BatchJob>(); // job id -> mutable job record
   const runners = new Map<string, Promise<void>>(); // job id -> processing promise (for tests/shutdown)
 

@@ -16,11 +16,11 @@ const SEED_USERS = JSON.stringify([
   { name: 'Gast', email: 'gast@test.local', password: 'gast12345' },
 ]);
 
-let child;
-let dataDir;
+let child: ReturnType<typeof spawn>;
+let dataDir: string;
 
-async function api(path, { token, method = 'GET', body } = {}) {
-  const headers = {};
+async function api(path: string, { token, method = 'GET', body }: { token?: string; method?: string; body?: unknown } = {}): Promise<{ status: number; body: any; res?: Response }> {
+  const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
@@ -154,7 +154,7 @@ test('user creation defaults to MEMBER when no role is given', async () => {
 test('admin can change a user name', async () => {
   const adminToken = await loginAsAdmin();
   const users = await api('/api/admin/users', { token: adminToken });
-  const user = users.body.data.find((entry) => entry.email === 'chelly@test.local');
+  const user = users.body.data.find((entry: any) => entry.email === 'chelly@test.local');
 
   const updated = await api(`/api/admin/users/${user.id}/name`, {
     method: 'PATCH',
@@ -165,13 +165,13 @@ test('admin can change a user name', async () => {
   assert.equal(updated.body.name, 'Chelly Kocht');
 
   const list = await api('/api/admin/users', { token: adminToken });
-  assert.equal(list.body.data.find((entry) => entry.id === user.id).name, 'Chelly Kocht');
+  assert.equal(list.body.data.find((entry: any) => entry.id === user.id).name, 'Chelly Kocht');
 });
 
 test('changing a user name requires an admin and a non-empty name', async () => {
   const adminToken = await loginAsAdmin();
   const users = await api('/api/admin/users', { token: adminToken });
-  const user = users.body.data.find((entry) => entry.email === 'gast@test.local');
+  const user = users.body.data.find((entry: any) => entry.email === 'gast@test.local');
 
   const invalid = await api(`/api/admin/users/${user.id}/name`, {
     method: 'PATCH',

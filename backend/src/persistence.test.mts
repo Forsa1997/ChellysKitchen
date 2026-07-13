@@ -10,7 +10,7 @@ import {
   serializeState,
 } from './persistence.mts';
 
-function sampleState() {
+function sampleState(): any {
   const users = new Map([
     ['a@x.de', { id: 'u1', email: 'a@x.de', name: 'A', role: 'ADMIN' }],
     ['b@x.de', { id: 'u2', email: 'b@x.de', name: 'B', role: 'MEMBER' }],
@@ -31,13 +31,13 @@ test('serialize/deserialize round-trips all collections', () => {
   const restored = deserializeState(JSON.parse(JSON.stringify(serializeState(state))));
 
   assert.equal(restored.users.size, 2);
-  assert.equal(restored.users.get('a@x.de').role, 'ADMIN');
+  assert.equal(restored.users.get('a@x.de')!.role, 'ADMIN');
   assert.equal(restored.sessions.get('tok1'), 'u1');
   assert.equal(restored.refreshSessions.get('ref1'), 'u1');
   assert.equal(restored.recipeStore.length, 1);
-  assert.equal(restored.ratingsStore.get('r1').get('u2').stars, 4);
+  assert.equal(restored.ratingsStore.get('r1')!.get('u2')!.stars, 4);
   assert.equal(restored.categoriesStore[0].slug, 'cooking');
-  assert.ok(restored.favoritesStore.get('u2').has('r1'));
+  assert.ok(restored.favoritesStore.get('u2')!.has('r1'));
 });
 
 test('deserialize tolerates missing fields', () => {
@@ -62,8 +62,8 @@ test('store persists to disk and reloads', () => {
     assert.equal(store.load(), null);
     store.save(sampleState());
     const loaded = store.load();
-    assert.equal(loaded.users.get('b@x.de').name, 'B');
-    assert.equal(loaded.ratingsStore.get('r1').get('u2').stars, 4);
+    assert.equal(loaded!.users.get('b@x.de')!.name, 'B');
+    assert.equal(loaded!.ratingsStore.get('r1')!.get('u2')!.stars, 4);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -13,7 +13,7 @@ test('allows attempts below the limit and blocks above it', () => {
 
   const check = limiter.isBlocked('k', now);
   assert.equal(check.blocked, true);
-  assert.ok(check.retryAfterSeconds >= 1, 'tells the caller when to retry');
+  assert.ok(check.retryAfterSeconds! >= 1, 'tells the caller when to retry');
 });
 
 test('failures expire after the window', () => {

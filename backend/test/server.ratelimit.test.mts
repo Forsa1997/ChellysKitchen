@@ -12,10 +12,10 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN_EMAIL = 'admin@test.local';
 const ADMIN_PASSWORD = 'admintest';
 
-let child;
-let dataDir;
+let child: ReturnType<typeof spawn>;
+let dataDir: string;
 
-async function login(email, password) {
+async function login(email: string, password: string) {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

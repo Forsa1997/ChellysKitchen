@@ -8,6 +8,7 @@ import {
   pruneExpiredSessions,
   resolveSession,
 } from './sessions.mts';
+import type { SessionEntry, SessionMap } from './types.mts';
 
 const NOW = 1_000_000;
 
@@ -27,10 +28,11 @@ test('resolveSession handles unknown tokens', () => {
 });
 
 test('normalizeSessionMap upgrades legacy string entries to expiring entries', () => {
-  const sessions = new Map([
+  // Deliberately a legacy-shaped map with plain string values.
+  const sessions = new Map<string, SessionEntry | string>([
     ['legacy-token', 'user_1'],
     ['new-token', createSessionEntry('user_2', NOW, ACCESS_TTL_MS)],
-  ]);
+  ]) as SessionMap;
 
   normalizeSessionMap(sessions, NOW, ACCESS_TTL_MS);
 

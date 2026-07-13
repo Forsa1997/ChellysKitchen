@@ -12,11 +12,11 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN_EMAIL = 'admin@test.local';
 const ADMIN_PASSWORD = 'admintest';
 
-let child;
-let dataDir;
+let child: ReturnType<typeof spawn>;
+let dataDir: string;
 
-async function api(path, { token, method = 'GET', body } = {}) {
-  const headers = {};
+async function api(path: string, { token, method = 'GET', body }: { token?: string; method?: string; body?: unknown } = {}): Promise<{ status: number; body: any; res: Response }> {
+  const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
@@ -45,7 +45,7 @@ function validRecipePayload(overrides = {}) {
   };
 }
 
-const INVALID_RECIPE_FIELDS = [
+const INVALID_RECIPE_FIELDS: Array<[string, Record<string, unknown>]> = [
   ['title whitespace', { title: '   ' }],
   ['shortDescription whitespace', { shortDescription: '   ' }],
   ['category whitespace', { category: '   ' }],
@@ -68,7 +68,7 @@ const INVALID_RECIPE_FIELDS = [
   ['step number invalid', { steps: [{ stepNumber: 1.5, instruction: 'Kochen.' }] }],
 ];
 
-function archivedSubresourceRequests(recipe, { stars, notes, servings }) {
+function archivedSubresourceRequests(recipe: any, { stars, notes, servings }: { stars?: unknown; notes?: unknown; servings?: unknown }): Array<[string, string, { method?: string; body?: unknown }]> {
   return [
     ['rating:post', `/api/recipes/${recipe.slug}/rating`, { method: 'POST', body: { stars } }],
     ['rating:get', `/api/recipes/${recipe.slug}/rating`, {}],
@@ -81,8 +81,8 @@ function archivedSubresourceRequests(recipe, { stars, notes, servings }) {
   ];
 }
 
-async function collectStatuses(requests, token) {
-  const statuses = {};
+async function collectStatuses(requests: Array<[string, string, { method?: string; body?: unknown }]>, token: string) {
+  const statuses: Record<string, number> = {};
   for (const [label, path, options] of requests) {
     statuses[label] = (await api(path, { ...options, token })).status;
   }
@@ -90,7 +90,7 @@ async function collectStatuses(requests, token) {
 }
 
 // Public registration no longer exists — the admin provisions every account.
-async function createMember(name) {
+async function createMember(name: string) {
   const adminLogin = await api('/api/auth/login', {
     method: 'POST',
     body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
@@ -202,7 +202,7 @@ test('recipe create -> update -> publish flow and admin role update', async () =
   assert.equal(usersList.status, 200);
   assert.ok(Array.isArray(usersList.body.data));
   assert.equal(typeof usersList.body.total, 'number');
-  const memberEntry = usersList.body.data.find((entry) => entry.id === member.user.id);
+  const memberEntry = usersList.body.data.find((entry: any) => entry.id === member.user.id);
   assert.equal(memberEntry._count.recipesCreated, 1);
 
   // Promote the member to EDITOR
@@ -226,7 +226,7 @@ test('recipe create -> update -> publish flow and admin role update', async () =
 
   const publicList = await api('/api/recipes?pageSize=24');
   assert.equal(publicList.status, 200);
-  assert.ok(!publicList.body.data.some((r) => r.id === recipeId), 'archived recipe hidden from public list');
+  assert.ok(!publicList.body.data.some((r: any) => r.id === recipeId), 'archived recipe hidden from public list');
 
   // An archived recipe must not be discoverable through endpoints that use a
   // slug directly either. Otherwise the public list would hide it while a
@@ -301,7 +301,7 @@ test('favorites can be set, filtered and removed', async () => {
   // The favorites filter returns exactly the marked recipe.
   const favorites = await api('/api/recipes?favorites=true', { token });
   assert.equal(favorites.status, 200);
-  assert.deepEqual(favorites.body.data.map((r) => r.id), [target.id]);
+  assert.deepEqual(favorites.body.data.map((r: any) => r.id), [target.id]);
 
   // The random endpoint honors the favorites pool.
   const random = await api('/api/recipes/random?favorites=true', { token });
@@ -352,7 +352,7 @@ test('bring export serves schema.org recipe markup with scaled ingredients', asy
 
   const res = await fetch(`${BASE}/api/recipes/${target.slug}/bring?servings=${doubled}`);
   assert.equal(res.status, 200);
-  assert.match(res.headers.get('content-type'), /text\/html/);
+  assert.match(res.headers.get('content-type')!, /text\/html/);
 
   const html = await res.text();
   const jsonLdMatch = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s);
@@ -531,7 +531,7 @@ test('members cannot access archived recipe subresources while editors retain ac
   const memberPlan = await api('/api/weekplan', { token: member.token });
   const memberPlanExposesRecipe = Object.values(memberPlan.body.days)
     .flat()
-    .some((entry) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
+    .some((entry: any) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
   const publicBring = await fetch(`${BASE}/api/weekplan/bring`);
   const publicBringExposesRecipe = (await publicBring.text()).includes(title);
   const publicVariants = await api(`/api/recipes?q=${encodeURIComponent(title)}&pageSize=100`);
@@ -541,7 +541,7 @@ test('members cannot access archived recipe subresources while editors retain ac
   const editorPlanAfterMemberDeletes = await api('/api/weekplan', { token: editor.token });
   const hiddenPlanEntryPreserved = Object.values(editorPlanAfterMemberDeletes.body.days)
     .flat()
-    .some((entry) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
+    .some((entry: any) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
 
   const editorRequests = archivedSubresourceRequests(created.body, {
     stars: 4,
@@ -552,7 +552,7 @@ test('members cannot access archived recipe subresources while editors retain ac
   const editorPlan = await api('/api/weekplan', { token: editor.token });
   const editorPlanExposesRecipe = Object.values(editorPlan.body.days)
     .flat()
-    .some((entry) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
+    .some((entry: any) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
 
   assert.deepEqual({
     memberStatuses,
@@ -623,7 +623,7 @@ test('ratings accept only integer stars from one through five', async () => {
   const list = await api('/api/recipes?pageSize=1');
   const target = list.body.data[0];
 
-  const invalidStatuses = {};
+  const invalidStatuses: Record<string, number> = {};
   for (const stars of ['abc', 1.5, null]) {
     const response = await api(`/api/recipes/${target.slug}/rating`, {
       method: 'POST',
@@ -646,7 +646,7 @@ test('ratings accept only integer stars from one through five', async () => {
 test('recipe creation rejects invalid fields without persisting a recipe', async () => {
   const { token } = await createMember('CreateContract');
   const before = await api('/api/recipes?pageSize=1000');
-  const unexpectedStatuses = {};
+  const unexpectedStatuses: Record<string, number> = {};
 
   for (const [label, override] of INVALID_RECIPE_FIELDS) {
     const response = await api('/api/recipes', {
@@ -676,7 +676,7 @@ test('recipe patch rejects invalid fields without mutating the recipe', async ()
   });
   assert.equal(created.status, 201);
 
-  const unexpectedStatuses = {};
+  const unexpectedStatuses: Record<string, number> = {};
 
   for (const [label, body] of INVALID_RECIPE_FIELDS) {
     const response = await api(`/api/recipes/${created.body.id}`, {
@@ -692,7 +692,7 @@ test('recipe patch rejects invalid fields without mutating the recipe', async ()
     'title', 'shortDescription', 'category', 'servings', 'preparationTime',
     'cookingTime', 'ingredients', 'steps',
   ];
-  const project = (recipe) => Object.fromEntries(fields.map((field) => [field, recipe[field]]));
+  const project = (recipe: any) => Object.fromEntries(fields.map((field) => [field, recipe[field]]));
 
   assert.deepEqual({
     unexpectedStatuses,

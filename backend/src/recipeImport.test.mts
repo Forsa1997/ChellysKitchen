@@ -9,7 +9,7 @@ import {
   parseIsoDurationToMinutes,
 } from './recipeImport.mts';
 
-function pageWith(jsonLd) {
+function pageWith(jsonLd: unknown) {
   return `<!doctype html><html><head>
     <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
     </head><body>Hallo</body></html>`;
@@ -135,16 +135,16 @@ test('extractRecipeFromHtml parses a German page with Zutaten/Zubereitung headin
     </body></html>`;
 
   const recipe = extractRecipeFromHtml(html);
-  assert.equal(recipe.title, 'Omas Kartoffelsuppe');
-  assert.equal(recipe.shortDescription, 'Deftige Suppe wie früher.');
-  assert.equal(recipe.servings, 4);
-  assert.equal(recipe.img, 'https://example.com/suppe.jpg');
-  assert.deepEqual(recipe.ingredients, [
+  assert.equal(recipe!.title, 'Omas Kartoffelsuppe');
+  assert.equal(recipe!.shortDescription, 'Deftige Suppe wie früher.');
+  assert.equal(recipe!.servings, 4);
+  assert.equal(recipe!.img, 'https://example.com/suppe.jpg');
+  assert.deepEqual(recipe!.ingredients, [
     { amount: 500, unit: 'g', name: 'Kartoffeln' },
     { amount: 1, unit: '', name: 'Zwiebel' },
     { amount: 0, unit: '', name: 'Salz & Pfeffer' },
   ]);
-  assert.deepEqual(recipe.steps, [
+  assert.deepEqual(recipe!.steps, [
     { stepNumber: 1, instruction: 'Kartoffeln schälen und würfeln.' },
     { stepNumber: 2, instruction: 'Alles weich kochen und pürieren.' },
   ]);
@@ -160,12 +160,12 @@ test('extractRecipeFromHtml prefers microdata itemprops when present', () => {
     </body></html>`;
 
   const recipe = extractRecipeFromHtml(html);
-  assert.equal(recipe.title, 'Microdata-Nudeln');
-  assert.deepEqual(recipe.ingredients, [
+  assert.equal(recipe!.title, 'Microdata-Nudeln');
+  assert.deepEqual(recipe!.ingredients, [
     { amount: 200, unit: 'g', name: 'Nudeln' },
     { amount: 1, unit: 'EL', name: 'Olivenöl' },
   ]);
-  assert.deepEqual(recipe.steps.map((step) => step.instruction), [
+  assert.deepEqual(recipe!.steps.map((step) => step.instruction), [
     'Nudeln kochen.',
     'Öl darüber geben.',
   ]);
@@ -184,9 +184,9 @@ test('extractRecipeFromHtml falls back to paragraphs when steps are not a list',
     </body></html>`;
 
   const recipe = extractRecipeFromHtml(html);
-  assert.equal(recipe.title, 'Pfannkuchen');
-  assert.equal(recipe.servings, 2);
-  assert.deepEqual(recipe.steps.map((step) => step.instruction), [
+  assert.equal(recipe!.title, 'Pfannkuchen');
+  assert.equal(recipe!.servings, 2);
+  assert.deepEqual(recipe!.steps.map((step) => step.instruction), [
     'Alles verrühren.',
     'In der Pfanne ausbacken.',
   ]);
@@ -199,9 +199,9 @@ test('extractRecipeFromHtml decodes umlaut and numeric HTML entities', () => {
     </body></html>`;
 
   const recipe = extractRecipeFromHtml(html);
-  assert.equal(recipe.title, 'Grüne Soße');
-  assert.equal(recipe.ingredients[1].name, '½ Zitrone');
-  assert.equal(recipe.steps[0].instruction, 'Kräuter hacken – fertig.');
+  assert.equal(recipe!.title, 'Grüne Soße');
+  assert.equal(recipe!.ingredients[1].name, '½ Zitrone');
+  assert.equal(recipe!.steps[0].instruction, 'Kräuter hacken – fertig.');
 });
 
 test('extractRecipeFromHtml uses title/og fallbacks and returns null without ingredients', () => {
@@ -213,9 +213,9 @@ test('extractRecipeFromHtml uses title/og fallbacks and returns null without ing
     </head><body>
     <h2>Zutaten</h2><ul><li>1 Gurke</li></ul>
     </body></html>`);
-  assert.equal(withoutH1.title, 'Schneller Salat');
-  assert.deepEqual(withoutH1.ingredients, [{ amount: 1, unit: '', name: 'Gurke' }]);
-  assert.deepEqual(withoutH1.steps, []);
+  assert.equal(withoutH1!.title, 'Schneller Salat');
+  assert.deepEqual(withoutH1!.ingredients, [{ amount: 1, unit: '', name: 'Gurke' }]);
+  assert.deepEqual(withoutH1!.steps, []);
 });
 
 test('isAllowedImportUrl blocks private targets and non-http protocols', () => {

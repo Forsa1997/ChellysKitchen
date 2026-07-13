@@ -5,7 +5,7 @@ const defaultApiBaseUrl = 'https://chellys-kitchen-api.onrender.com';
 const defaultEmail = 'demo@chellys-kitchen.local';
 const defaultPassword = 'demo1234';
 
-export function selectMissingRecipes(localRecipes: Recipe[], remoteRecipes: Array<Pick<Recipe, 'slug'>>): Recipe[] {
+export function selectMissingRecipes<T extends Pick<Recipe, 'slug'>>(localRecipes: T[], remoteRecipes: Array<Pick<Recipe, 'slug'>>): T[] {
   const remoteSlugs = new Set(remoteRecipes.map((recipe) => recipe.slug));
   return localRecipes.filter((recipe) => recipe.slug && !remoteSlugs.has(recipe.slug));
 }

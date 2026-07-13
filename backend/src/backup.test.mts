@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createExportPayload, parseImportPayload } from './backup.mts';
 
-function sampleState() {
+function sampleState(): any {
   const users = new Map([
     ['chef@test.local', {
       id: 'user_1', name: 'Chef', email: 'chef@test.local', role: 'ADMIN',
@@ -31,12 +31,12 @@ test('export -> import round-trips users, recipes, ratings and categories', () =
   // Simulate the JSON round-trip of download + upload.
   const parsed = parseImportPayload(JSON.parse(JSON.stringify(payload)));
 
-  assert.equal(parsed.users.get('chef@test.local').id, 'user_1');
+  assert.equal(parsed.users.get('chef@test.local')!.id, 'user_1');
   assert.equal(parsed.recipeStore.length, 1);
   assert.equal(parsed.recipeStore[0].slug, 'pasta');
-  assert.equal(parsed.ratingsStore.get('r1').get('user_1').stars, 5);
+  assert.equal(parsed.ratingsStore.get('r1')!.get('user_1')!.stars, 5);
   assert.equal(parsed.categoriesStore[0].slug, 'cooking');
-  assert.ok(parsed.favoritesStore.get('user_1').has('r1'));
+  assert.ok(parsed.favoritesStore.get('user_1')!.has('r1'));
   assert.equal(parsed.uploads.length, 1);
   assert.equal(parsed.uploads[0].fileName, 'abc123.png');
   assert.equal(parsed.uploads[0].buffer.toString(), 'fake-image');

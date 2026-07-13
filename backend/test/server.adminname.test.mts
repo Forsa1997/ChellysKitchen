@@ -12,10 +12,10 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN_EMAIL = 'admin@test.local';
 const ADMIN_PASSWORD = 'admintest';
 
-let child;
-let dataDir;
+let child: ReturnType<typeof spawn>;
+let dataDir: string;
 
-function startServer(adminName) {
+function startServer(adminName: string) {
   return spawn('node', ['server.mts'], {
     cwd: backendDir,
     env: {
@@ -30,8 +30,8 @@ function startServer(adminName) {
   });
 }
 
-async function api(path, { token, method = 'GET', body } = {}) {
-  const headers = {};
+async function api(path: string, { token, method = 'GET', body }: { token?: string; method?: string; body?: unknown } = {}): Promise<{ status: number; body: any; res?: Response }> {
+  const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
@@ -59,7 +59,7 @@ async function waitForReady(timeoutMs = 10000) {
   throw new Error('Server did not become ready in time');
 }
 
-function stopServer(proc) {
+function stopServer(proc: ReturnType<typeof spawn>) {
   return new Promise((resolve) => {
     proc.once('exit', resolve);
     proc.kill('SIGTERM');

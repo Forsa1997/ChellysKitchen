@@ -74,7 +74,7 @@ test('aggregateWeekPlanIngredients scales by the planned servings', () => {
 
 test('aggregateWeekPlanIngredients falls back to the recipe servings', () => {
   const list = aggregateWeekPlanIngredients([{ recipe: pasta, servings: null }]);
-  assert.equal(list.find((item) => item.name === 'Sahne').amount, 200);
+  assert.equal(list.find((item) => item.name === 'Sahne')!.amount, 200);
 });
 
 test('aggregateWeekPlanIngredients keeps different units apart and merges case-insensitively', () => {
