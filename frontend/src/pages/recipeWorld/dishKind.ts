@@ -11,6 +11,9 @@ export type DishKind =
   | 'meat'
   | 'bread'
   | 'drink'
+  | 'fries'
+  | 'taco'
+  | 'casserole'
   | 'pot';
 
 export const dishKindLabels: Record<DishKind, string> = {
@@ -24,6 +27,9 @@ export const dishKindLabels: Record<DishKind, string> = {
   meat: 'Fleischgericht',
   bread: 'Frisch gebacken',
   drink: 'Erfrischung',
+  fries: 'Pommes-Tüte',
+  taco: 'Taco',
+  casserole: 'Ofenauflauf',
   pot: 'Kochtopf',
 };
 
@@ -31,6 +37,9 @@ export const dishKindLabels: Record<DishKind, string> = {
 const keywordRules: Array<[DishKind, RegExp]> = [
   ['pizza', /pizza|flammkuchen/],
   ['burger', /burger/],
+  ['taco', /taco|burrito|wrap|quesadilla|fajita/],
+  ['fries', /pommes|fritten|wedges|bratkartoffel/],
+  ['casserole', /auflauf|gratin|überbacken/],
   ['pasta', /pasta|nudel|spaghetti|lasagne|tortellini|gnocchi|spätzle|penne|tagliatelle|mac.?aroni|ramen/],
   ['soup', /suppe|eintopf|brühe|chili con|curry|gulasch/],
   ['cake', /kuchen|torte|dessert|süß|muffin|keks|cookie|gebäck|waffel|pancake|pfannkuchen|crêpe|\beis(?:creme)?\b|pudding|tiramisu|brownie/],

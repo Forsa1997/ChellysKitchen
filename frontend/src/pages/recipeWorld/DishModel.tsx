@@ -305,6 +305,78 @@ function DrinkDish({ seed }: { seed: number }) {
   );
 }
 
+function FriesDish() {
+  return (
+    <group>
+      <mesh position={[0, 0.3, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.22, 0.55, 14]} />
+        <meshStandardMaterial color="#d94f3d" roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 0.34, 0.24]} rotation={[0.18, 0, 0]}>
+        <boxGeometry args={[0.34, 0.4, 0.03]} />
+        <meshStandardMaterial color="#fbf4e8" roughness={0.5} />
+      </mesh>
+      {[[-0.14, 0.1, 0], [0.02, 0.14, -0.3], [0.12, 0.06, 0.25], [-0.05, 0.02, 0.5], [0.16, 0.12, -0.1], [-0.16, 0.05, -0.45], [0.06, 0.1, 0.72]].map(([x, tilt, spin], i) => (
+        <mesh key={i} position={[x, 0.62 + tilt, (i % 3 - 1) * 0.08]} rotation={[tilt, spin, tilt * 1.5]}>
+          <boxGeometry args={[0.07, 0.42, 0.07]} />
+          <meshStandardMaterial color="#f2c14e" roughness={0.55} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function TacoDish({ seed }: { seed: number }) {
+  const filling = pick(seed, ['#8a4a32', '#a15c3e', '#c0392b']);
+  return (
+    <group>
+      <Plate />
+      <group position={[0, 0.32, 0]} rotation={[0, 0.4, 0]}>
+        {[-1, 1].map((side) => (
+          <mesh key={side} position={[side * 0.16, 0, 0]} rotation={[0, 0, side * 0.5]} castShadow>
+            <cylinderGeometry args={[0.42, 0.42, 0.05, 18, 1, false, 0, Math.PI]} />
+            <meshStandardMaterial color="#e8b45a" roughness={0.55} />
+          </mesh>
+        ))}
+        {[[-0.12, '#7bb661'], [0, filling], [0.12, '#d94f3d']].map(([offset, color], i) => (
+          <mesh key={i} position={[Number(offset), 0.16, 0]}>
+            <sphereGeometry args={[0.11, 10, 10]} />
+            <meshStandardMaterial color={String(color)} roughness={0.55} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+}
+
+function CasseroleDish() {
+  return (
+    <group>
+      <mesh position={[0, 0.16, 0]} castShadow>
+        <boxGeometry args={[1.0, 0.3, 0.7]} />
+        <meshStandardMaterial color="#b03a2e" roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 0.32, 0]}>
+        <boxGeometry args={[0.92, 0.04, 0.62]} />
+        <meshStandardMaterial color="#e8b45a" roughness={0.55} />
+      </mesh>
+      {[[-0.28, 0.12], [0, -0.1], [0.26, 0.08], [-0.1, -0.02], [0.12, 0.18]].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.36, z]} scale={[1, 0.5, 1]}>
+          <sphereGeometry args={[0.11, 10, 8]} />
+          <meshStandardMaterial color="#f6d365" roughness={0.5} />
+        </mesh>
+      ))}
+      {[-1, 1].map((side) => (
+        <mesh key={side} position={[side * 0.56, 0.18, 0]}>
+          <boxGeometry args={[0.12, 0.08, 0.26]} />
+          <meshStandardMaterial color="#8e2f24" roughness={0.5} />
+        </mesh>
+      ))}
+      <Steam x={0.1} y={0.62} />
+    </group>
+  );
+}
+
 function PotDish() {
   return (
     <group>
@@ -342,6 +414,9 @@ const dishComponents: Record<DishKind, (props: { seed: number }) => React.JSX.El
   meat: MeatDish,
   bread: BreadDish,
   drink: DrinkDish,
+  fries: FriesDish,
+  taco: TacoDish,
+  casserole: CasseroleDish,
   pot: PotDish,
 };
 

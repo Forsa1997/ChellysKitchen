@@ -11,6 +11,7 @@ vi.mock('../recipes/useQueryRecipes', () => ({
 
 vi.mock('@react-three/fiber', () => ({
   Canvas: () => <div data-testid="recipe-world-canvas" />,
+  useFrame: () => {},
 }));
 
 vi.mock('@react-three/drei', () => ({
@@ -61,6 +62,18 @@ describe('RecipeWorldPage', () => {
 
     expect(screen.getByRole('link', { name: /Cremige Pasta entdecken/i })).toHaveTextContent('Pastateller');
     expect(screen.getByRole('link', { name: /Tomatensuppe entdecken/i })).toHaveTextContent('Suppenschüssel');
+  });
+
+  it('offers touch-friendly view controls next to the 3D festival', () => {
+    useQueryRecipesMock.mockReturnValue({ recipes, loading: false, error: null });
+
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'Hineinzoomen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Herauszoomen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nach links drehen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nach rechts drehen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ansicht zurücksetzen' })).toBeInTheDocument();
   });
 
   it('lets players filter the world by recipe category', () => {

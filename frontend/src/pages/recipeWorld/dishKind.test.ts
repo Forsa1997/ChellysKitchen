@@ -30,6 +30,12 @@ describe('pickDishKind', () => {
     ['bread', { title: 'Sauerteigbrot' }],
     ['drink', { category: 'Getränke' }],
     ['drink', { title: 'Beeren-Smoothie' }],
+    ['fries', { title: 'Pommes rot-weiß' }],
+    ['fries', { title: 'Süßkartoffel-Wedges' }],
+    ['taco', { title: 'Tacos mit Guacamole' }],
+    ['taco', { title: 'Hähnchen-Wrap' }],
+    ['casserole', { title: 'Kartoffelgratin' }],
+    ['casserole', { title: 'Blumenkohl-Auflauf' }],
     ['pot', { title: 'Wochenend-Experiment' }],
   ])('maps to %s', (expected, overrides) => {
     expect(pickDishKind(recipe(overrides))).toBe(expected);
@@ -46,7 +52,7 @@ describe('pickDishKind', () => {
   });
 
   it('has a German label for every dish kind', () => {
-    const kinds: DishKind[] = ['pasta', 'soup', 'pizza', 'cake', 'burger', 'salad', 'fish', 'meat', 'bread', 'drink', 'pot'];
+    const kinds: DishKind[] = ['pasta', 'soup', 'pizza', 'cake', 'burger', 'salad', 'fish', 'meat', 'bread', 'drink', 'fries', 'taco', 'casserole', 'pot'];
     for (const kind of kinds) {
       expect(dishKindLabels[kind]).toBeTruthy();
     }
