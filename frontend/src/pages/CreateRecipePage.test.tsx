@@ -12,7 +12,9 @@ vi.mock('../api/client', () => ({
     importRecipe: (...args: unknown[]) => importRecipeMock(...args),
     importRecipeFromPhoto: (...args: unknown[]) => importRecipeFromPhotoMock(...args),
     uploadImage: (...args: unknown[]) => uploadImageMock(...args),
+    fetchImageObjectUrl: vi.fn(() => Promise.resolve('blob:mock-image')),
   },
+  getApiBaseUrl: () => 'http://localhost:4000',
 }));
 
 vi.mock('../hooks/useRecipes', () => ({

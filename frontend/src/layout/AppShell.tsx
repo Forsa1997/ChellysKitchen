@@ -54,14 +54,10 @@ export function AppShell({ children }: PropsWithChildren) {
       </Button>
     </>
   ) : (
-    <>
-      <Button component={RouterLink} to="/rezeptwelt" variant="text">
-        Rezeptwelt
-      </Button>
-      <Button component={RouterLink} to="/signin" variant="contained">
-        Anmelden
-      </Button>
-    </>
+    // The app is private — a logged-out visitor can only sign in.
+    <Button component={RouterLink} to="/signin" variant="contained">
+      Anmelden
+    </Button>
   );
 
   return (
@@ -210,14 +206,9 @@ export function AppShell({ children }: PropsWithChildren) {
                 </Button>
               </>
             ) : (
-              <>
-                <Button component={RouterLink} to="/rezeptwelt" variant="outlined" fullWidth onClick={closeMenu}>
-                  Rezeptwelt
-                </Button>
-                <Button component={RouterLink} to="/signin" variant="contained" fullWidth onClick={closeMenu}>
-                  Anmelden
-                </Button>
-              </>
+              <Button component={RouterLink} to="/signin" variant="contained" fullWidth onClick={closeMenu}>
+                Anmelden
+              </Button>
             )}
           </Stack>
         </Box>

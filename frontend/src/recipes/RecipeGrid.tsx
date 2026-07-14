@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, CardMedia, Chip, Grid, IconButton, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Card, CardContent, Chip, Grid, IconButton, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { Link as RouterLink } from 'react-router';
@@ -6,6 +6,7 @@ import type { Recipe } from '../types/domain';
 import { RatingDisplay } from '../components/Rating';
 import { totalRecipeMinutes } from './recipeCardViewModel';
 import { recipeRenderImage } from './recipeImages';
+import { RecipeImage } from './RecipeImage';
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -73,9 +74,8 @@ function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
       >
         {recipe.img ? (
           <Box data-recipe-media sx={{ position: 'relative' }}>
-            <CardMedia
-              image={renderImage ?? recipe.img}
-              component="img"
+            <RecipeImage
+              src={renderImage ?? recipe.img}
               alt={recipe.title}
               sx={{ aspectRatio: '16 / 10', height: 'auto', objectFit: 'cover' }}
             />
@@ -162,9 +162,8 @@ function RecipeListItem({ recipe, onToggleFavorite }: RecipeCardProps) {
     >
       <Box component={RouterLink} to={`/recipes/${recipe.slug}`} sx={{ color: 'inherit', textDecoration: 'none', display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
         {imageSrc ? (
-          <CardMedia
-            image={imageSrc}
-            component="img"
+          <RecipeImage
+            src={imageSrc}
             alt={recipe.title}
             sx={{ width: 92, height: 92, flexShrink: 0, objectFit: 'cover' }}
           />

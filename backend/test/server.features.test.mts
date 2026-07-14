@@ -141,7 +141,7 @@ test('week plan requires a signed-in member', async () => {
 });
 
 test('members can plan recipes, adjust servings and remove them again', async () => {
-  const list = await api('/api/recipes?pageSize=2');
+  const list = await api('/api/recipes?pageSize=2', { token: memberToken });
   const [first, second] = list.body.data;
 
   // Plan two meals.
@@ -205,7 +205,7 @@ test('week plan rejects unknown days and recipes', async () => {
 });
 
 test('the week plan Bring page aggregates all planned ingredients publicly', async () => {
-  const list = await api('/api/recipes?pageSize=1');
+  const list = await api('/api/recipes?pageSize=1', { token: memberToken });
   const recipe = list.body.data[0];
 
   await api('/api/weekplan', { method: 'DELETE', token: memberToken });
@@ -243,7 +243,7 @@ test('clearing the week plan empties every day', async () => {
 });
 
 test('members can duplicate a recipe as their own variant', async () => {
-  const list = await api('/api/recipes?pageSize=1');
+  const list = await api('/api/recipes?pageSize=1', { token: memberToken });
   const original = list.body.data[0];
 
   const duplicated = await api(`/api/recipes/${original.slug}/duplicate`, {
@@ -260,7 +260,7 @@ test('members can duplicate a recipe as their own variant', async () => {
   assert.equal(duplicated.body.totalRatings, 0);
   assert.equal(duplicated.body.notes, '');
 
-  const detail = await api(`/api/recipes/${duplicated.body.slug}`);
+  const detail = await api(`/api/recipes/${duplicated.body.slug}`, { token: memberToken });
   assert.equal(detail.status, 200);
 
   const anonymous = await api(`/api/recipes/${original.slug}/duplicate`, { method: 'POST' });

@@ -32,9 +32,30 @@ function App() {
           <RouterComponent>
             <AppShell>
               <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/rezeptwelt" element={<Suspense fallback={null}><RecipeWorldPage /></Suspense>} />
-                <Route path="/recipes/:slug" element={<RecipeDetailPage />} />
+                <Route
+                  path="/"
+                  element={(
+                    <RequireAuth>
+                      <HomePage />
+                    </RequireAuth>
+                  )}
+                />
+                <Route
+                  path="/rezeptwelt"
+                  element={(
+                    <RequireAuth>
+                      <Suspense fallback={null}><RecipeWorldPage /></Suspense>
+                    </RequireAuth>
+                  )}
+                />
+                <Route
+                  path="/recipes/:slug"
+                  element={(
+                    <RequireAuth>
+                      <RecipeDetailPage />
+                    </RequireAuth>
+                  )}
+                />
                 <Route
                   path="/recipes/new"
                   element={(

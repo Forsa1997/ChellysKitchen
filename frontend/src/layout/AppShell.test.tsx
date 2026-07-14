@@ -33,6 +33,9 @@ describe('AppShell', () => {
     expect(logo).toHaveAttribute('src', '/brand/chellys-kitchen-icon.svg');
     expect(logo.closest('[data-brand-mark]')).not.toBeNull();
     expect(screen.getByRole('link', { name: /Chellys Kitchen/ })).toHaveAttribute('href', '/');
-    expect(screen.getByRole('link', { name: 'Rezeptwelt' })).toHaveAttribute('href', '/rezeptwelt');
+    // The app is private: a logged-out visitor only gets a sign-in link, no
+    // browsing entry points.
+    expect(screen.getByRole('link', { name: 'Anmelden' })).toHaveAttribute('href', '/signin');
+    expect(screen.queryByRole('link', { name: 'Rezeptwelt' })).toBeNull();
   });
 });

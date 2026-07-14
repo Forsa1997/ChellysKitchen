@@ -1,4 +1,4 @@
-import { Alert, Avatar, Box, Button, CardContent, CardMedia, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Alert, Avatar, Box, Button, CardContent, Chip, CircularProgress, Container, Divider, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Snackbar, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
 import { useRecipe, useDeleteRecipe, useDuplicateRecipe, usePublishRecipe, useArchiveRecipe, useToggleFavorite, useUpdateRecipeNotes } from '../hooks/useRecipes';
@@ -36,6 +36,7 @@ import { buildBringDeeplink } from '../utils/bring';
 import { WEEK_DAYS } from '../utils/weekdays';
 import type { Ingredient, RecipeStep } from '../types/domain';
 import { recipeRenderImage } from '../recipes/recipeImages';
+import { RecipeImage } from '../recipes/RecipeImage';
 import { CookingMode } from '../components/CookingMode';
 
 const EDITOR_ROLES = ['EDITOR', 'ADMIN'];
@@ -413,9 +414,8 @@ export function RecipeDetailPage() {
         >
           {recipe.img && (
             <Box sx={{ position: 'relative' }}>
-              <CardMedia
-                component="img"
-                image={renderImage ?? recipe.img}
+              <RecipeImage
+                src={renderImage ?? recipe.img}
                 alt={recipe.title}
                 sx={{ height: { xs: 280, sm: 360, md: 400 }, width: '100%', objectFit: 'cover' }}
               />

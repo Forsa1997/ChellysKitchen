@@ -89,6 +89,21 @@ async function collectStatuses(requests: Array<[string, string, { method?: strin
   return statuses;
 }
 
+// The app is completely private, so even plain reads need a session. A seeded
+// non-editor member stands in for "any signed-in user" — it only ever sees
+// PUBLISHED recipes, exactly like the old anonymous list did.
+let readerTokenCache: string | undefined;
+async function readerToken(): Promise<string> {
+  if (readerTokenCache) return readerTokenCache;
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: 'demo@chellys-kitchen.local', password: 'demo1234' },
+  });
+  assert.equal(login.status, 200, 'demo member login must work');
+  readerTokenCache = login.body.accessToken as string;
+  return readerTokenCache;
+}
+
 // Public registration no longer exists — the admin provisions every account.
 async function createMember(name: string) {
   const adminLogin = await api('/api/auth/login', {
@@ -224,15 +239,15 @@ test('recipe create -> update -> publish flow and admin role update', async () =
   assert.equal(archived.status, 200);
   assert.equal(archived.body.status, 'ARCHIVED');
 
-  const publicList = await api('/api/recipes?pageSize=24');
+  const publicList = await api('/api/recipes?pageSize=24', { token: await readerToken() });
   assert.equal(publicList.status, 200);
-  assert.ok(!publicList.body.data.some((r: any) => r.id === recipeId), 'archived recipe hidden from public list');
+  assert.ok(!publicList.body.data.some((r: any) => r.id === recipeId), 'archived recipe hidden from member list');
 
   // An archived recipe must not be discoverable through endpoints that use a
-  // slug directly either. Otherwise the public list would hide it while a
-  // previously shared URL still exposed its contents.
-  const anonymousDetail = await api(`/api/recipes/${archived.body.slug}`);
-  assert.equal(anonymousDetail.status, 404);
+  // slug directly either. Otherwise the list would hide it while a previously
+  // shared URL still exposed its contents to a normal member.
+  const memberDetail = await api(`/api/recipes/${archived.body.slug}`, { token: await readerToken() });
+  assert.equal(memberDetail.status, 404);
 
   const anonymousBring = await fetch(`${BASE}/api/recipes/${archived.body.slug}/bring`);
   assert.equal(anonymousBring.status, 404);
@@ -269,7 +284,8 @@ test('image upload stores a file that is served back', async () => {
   assert.match(upload.body.url, /\/uploads\/[a-f0-9]+\.png$/);
 
   const path = new URL(upload.body.url).pathname;
-  const fetched = await fetch(`${BASE}${path}`);
+  // Uploaded images are private now — serving them needs a bearer token.
+  const fetched = await fetch(`${BASE}${path}`, { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(fetched.status, 200);
   assert.equal(fetched.headers.get('content-type'), 'image/png');
 });
@@ -290,7 +306,7 @@ test('CORS preflight allows PUT so browsers can set favorites', async () => {
 test('favorites can be set, filtered and removed', async () => {
   const { token } = await createMember('Fan');
 
-  const list = await api('/api/recipes?pageSize=2');
+  const list = await api('/api/recipes?pageSize=2', { token });
   const target = list.body.data[0];
 
   // Mark as favorite
@@ -324,7 +340,7 @@ test('favorites can be set, filtered and removed', async () => {
 test('any member can update the shared notes of a recipe', async () => {
   const { token } = await createMember('Notiz');
 
-  const list = await api('/api/recipes?pageSize=1');
+  const list = await api('/api/recipes?pageSize=1', { token });
   const target = list.body.data[0];
 
   const updated = await api(`/api/recipes/${target.slug}/notes`, {
@@ -335,7 +351,7 @@ test('any member can update the shared notes of a recipe', async () => {
   assert.equal(updated.status, 200);
   assert.equal(updated.body.notes, 'Nächstes Mal weniger Salz.');
 
-  const detail = await api(`/api/recipes/${target.slug}`);
+  const detail = await api(`/api/recipes/${target.slug}`, { token });
   assert.equal(detail.body.notes, 'Nächstes Mal weniger Salz.');
 
   const anonymous = await api(`/api/recipes/${target.slug}/notes`, {
@@ -346,7 +362,7 @@ test('any member can update the shared notes of a recipe', async () => {
 });
 
 test('bring export serves schema.org recipe markup with scaled ingredients', async () => {
-  const list = await api('/api/recipes?pageSize=1');
+  const list = await api('/api/recipes?pageSize=1', { token: await readerToken() });
   const target = list.body.data[0];
   const doubled = target.servings * 2;
 
@@ -368,22 +384,23 @@ test('bring export serves schema.org recipe markup with scaled ingredients', asy
 });
 
 test('random recipe endpoint picks published recipes and respects filters', async () => {
-  const random = await api('/api/recipes/random');
+  const token = await readerToken();
+  const random = await api('/api/recipes/random', { token });
   assert.equal(random.status, 200);
   assert.equal(random.body.status, 'PUBLISHED');
   assert.ok(random.body.slug, 'random recipe has a slug');
 
   // Category filter narrows the pool.
-  const baking = await api('/api/recipes/random?category=Baking');
+  const baking = await api('/api/recipes/random?category=Baking', { token });
   assert.equal(baking.status, 200);
   assert.equal(baking.body.category, 'Baking');
 
   // No match -> 404 instead of an arbitrary recipe.
-  const none = await api(`/api/recipes/random?q=gibt-es-sicher-nicht-${Date.now()}`);
+  const none = await api(`/api/recipes/random?q=gibt-es-sicher-nicht-${Date.now()}`, { token });
   assert.equal(none.status, 404);
 
   // exclude keeps "roll again" from returning the same recipe.
-  const excluded = await api(`/api/recipes/random?category=Baking&exclude=${baking.body.slug}`);
+  const excluded = await api(`/api/recipes/random?category=Baking&exclude=${baking.body.slug}`, { token });
   if (excluded.status === 200) {
     assert.notEqual(excluded.body.slug, baking.body.slug);
   }
@@ -429,7 +446,7 @@ test('admin can export a backup and restore it after data changes', async () => 
   assert.equal(me.status, 200);
   assert.equal(me.body.user.role, 'ADMIN');
 
-  const detail = await api(`/api/recipes/${created.body.slug}`);
+  const detail = await api(`/api/recipes/${created.body.slug}`, { token: adminToken });
   assert.equal(detail.status, 404);
 });
 
@@ -534,7 +551,7 @@ test('members cannot access archived recipe subresources while editors retain ac
     .some((entry: any) => entry.recipeId === created.body.id || entry.recipe?.id === created.body.id);
   const publicBring = await fetch(`${BASE}/api/weekplan/bring`);
   const publicBringExposesRecipe = (await publicBring.text()).includes(title);
-  const publicVariants = await api(`/api/recipes?q=${encodeURIComponent(title)}&pageSize=100`);
+  const publicVariants = await api(`/api/recipes?q=${encodeURIComponent(title)}&pageSize=100`, { token: await readerToken() });
 
   // A denied MEMBER request must not mutate the existing rating or the recipe.
   const adminSnapshot = await api(`/api/recipes/${created.body.id}`, { token: adminToken });
@@ -620,7 +637,7 @@ test('owners cannot mutate their own recipe after an editor archives it', async 
 
 test('ratings accept only integer stars from one through five', async () => {
   const { token } = await createMember('RatingContract');
-  const list = await api('/api/recipes?pageSize=1');
+  const list = await api('/api/recipes?pageSize=1', { token });
   const target = list.body.data[0];
 
   const invalidStatuses: Record<string, number> = {};
@@ -645,7 +662,7 @@ test('ratings accept only integer stars from one through five', async () => {
 
 test('recipe creation rejects invalid fields without persisting a recipe', async () => {
   const { token } = await createMember('CreateContract');
-  const before = await api('/api/recipes?pageSize=1000');
+  const before = await api('/api/recipes?pageSize=1000', { token });
   const unexpectedStatuses: Record<string, number> = {};
 
   for (const [label, override] of INVALID_RECIPE_FIELDS) {
@@ -657,7 +674,7 @@ test('recipe creation rejects invalid fields without persisting a recipe', async
     if (response.status !== 400) unexpectedStatuses[label] = response.status;
   }
 
-  const after = await api('/api/recipes?pageSize=1000');
+  const after = await api('/api/recipes?pageSize=1000', { token });
   assert.deepEqual({
     unexpectedStatuses,
     persistedRecipeDelta: after.body.meta.total - before.body.meta.total,

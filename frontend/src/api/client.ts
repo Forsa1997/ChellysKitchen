@@ -988,6 +988,35 @@ class ApiClient {
     });
   }
 
+  /**
+   * Fetch a protected image (e.g. an uploaded recipe photo under `/uploads/`)
+   * with the bearer token and return an object URL. Uploaded images are private
+   * now, so a plain `<img src>` — which cannot send the token — would 401.
+   *
+   * The caller owns the returned object URL and must revoke it when done.
+   * Mirrors `request()`'s single refresh-and-retry on a 401.
+   */
+  async fetchImageObjectUrl(rawUrl: string, isRetry = false): Promise<string> {
+    const url = /^https?:\/\//.test(rawUrl) ? rawUrl : `${this.baseUrl}${rawUrl}`;
+    const headers: Record<string, string> = {};
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+
+    const response = await fetch(url, { headers });
+
+    if (!response.ok) {
+      if (response.status === 401 && this.refreshToken && !isRetry) {
+        await this.refreshAccessToken();
+        return this.fetchImageObjectUrl(rawUrl, true);
+      }
+      throw new Error(`Bild konnte nicht geladen werden (${response.status}).`);
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  }
+
   // ============================================================================
   // Health Endpoint
   // ============================================================================

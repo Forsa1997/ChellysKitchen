@@ -23,6 +23,7 @@ import { getApiBaseUrl, type WeekPlanEntry } from '../api/client';
 import { buildWeekPlanBringDeeplink } from '../utils/bring';
 import { WEEK_DAYS } from '../utils/weekdays';
 import { recipeRenderImage } from '../recipes/recipeImages';
+import { RecipeImage } from '../recipes/RecipeImage';
 
 export function WeekPlanPage() {
   const { data, isLoading, error } = useWeekPlan();
@@ -121,8 +122,7 @@ export function WeekPlanPage() {
                     {entries.map((entry: WeekPlanEntry) => (
                       <Stack key={entry.recipeId} direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                         {entry.recipe.img && (
-                          <Box
-                            component="img"
+                          <RecipeImage
                             src={recipeRenderImage(entry.recipe.img) ?? entry.recipe.img}
                             alt=""
                             sx={{ width: 60, height: 46, objectFit: 'cover', borderRadius: 2.5, flexShrink: 0 }}

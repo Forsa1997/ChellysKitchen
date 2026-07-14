@@ -10,7 +10,9 @@ vi.mock('../hooks/useCategories', () => ({
 vi.mock('../api/client', () => ({
   apiClient: {
     uploadImage: vi.fn(),
+    fetchImageObjectUrl: vi.fn(() => Promise.resolve('blob:mock-image')),
   },
+  getApiBaseUrl: () => 'http://localhost:4000',
 }));
 
 function renderForm(

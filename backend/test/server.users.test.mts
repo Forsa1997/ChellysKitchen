@@ -234,5 +234,7 @@ test('user creation is admin-only', async () => {
     method: 'POST',
     body: { name: 'Anonym', email: 'anonym@test.local', password: 'secret123' },
   });
-  assert.equal(anonymous.status, 403);
+  // The private-access gate rejects unauthenticated requests before the
+  // admin-role check even runs.
+  assert.equal(anonymous.status, 401);
 });

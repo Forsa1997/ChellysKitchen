@@ -5,6 +5,7 @@ import {
   RestaurantOutlined as RestaurantOutlinedIcon,
 } from '@mui/icons-material';
 import { brand, gray } from '../themePrimitives';
+import { RecipeImage } from '../recipes/RecipeImage';
 
 export interface PreviewIngredient {
   amount: string;
@@ -92,8 +93,7 @@ export function RecipePreviewCard({
       </Stack>
 
       {img ? (
-        <Box
-          component="img"
+        <RecipeImage
           src={img}
           alt="Rezeptbild"
           sx={{ display: 'block', width: '100%', height: 150, objectFit: 'cover' }}

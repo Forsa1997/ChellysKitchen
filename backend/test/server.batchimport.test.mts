@@ -157,7 +157,8 @@ test('batch import is admin only', async () => {
   const photos = [{ filename: 'a.png', data: `data:image/png;base64,${TINY_PNG_BASE64}` }];
 
   const anonymous = await api('/api/admin/recipes/import/photos', { method: 'POST', body: { photos } });
-  assert.equal(anonymous.status, 403);
+  // The private-access gate rejects unauthenticated requests up front.
+  assert.equal(anonymous.status, 401);
 
   const member = await api('/api/admin/recipes/import/photos', {
     method: 'POST',
@@ -254,12 +255,12 @@ test('a batch creates unpublished drafts tagged KI-Import and reports progress',
   assert.deepEqual(draft.ingredients[0], { amount: 250, unit: 'g', name: 'Mehl' });
   assert.match(draft.img, new RegExp(`^http://127\\.0\\.0\\.1:${PORT}/uploads/`));
 
-  const image = await fetch(draft.img);
+  const image = await fetch(draft.img, { headers: { Authorization: `Bearer ${adminToken}` } });
   assert.equal(image.status, 200);
   assert.equal(image.headers.get('content-type'), 'image/png');
 
-  // Unpublished drafts stay invisible on the public list until reviewed.
-  const publicList = await api('/api/recipes?pageSize=100');
+  // Unpublished drafts stay invisible on a normal member's list until reviewed.
+  const publicList = await api('/api/recipes?pageSize=100', { token: memberToken });
   assert.equal(publicList.status, 200);
   assert.ok(!publicList.body.data.some((recipe: any) => recipe.id === createdItem.recipe.id));
 

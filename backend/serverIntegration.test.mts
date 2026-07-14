@@ -57,7 +57,12 @@ test('eine gültige eingehende Request-ID wird in der Antwort übernommen', asyn
 });
 
 test('auch Fehlerantworten tragen eine Request-ID', async () => {
-  const response = await fetch(`${baseUrl}/gibt-es-nicht`);
+  // Signed in, so the private-access gate is passed and the request reaches the
+  // real "route not found" branch instead of the 401 gate.
+  const { accessToken } = await loginAs('MEMBER');
+  const response = await fetch(`${baseUrl}/gibt-es-nicht`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   assert.equal(response.status, 404);
   assert.ok(response.headers.get('x-request-id'));
 });
@@ -68,7 +73,11 @@ test('auch Fehlerantworten tragen eine Request-ID', async () => {
 
 test('GET /metrics liefert Request-Zähler und Latenz-Kennzahlen', async () => {
   await fetch(`${baseUrl}/health`);
-  const response = await fetch(`${baseUrl}/metrics`);
+  // /metrics is private now, like the rest of the app — it needs a session.
+  const { accessToken } = await loginAs('MEMBER');
+  const response = await fetch(`${baseUrl}/metrics`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   assert.equal(response.status, 200);
 
   const body: any = await response.json();
@@ -231,7 +240,9 @@ test('Bewertung ohne Anmeldung liefert 401', async () => {
 test('Bewertung außerhalb 1-5 wird abgelehnt', async () => {
   const { accessToken } = await loginAs('MEMBER');
 
-  const recipesResponse = await fetch(`${baseUrl}/api/recipes?pageSize=1`);
+  const recipesResponse = await fetch(`${baseUrl}/api/recipes?pageSize=1`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   const { data }: any = await recipesResponse.json();
   assert.ok(data.length > 0, 'mindestens ein Rezept wird für den Test benötigt');
 

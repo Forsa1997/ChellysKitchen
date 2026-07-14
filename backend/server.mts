@@ -608,6 +608,28 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // ---------------------------------------------------------------------------
+  // Private-by-default gate. The app is kept completely private: every endpoint
+  // requires a signed-in user. Only a small allowlist stays public — the health
+  // probe, the auth endpoints, and the Bring! export pages (Bring's crawler
+  // fetches those server-side without a token). Anything else — recipe
+  // browsing, categories, uploaded images, the week plan, admin — gets a 401
+  // before it reaches its route handler.
+  // ---------------------------------------------------------------------------
+  {
+    const gatePath = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`).pathname;
+    const isPublicPath =
+      gatePath === '/health' ||
+      gatePath.startsWith('/api/auth/') ||
+      gatePath === '/api/weekplan/bring' ||
+      /^\/api\/recipes\/[^/]+\/bring$/.test(gatePath);
+
+    if (!isPublicPath && !authenticateRequest(req)) {
+      jsonResponse(res, 401, { error: 'Bitte zuerst anmelden.' });
+      return;
+    }
+  }
+
   if (req.method === 'GET' && req.url === '/health') {
     jsonResponse(res, 200, {
       status: 'ok',

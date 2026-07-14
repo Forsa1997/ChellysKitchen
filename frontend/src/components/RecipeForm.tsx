@@ -24,6 +24,7 @@ import { apiClient, type CreateRecipeRequest } from '../api/client';
 import { useCategories } from '../hooks/useCategories';
 import { RecipePreviewCard } from './RecipePreviewCard';
 import { RecipeImportCard } from './RecipeImportCard';
+import { RecipeImage } from '../recipes/RecipeImage';
 
 const FALLBACK_CATEGORIES = ['Cooking', 'Baking', 'Barbeque', 'Salads', 'Soups', 'Desserts'];
 const DIFFICULTY_LEVELS = ['EINFACH', 'MITTEL', 'SCHWER'] as const;
@@ -617,8 +618,7 @@ export function RecipeForm({
               <Box>
                 <Typography variant="subtitle2" gutterBottom>Bild</Typography>
                 {img && (
-                  <Box
-                    component="img"
+                  <RecipeImage
                     src={img}
                     alt="Vorschau"
                     sx={{ display: 'block', width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 1, mb: 1.5 }}
