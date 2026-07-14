@@ -16,7 +16,7 @@ export type RecipeDifficulty = 'EINFACH' | 'MITTEL' | 'SCHWER';
 
 export interface User {
   id: string;
-  email: string;
+  username: string;
   name: string;
   role: UserRole;
   createdAt: string;
@@ -101,7 +101,7 @@ export interface Category {
 
 // Auth Types
 export interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -235,7 +235,7 @@ export interface UpdateUserNameRequest {
 
 export interface CreateUserRequest {
   name: string;
-  email: string;
+  username: string;
   password: string;
   role: UserRole;
 }
@@ -509,7 +509,7 @@ class ApiClient {
 
   /**
    * POST /api/auth/login
-   * Login with email and password
+   * Login with username and password
    */
   async login(data: LoginRequest): Promise<AuthResponse> {
     const response = await this.request<AuthResponse>('/api/auth/login', {

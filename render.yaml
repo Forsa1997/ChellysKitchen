@@ -41,9 +41,10 @@ services:
       # Without the key the endpoint answers with a friendly hint.
       - key: GEMINI_API_KEY
         sync: false
-      # Initial admin account (needed to reach the admin dashboard).
-      # Required in production: without these no admin account is created.
-      - key: ADMIN_EMAIL
+      # Initial admin account (needed to reach the admin dashboard). The login
+      # identifier is a username. Required in production: without these no admin
+      # account is created. ADMIN_EMAIL is still accepted as a legacy alias.
+      - key: ADMIN_USERNAME
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
@@ -51,8 +52,9 @@ services:
       # renames the existing account on the next boot.
       - key: ADMIN_NAME
         sync: false
-      # Optional additional accounts (there is no public registration):
-      # a JSON array of { name, email, password, role? } objects.
+      # Optional additional accounts (there is no public registration): a JSON
+      # array of { name, username, password, role? } objects (`email` is still
+      # accepted as a legacy alias for `username`).
       - key: SEED_USERS
         sync: false
       # Local working directory for uploaded images. With DATABASE_URL set

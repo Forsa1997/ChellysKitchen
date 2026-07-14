@@ -2,7 +2,7 @@ import { recipes } from '../data/recipes.mts';
 import type { Recipe } from '../src/types.mts';
 
 const defaultApiBaseUrl = 'https://chellys-kitchen-api.onrender.com';
-const defaultEmail = 'demo@chellys-kitchen.local';
+const defaultUsername = 'demo';
 const defaultPassword = 'demo1234';
 
 export function selectMissingRecipes<T extends Pick<Recipe, 'slug'>>(localRecipes: T[], remoteRecipes: Array<Pick<Recipe, 'slug'>>): T[] {
@@ -46,14 +46,14 @@ async function requestJson(url: string, options: RequestInit = {}): Promise<any>
 
 export async function uploadMissingRecipes({
   apiBaseUrl = process.env.CHELLYS_API_BASE_URL ?? defaultApiBaseUrl,
-  email = process.env.CHELLYS_UPLOAD_EMAIL ?? defaultEmail,
+  username = process.env.CHELLYS_UPLOAD_USERNAME ?? process.env.CHELLYS_UPLOAD_EMAIL ?? defaultUsername,
   password = process.env.CHELLYS_UPLOAD_PASSWORD ?? defaultPassword,
   localRecipes = recipes,
 } = {}) {
   const login = await requestJson(`${apiBaseUrl}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ username, password }),
   });
 
   const remote = await requestJson(`${apiBaseUrl}/api/recipes?pageSize=24`, {

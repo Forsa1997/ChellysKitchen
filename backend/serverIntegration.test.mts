@@ -21,19 +21,19 @@ before(async () => {
 
 after(() => new Promise((resolve) => server.close(resolve)));
 
-async function login(email: string, password: string) {
+async function login(username: string, password: string) {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ username, password }),
   });
   return response;
 }
 
 async function loginAs(role: string): Promise<any> {
   const credentials: [string, string] = role === 'ADMIN'
-    ? ['admin@chellys-kitchen.local', 'admin1234']
-    : ['demo@chellys-kitchen.local', 'demo1234'];
+    ? ['admin', 'admin1234']
+    : ['demo', 'demo1234'];
   const response = await login(...credentials);
   assert.equal(response.status, 200, `Login als ${role} muss gelingen`);
   return response.json();
@@ -93,7 +93,7 @@ test('Login mit korrekten Daten liefert Session ohne sensible Felder', async () 
 });
 
 test('Login mit falschem Passwort liefert 401', async () => {
-  const response = await login('demo@chellys-kitchen.local', 'falsches-passwort');
+  const response = await login('demo', 'falsches-passwort');
   assert.equal(response.status, 401);
 });
 

@@ -77,10 +77,11 @@ End-to-end smoke tests in `backend/test/` spawn the real server against a temp `
 ### Key Patterns
 
 **Authentication Flow**
+- Login is by **username and password** (no e-mail). `POST /api/auth/login` takes `{ username, password }`; `email` is still accepted as a legacy alias. Usernames are normalized (trim + lowercase), so login is case-insensitive
 - Opaque bearer tokens (not JWT) stored in persisted session maps with expiry
 - `authenticateRequest(req)` resolves the user; role ranks: GUEST < MEMBER < EDITOR < ADMIN
-- There is no public registration: accounts are created via the admin dashboard (`POST /api/admin/users`) or the `ADMIN_EMAIL`/`SEED_USERS` env vars (`SEED_USERS` = JSON array of `{ name, email, password, role? }`)
-- Production (`NODE_ENV=production`) seeds no demo user and no default admin — `ADMIN_EMAIL`/`ADMIN_PASSWORD` are required
+- There is no public registration: accounts are created via the admin dashboard (`POST /api/admin/users`) or the `ADMIN_USERNAME`/`SEED_USERS` env vars (`SEED_USERS` = JSON array of `{ name, username, password, role? }`; `email` accepted as an alias). `ADMIN_EMAIL` remains a legacy alias for `ADMIN_USERNAME`
+- Production (`NODE_ENV=production`) seeds no demo user and no default admin — `ADMIN_USERNAME` (or `ADMIN_EMAIL`)/`ADMIN_PASSWORD` are required
 
 **Recipe Management**
 - Recipes have slugs for URL-friendly identifiers

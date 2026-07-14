@@ -5,10 +5,10 @@ import type { Recipe, ServerState, User } from './types.mts';
 
 function sampleState(): ServerState {
   const users = new Map<string, User>([
-    ['chef@test.local', {
+    ['chef', {
       id: 'user_1',
       name: 'Christoph',
-      email: 'chef@test.local',
+      username: 'chef',
       role: 'ADMIN',
       passwordHash: 'hash',
       salt: 'salz',
@@ -50,7 +50,7 @@ test('stateToRows produces flat table rows', () => {
   const rows = stateToRows(sampleState());
 
   assert.equal(rows.users.length, 1);
-  assert.equal(rows.users[0].email, 'chef@test.local');
+  assert.equal(rows.users[0].username, 'chef');
   assert.equal(rows.users[0].passwordHash, 'hash');
 
   assert.equal(rows.recipes.length, 1);
@@ -81,7 +81,7 @@ test('state survives a full rows roundtrip', () => {
   const original = sampleState();
   const restored = rowsToState(stateToRows(original));
 
-  assert.deepEqual(restored.users.get('chef@test.local'), original.users.get('chef@test.local'));
+  assert.deepEqual(restored.users.get('chef'), original.users.get('chef'));
   assert.deepEqual(restored.sessions.get('token-a'), original.sessions.get('token-a'));
   assert.deepEqual(restored.refreshSessions.get('token-r'), original.refreshSessions.get('token-r'));
   assert.deepEqual(restored.recipeStore, original.recipeStore);
@@ -101,7 +101,7 @@ test('rowsToState copes with missing optional user fields', () => {
   rows.users[0] = { ...rows.users[0], salt: null, algo: null };
 
   const restored = rowsToState(rows);
-  const user = restored.users.get('chef@test.local');
+  const user = restored.users.get('chef');
   assert.equal(user!.salt, undefined);
   assert.equal(user!.algo, undefined);
 });

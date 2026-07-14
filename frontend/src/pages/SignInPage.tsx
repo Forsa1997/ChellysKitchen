@@ -10,7 +10,7 @@ export function SignInPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const targetPath = (location.state as { from?: string } | null)?.from ?? '/';
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +22,7 @@ export function SignInPage() {
     setError(null);
 
     try {
-      await login(email, password);
+      await login(username, password);
       navigate(targetPath);
     } catch (requestError) {
       const errorMessage = requestError instanceof Error ? requestError.message : 'Anmeldung fehlgeschlagen';
@@ -49,13 +49,13 @@ export function SignInPage() {
           </Box>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField
-              label="E-Mail"
-              type="email"
+              label="Benutzername"
+              type="text"
               required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               disabled={isLoading}
-              autoComplete="email"
+              autoComplete="username"
             />
             <TextField
               label="Passwort"
