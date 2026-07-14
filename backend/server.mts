@@ -1839,6 +1839,55 @@ const server = createServer(async (req, res) => {
     }
   }
 
+  // DELETE /api/admin/users/:id - Delete a user (admin only). Also drops the
+  // user's sessions, favorites and ratings; recipes keep their embedded author
+  // snapshot so the family history stays intact.
+  if (req.method === 'DELETE' && req.url?.match(/^\/api\/admin\/users\/[^/]+$/)) {
+    const actingUser = authenticateRequest(req);
+    if (!hasMinRole(actingUser, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const targetId = requestUrl.pathname.split('/')[4];
+    const targetUser = findUserById(targetId);
+    if (!targetUser) {
+      jsonResponse(res, 404, { error: 'Benutzer nicht gefunden.' });
+      return;
+    }
+
+    if (targetUser.id === actingUser?.id) {
+      jsonResponse(res, 400, { error: 'Du kannst dein eigenes Konto nicht löschen.' });
+      return;
+    }
+
+    // Never leave the app without an admin.
+    if (targetUser.role === 'ADMIN') {
+      const adminCount = Array.from(users.values()).filter((u) => u.role === 'ADMIN').length;
+      if (adminCount <= 1) {
+        jsonResponse(res, 400, { error: 'Der letzte Admin kann nicht gelöscht werden.' });
+        return;
+      }
+    }
+
+    users.delete(targetUser.username);
+    favoritesStore.delete(targetUser.id);
+    for (const recipeRatings of ratingsStore.values()) {
+      recipeRatings.delete(targetUser.id);
+    }
+    for (const [token, entry] of sessions) {
+      if (entry.userId === targetUser.id) sessions.delete(token);
+    }
+    for (const [token, entry] of refreshSessions) {
+      if (entry.userId === targetUser.id) refreshSessions.delete(token);
+    }
+    persist();
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   // GET /api/admin/recipes - List all recipes incl. drafts/archived (admin only)
   if (req.method === 'GET' && req.url === '/api/admin/recipes') {
     const user = authenticateRequest(req);

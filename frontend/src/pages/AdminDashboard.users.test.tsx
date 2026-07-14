@@ -7,6 +7,7 @@ import { AdminDashboard } from './AdminDashboard';
 const useAuthMock = vi.fn();
 const createUserMock = vi.fn();
 const updateUserNameMock = vi.fn();
+const deleteUserMock = vi.fn();
 let usersDataMock: {
   data: Array<{
     id: string;
@@ -30,6 +31,7 @@ vi.mock('../hooks/useAdmin', () => ({
   useUpdateUserRole: () => mockMutation(),
   useUpdateUserName: () => ({ isPending: false, mutateAsync: updateUserNameMock }),
   useCreateUser: () => ({ isPending: false, mutateAsync: createUserMock }),
+  useDeleteUser: () => ({ isPending: false, mutateAsync: deleteUserMock }),
   useAdminRecipes: () => ({ data: { data: [], total: 0 } }),
 }));
 
@@ -66,6 +68,7 @@ describe('AdminDashboard user creation', () => {
     vi.restoreAllMocks();
     createUserMock.mockReset();
     updateUserNameMock.mockReset();
+    deleteUserMock.mockReset();
     usersDataMock = { data: [], total: 0 };
   });
 
@@ -126,5 +129,51 @@ describe('AdminDashboard user creation', () => {
       data: { name: 'Chelly Kocht' },
     }));
     await waitFor(() => expect(screen.getByText(/Name von Chelly Kocht wurde geändert/)).toBeInTheDocument());
+  });
+
+  it('deletes a user after confirmation', async () => {
+    useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
+    deleteUserMock.mockResolvedValue(undefined);
+    usersDataMock = {
+      data: [{ id: 'user-2', name: 'Chelly', username: 'chelly', role: 'MEMBER', createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      total: 1,
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Löschen' }));
+
+    await waitFor(() => expect(deleteUserMock).toHaveBeenCalledWith('user-2'));
+    await waitFor(() => expect(screen.getByText(/Benutzer Chelly wurde gelöscht/)).toBeInTheDocument());
+    confirmSpy.mockRestore();
+  });
+
+  it('does not delete a user when the confirmation is cancelled', async () => {
+    useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
+    usersDataMock = {
+      data: [{ id: 'user-2', name: 'Chelly', username: 'chelly', role: 'MEMBER', createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      total: 1,
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Löschen' }));
+
+    await waitFor(() => expect(deleteUserMock).not.toHaveBeenCalled());
+    confirmSpy.mockRestore();
+  });
+
+  it('does not offer a delete button for the current admin', () => {
+    useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
+    usersDataMock = {
+      data: [{ id: 'admin-1', name: 'Ich', username: 'ich', role: 'ADMIN', createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      total: 1,
+    };
+
+    renderDashboard();
+
+    expect(screen.queryByRole('button', { name: 'Löschen' })).not.toBeInTheDocument();
   });
 });

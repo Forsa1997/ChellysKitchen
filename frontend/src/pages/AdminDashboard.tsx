@@ -30,7 +30,7 @@ import {
 import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useUsers, useUpdateUserRole, useUpdateUserName, useCreateUser, useAdminRecipes } from '../hooks/useAdmin';
+import { useUsers, useUpdateUserRole, useUpdateUserName, useCreateUser, useDeleteUser, useAdminRecipes } from '../hooks/useAdmin';
 import { useBatchImportJobs } from '../hooks/useBatchImport';
 import { usePublishRecipe, useArchiveRecipe, useDeleteRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
@@ -49,6 +49,7 @@ export function AdminDashboard() {
   const updateUserRole = useUpdateUserRole();
   const updateUserName = useUpdateUserName();
   const createUser = useCreateUser();
+  const deleteUser = useDeleteUser();
   const publishRecipe = usePublishRecipe();
   const archiveRecipe = useArchiveRecipe();
   const deleteRecipe = useDeleteRecipe();
@@ -137,6 +138,22 @@ export function AdminDashboard() {
       setActionSuccess(`Benutzer ${created.name} wurde angelegt.`);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Benutzer konnte nicht angelegt werden.');
+    }
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    if (currentUser?.role !== 'ADMIN' || user.id === currentUser?.id) {
+      return;
+    }
+    if (!window.confirm(`Benutzer "${user.name}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) {
+      return;
+    }
+
+    try {
+      await deleteUser.mutateAsync(user.id);
+      setActionSuccess(`Benutzer ${user.name} wurde gelöscht.`);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Benutzer konnte nicht gelöscht werden.');
     }
   };
 
@@ -293,6 +310,17 @@ export function AdminDashboard() {
                         disabled={updateUserRole.isPending}
                       >
                         Rolle ändern
+                      </Button>
+                    )}
+                    {user.id !== currentUser?.id && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={deleteUser.isPending}
+                      >
+                        Löschen
                       </Button>
                     )}
                   </Stack>

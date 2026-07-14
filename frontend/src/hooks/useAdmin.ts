@@ -44,6 +44,17 @@ export function useCreateUser() {
   });
 }
 
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => apiClient.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
 export function useAdminRecipes() {
   return useQuery({
     queryKey: ['admin-recipes'],

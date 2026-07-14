@@ -235,6 +235,73 @@ test('user creation validates input', async () => {
   assert.equal(duplicate.status, 409);
 });
 
+test('admin can delete a user, after which that user can no longer log in', async () => {
+  const adminToken = await loginAsAdmin();
+
+  const created = await api('/api/admin/users', {
+    method: 'POST',
+    token: adminToken,
+    body: { name: 'Weg', username: 'weg', password: 'secret123', role: 'MEMBER' },
+  });
+  assert.equal(created.status, 201);
+
+  const deleted = await api(`/api/admin/users/${created.body.id}`, {
+    method: 'DELETE',
+    token: adminToken,
+  });
+  assert.equal(deleted.status, 204);
+
+  const list = await api('/api/admin/users', { token: adminToken });
+  assert.equal(list.body.data.find((entry: any) => entry.id === created.body.id), undefined);
+
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { username: 'weg', password: 'secret123' },
+  });
+  assert.equal(login.status, 401);
+});
+
+test('deleting a user is admin-only', async () => {
+  const adminToken = await loginAsAdmin();
+  const users = await api('/api/admin/users', { token: adminToken });
+  const gast = users.body.data.find((entry: any) => entry.username === 'gast');
+
+  const editorLogin = await api('/api/auth/login', {
+    method: 'POST',
+    body: { username: 'chelly', password: 'chef12345' },
+  });
+  const forbidden = await api(`/api/admin/users/${gast.id}`, {
+    method: 'DELETE',
+    token: editorLogin.body.accessToken,
+  });
+  assert.equal(forbidden.status, 403);
+
+  // The user must still exist after the rejected deletion.
+  const stillThere = await api('/api/admin/users', { token: adminToken });
+  assert.ok(stillThere.body.data.find((entry: any) => entry.id === gast.id));
+});
+
+test('deleting an unknown user returns 404', async () => {
+  const adminToken = await loginAsAdmin();
+  const missing = await api('/api/admin/users/user_does_not_exist', {
+    method: 'DELETE',
+    token: adminToken,
+  });
+  assert.equal(missing.status, 404);
+});
+
+test('an admin cannot delete their own account (protects the last admin)', async () => {
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { username: ADMIN_USERNAME, password: ADMIN_PASSWORD },
+  });
+  const self = await api(`/api/admin/users/${login.body.user.id}`, {
+    method: 'DELETE',
+    token: login.body.accessToken,
+  });
+  assert.equal(self.status, 400);
+});
+
 test('user creation is admin-only', async () => {
   const editorLogin = await api('/api/auth/login', {
     method: 'POST',

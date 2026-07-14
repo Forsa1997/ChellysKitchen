@@ -900,6 +900,16 @@ class ApiClient {
   }
 
   /**
+   * DELETE /api/admin/users/:id
+   * Delete a user (admin only)
+   */
+  async deleteUser(id: string): Promise<void> {
+    await this.request(`/api/admin/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
    * GET /api/admin/recipes
    * Get all recipes including drafts (admin only)
    */
