@@ -23,7 +23,15 @@ function sampleState(): any {
   ]);
   const categoriesStore = [{ id: 'cat_1', name: 'Cooking', slug: 'cooking' }];
   const favoritesStore = new Map([['u2', new Set(['r1'])]]);
-  return { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore };
+  const auditLogStore = [{
+    id: 'audit_1',
+    action: 'USER_CREATED',
+    actor: { id: 'u1', name: 'A', username: 'alice' },
+    target: { type: 'USER', id: 'u2', label: 'B', username: 'bob' },
+    details: { role: 'MEMBER' },
+    createdAt: '2026-07-14T10:00:00.000Z',
+  }];
+  return { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore, auditLogStore };
 }
 
 test('serialize/deserialize round-trips all collections', () => {
@@ -38,6 +46,7 @@ test('serialize/deserialize round-trips all collections', () => {
   assert.equal(restored.ratingsStore.get('r1')!.get('u2')!.stars, 4);
   assert.equal(restored.categoriesStore[0].slug, 'cooking');
   assert.ok(restored.favoritesStore.get('u2')!.has('r1'));
+  assert.deepEqual(restored.auditLogStore, state.auditLogStore);
 });
 
 test('deserialize tolerates missing fields', () => {
@@ -46,6 +55,7 @@ test('deserialize tolerates missing fields', () => {
   assert.equal(restored.recipeStore.length, 0);
   assert.equal(restored.ratingsStore.size, 0);
   assert.equal(restored.favoritesStore.size, 0);
+  assert.deepEqual(restored.auditLogStore, []);
 });
 
 test('serialize tolerates state without a favorites store (older callers)', () => {

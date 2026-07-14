@@ -58,6 +58,9 @@ import type { BackupUploadEntry } from './src/backup.mts';
 import type { ImportedRecipe } from './src/recipeImport.mts';
 import type { ValidatedImageUpload } from './src/uploads.mts';
 import type {
+  AuditAction,
+  AuditLogEntry,
+  AuditTarget,
   Category,
   Rating,
   Recipe,
@@ -101,10 +104,11 @@ const ratingsStore = loadedState?.ratingsStore ?? new Map<string, Map<string, Ra
 const categoriesStore: Category[] = loadedState?.categoriesStore ?? [...DEFAULT_CATEGORIES];
 const favoritesStore = loadedState?.favoritesStore ?? new Map<string, Set<string>>(); // userId -> Set<recipeId>
 const weekPlanStore: WeekPlan = loadedState?.weekPlanStore ?? createEmptyWeekPlan(); // day -> [{ recipeId, servings }]
+const auditLogStore: AuditLogEntry[] = loadedState?.auditLogStore ?? [];
 
 const persister = createDebouncedPersister(
   store,
-  () => ({ users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore, weekPlanStore }),
+  () => ({ users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore, weekPlanStore, auditLogStore }),
   200,
 );
 const persist = () => persister.schedule();
@@ -347,6 +351,40 @@ function sanitizeUser(user: User) {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
+}
+
+function userAuditTarget(user: User): AuditTarget {
+  return {
+    type: 'USER',
+    id: user.id,
+    label: user.name,
+    username: user.username,
+  };
+}
+
+function recordAuditEntry({
+  action,
+  actor,
+  target,
+  details,
+}: {
+  action: AuditAction;
+  actor: User;
+  target: AuditTarget;
+  details: Record<string, string | number>;
+}): void {
+  auditLogStore.push({
+    id: `audit_${randomBytes(12).toString('hex')}`,
+    action,
+    actor: {
+      id: actor.id,
+      name: actor.name,
+      username: actor.username,
+    },
+    target,
+    details,
+    createdAt: new Date().toISOString(),
+  });
 }
 
 function toSlug(value: unknown): string {
@@ -1705,6 +1743,20 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/admin/audit-log - Newest privileged actions (admin only).
+  // The API intentionally exposes no mutation endpoint for this history.
+  if (req.method === 'GET' && req.url === '/api/admin/audit-log') {
+    const user = authenticateRequest(req);
+    if (!hasMinRole(user, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    const data = auditLogStore.slice().reverse().slice(0, 100);
+    jsonResponse(res, 200, { data, total: auditLogStore.length });
+    return;
+  }
+
   // POST /api/admin/users - Create a user (admin only). There is no public
   // registration; accounts exist only via this endpoint or the SEED_USERS /
   // ADMIN_USERNAME environment variables.
@@ -1752,6 +1804,12 @@ const server = createServer(async (req, res) => {
       };
 
       users.set(normalizedUsername, user);
+      recordAuditEntry({
+        action: 'USER_CREATED',
+        actor: actingUser,
+        target: userAuditTarget(user),
+        details: { role: user.role },
+      });
       persist();
       jsonResponse(res, 201, sanitizeUser(user));
       return;
@@ -1793,8 +1851,17 @@ const server = createServer(async (req, res) => {
         }
       }
 
+      const previousRole = targetUser.role;
       targetUser.role = role;
       targetUser.updatedAt = new Date().toISOString();
+      if (previousRole !== role) {
+        recordAuditEntry({
+          action: 'USER_ROLE_CHANGED',
+          actor: actingUser,
+          target: userAuditTarget(targetUser),
+          details: { previousRole, newRole: role },
+        });
+      }
       persist();
       jsonResponse(res, 200, sanitizeUser(targetUser));
       return;
@@ -1802,6 +1869,59 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
+  }
+
+  // DELETE /api/admin/users/:id - Delete another user and revoke their data
+  // access. Recipe author snapshots remain intact for historical context.
+  if (req.method === 'DELETE' && req.url?.match(/^\/api\/admin\/users\/[^/]+$/)) {
+    const actingUser = authenticateRequest(req);
+    if (!hasMinRole(actingUser, 'ADMIN')) {
+      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+    const targetId = requestUrl.pathname.split('/')[4];
+    const targetUser = findUserById(targetId);
+    if (!targetUser) {
+      jsonResponse(res, 404, { error: 'Benutzer nicht gefunden.' });
+      return;
+    }
+    if (targetUser.id === actingUser.id) {
+      jsonResponse(res, 400, { error: 'Das eigene Administratorkonto kann nicht gelöscht werden.' });
+      return;
+    }
+    if (targetUser.role === 'ADMIN') {
+      const adminCount = Array.from(users.values()).filter((user) => user.role === 'ADMIN').length;
+      if (adminCount <= 1) {
+        jsonResponse(res, 400, { error: 'Der letzte Admin kann nicht gelöscht werden.' });
+        return;
+      }
+    }
+
+    const targetSnapshot = userAuditTarget(targetUser);
+    for (const [token, entry] of sessions) {
+      if (entry.userId === targetUser.id) sessions.delete(token);
+    }
+    for (const [token, entry] of refreshSessions) {
+      if (entry.userId === targetUser.id) refreshSessions.delete(token);
+    }
+    for (const userRatings of ratingsStore.values()) {
+      userRatings.delete(targetUser.id);
+    }
+    favoritesStore.delete(targetUser.id);
+    users.delete(targetUser.username);
+
+    recordAuditEntry({
+      action: 'USER_DELETED',
+      actor: actingUser,
+      target: targetSnapshot,
+      details: { role: targetUser.role },
+    });
+    persist();
+    res.writeHead(204);
+    res.end();
+    return;
   }
 
   // PATCH /api/admin/users/:id/name - Update a user's displayed name (admin only)
@@ -1837,55 +1957,6 @@ const server = createServer(async (req, res) => {
       jsonResponse(res, 400, { error: errorMessage(error) });
       return;
     }
-  }
-
-  // DELETE /api/admin/users/:id - Delete a user (admin only). Also drops the
-  // user's sessions, favorites and ratings; recipes keep their embedded author
-  // snapshot so the family history stays intact.
-  if (req.method === 'DELETE' && req.url?.match(/^\/api\/admin\/users\/[^/]+$/)) {
-    const actingUser = authenticateRequest(req);
-    if (!hasMinRole(actingUser, 'ADMIN')) {
-      jsonResponse(res, 403, { error: 'Nur Admins haben Zugriff.' });
-      return;
-    }
-
-    const requestUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-    const targetId = requestUrl.pathname.split('/')[4];
-    const targetUser = findUserById(targetId);
-    if (!targetUser) {
-      jsonResponse(res, 404, { error: 'Benutzer nicht gefunden.' });
-      return;
-    }
-
-    if (targetUser.id === actingUser?.id) {
-      jsonResponse(res, 400, { error: 'Du kannst dein eigenes Konto nicht löschen.' });
-      return;
-    }
-
-    // Never leave the app without an admin.
-    if (targetUser.role === 'ADMIN') {
-      const adminCount = Array.from(users.values()).filter((u) => u.role === 'ADMIN').length;
-      if (adminCount <= 1) {
-        jsonResponse(res, 400, { error: 'Der letzte Admin kann nicht gelöscht werden.' });
-        return;
-      }
-    }
-
-    users.delete(targetUser.username);
-    favoritesStore.delete(targetUser.id);
-    for (const recipeRatings of ratingsStore.values()) {
-      recipeRatings.delete(targetUser.id);
-    }
-    for (const [token, entry] of sessions) {
-      if (entry.userId === targetUser.id) sessions.delete(token);
-    }
-    for (const [token, entry] of refreshSessions) {
-      if (entry.userId === targetUser.id) refreshSessions.delete(token);
-    }
-    persist();
-    res.writeHead(204);
-    res.end();
-    return;
   }
 
   // GET /api/admin/recipes - List all recipes incl. drafts/archived (admin only)
@@ -2080,13 +2151,20 @@ const server = createServer(async (req, res) => {
         }
       }
 
-      persist();
-      jsonResponse(res, 200, {
+      const importResult = {
         recipes: recipeStore.length,
         users: users.size,
         categories: categoriesStore.length,
         uploads: imported.uploads.length,
+      };
+      recordAuditEntry({
+        action: 'BACKUP_IMPORTED',
+        actor: actingUser,
+        target: { type: 'BACKUP', label: 'Backup' },
+        details: importResult,
       });
+      persist();
+      jsonResponse(res, 200, importResult);
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: errorMessage(error) });

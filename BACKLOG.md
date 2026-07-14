@@ -111,5 +111,5 @@ beschleunigt.
 
 ### Sicherheit/Robustheit
 - [ ] 2FA optional für Admin-Rolle (volle Backup-Export-Rechte)
-- [ ] Audit-Log für Admin-Aktionen (User angelegt/gelöscht, Rolle geändert,
+- [x] Audit-Log für Admin-Aktionen (User angelegt/gelöscht, Rolle geändert,
       Backup importiert)

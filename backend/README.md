@@ -33,7 +33,8 @@ Server-Standard: `http://localhost:4000`
 - `PUT|DELETE /api/recipes/:slug/favorite`, `PATCH /api/recipes/:slug/notes`
 - `GET|POST|DELETE /api/recipes/:slug/rating`
 - `GET|POST|PATCH|DELETE /api/categories`
-- `GET|POST /api/admin/users`, `PATCH /api/admin/users/:id/role`, `GET /api/admin/recipes`
+- `GET|POST /api/admin/users`, `PATCH /api/admin/users/:id/role`, `DELETE /api/admin/users/:id`
+- `GET /api/admin/audit-log`, `GET /api/admin/recipes`
 - `GET /api/admin/export`, `POST /api/admin/import` (Backup)
 - `POST /api/uploads`, `GET /uploads/:file`
 

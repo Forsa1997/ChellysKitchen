@@ -20,6 +20,7 @@ vi.mock('../hooks/useAdmin', () => ({
   useUpdateUserName: () => mockMutation(),
   useCreateUser: () => mockMutation(),
   useDeleteUser: () => mockMutation(),
+  useAuditLog: () => ({ data: { data: [], total: 0 } }),
   useAdminRecipes: () => ({ data: { data: [], total: 0 } }),
 }));
 

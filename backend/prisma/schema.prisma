@@ -68,6 +68,24 @@ model WeekPlanEntry {
   @@id([day, recipeId])
 }
 
+// Append-only snapshots of privileged admin activity. There are deliberately
+// no foreign keys to User: deleted users and actors must remain attributable.
+model AuditLog {
+  id             String @id
+  action         String
+  actorId        String
+  actorName      String
+  actorUsername  String
+  targetType     String
+  targetId       String?
+  targetLabel    String
+  targetUsername String?
+  details        Json
+  createdAt      String
+
+  @@index([createdAt])
+}
+
 // Uploaded recipe photos. They are served from local disk (fast), but the
 // disk is ephemeral on Render — the database is the durable copy and the
 // files are materialized back to disk on boot.

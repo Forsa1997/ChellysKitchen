@@ -30,11 +30,19 @@ import {
 import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useUsers, useUpdateUserRole, useUpdateUserName, useCreateUser, useDeleteUser, useAdminRecipes } from '../hooks/useAdmin';
+import {
+  useAdminRecipes,
+  useAuditLog,
+  useCreateUser,
+  useDeleteUser,
+  useUpdateUserName,
+  useUpdateUserRole,
+  useUsers,
+} from '../hooks/useAdmin';
 import { useBatchImportJobs } from '../hooks/useBatchImport';
 import { usePublishRecipe, useArchiveRecipe, useDeleteRecipe } from '../hooks/useRecipes';
 import { useAuth } from '../auth/AuthContext';
-import { apiClient, type User, type UserRole, type Recipe } from '../api/client';
+import { apiClient, type AuditLogEntry, type User, type UserRole, type Recipe } from '../api/client';
 
 type UserWithCounts = User & {
   _count?: {
@@ -42,10 +50,37 @@ type UserWithCounts = User & {
   };
 };
 
+const auditActionLabels: Record<AuditLogEntry['action'], string> = {
+  USER_CREATED: 'Benutzer angelegt',
+  USER_DELETED: 'Benutzer gelöscht',
+  USER_ROLE_CHANGED: 'Rolle geändert',
+  BACKUP_IMPORTED: 'Backup importiert',
+};
+
+function formatAuditTarget(entry: AuditLogEntry): string {
+  if (entry.target.type === 'USER' && entry.target.username) {
+    return `${entry.target.label} (@${entry.target.username})`;
+  }
+  return entry.target.label;
+}
+
+function formatAuditDetails(entry: AuditLogEntry): string {
+  switch (entry.action) {
+    case 'USER_ROLE_CHANGED':
+      return `${entry.details.previousRole} → ${entry.details.newRole}`;
+    case 'USER_CREATED':
+    case 'USER_DELETED':
+      return `Rolle: ${entry.details.role}`;
+    case 'BACKUP_IMPORTED':
+      return `${entry.details.recipes} Rezepte, ${entry.details.users} Benutzer, ${entry.details.categories} Kategorien, ${entry.details.uploads} Bilder`;
+  }
+}
+
 export function AdminDashboard() {
   const { user: currentUser } = useAuth();
   const { data: usersData, isLoading, error } = useUsers();
   const { data: recipesData } = useAdminRecipes();
+  const { data: auditLogData, isLoading: auditLogLoading, error: auditLogError } = useAuditLog();
   const updateUserRole = useUpdateUserRole();
   const updateUserName = useUpdateUserName();
   const createUser = useCreateUser();
@@ -71,6 +106,7 @@ export function AdminDashboard() {
 
   const users = usersData?.data || [];
   const recipes = recipesData?.data || [];
+  const auditEntries = auditLogData?.data || [];
   const batchJobs = batchJobsData?.data || [];
   const latestBatchJob = batchJobs[0];
 
@@ -325,6 +361,63 @@ export function AdminDashboard() {
                     )}
                   </Stack>
                 </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Box>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+          Audit-Log
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          Die letzten administrativen Änderungen. Einträge können über die Anwendung weder bearbeitet noch gelöscht werden.
+        </Typography>
+      </Box>
+
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+        <Table aria-label="Audit-Log" sx={{ minWidth: 760 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Zeitpunkt</TableCell>
+              <TableCell>Aktion</TableCell>
+              <TableCell>Ausgeführt von</TableCell>
+              <TableCell>Ziel</TableCell>
+              <TableCell>Details</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {auditLogError ? (
+              <TableRow>
+                <TableCell colSpan={5}>
+                  <Alert severity="error">
+                    {auditLogError instanceof Error ? auditLogError.message : 'Audit-Log konnte nicht geladen werden.'}
+                  </Alert>
+                </TableCell>
+              </TableRow>
+            ) : auditLogLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  <Stack direction="row" spacing={1} sx={{ justifyContent: 'center', alignItems: 'center' }}>
+                    <CircularProgress size={20} />
+                    <Typography>Audit-Log wird geladen…</Typography>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ) : auditEntries.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  Noch keine protokollierten Admin-Aktionen.
+                </TableCell>
+              </TableRow>
+            ) : auditEntries.map((entry) => (
+              <TableRow key={entry.id}>
+                <TableCell>{new Date(entry.createdAt).toLocaleString('de-DE')}</TableCell>
+                <TableCell><Chip label={auditActionLabels[entry.action]} size="small" /></TableCell>
+                <TableCell>{entry.actor.name} (@{entry.actor.username})</TableCell>
+                <TableCell>{formatAuditTarget(entry)}</TableCell>
+                <TableCell>{formatAuditDetails(entry)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

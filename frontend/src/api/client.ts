@@ -13,6 +13,7 @@ import { resolveApiBaseUrl } from './resolveApiBaseUrl';
 export type UserRole = 'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN';
 export type RecipeStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 export type RecipeDifficulty = 'EINFACH' | 'MITTEL' | 'SCHWER';
+export type AuditAction = 'USER_CREATED' | 'USER_DELETED' | 'USER_ROLE_CHANGED' | 'BACKUP_IMPORTED';
 
 export interface User {
   id: string;
@@ -21,6 +22,24 @@ export interface User {
   role: UserRole;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: AuditAction;
+  actor: {
+    id: string;
+    name: string;
+    username: string;
+  };
+  target: {
+    type: 'USER' | 'BACKUP';
+    id?: string;
+    label: string;
+    username?: string;
+  };
+  details: Record<string, string | number>;
+  createdAt: string;
 }
 
 export interface Ingredient {
@@ -222,6 +241,11 @@ export interface UpdateCategoryRequest {
 // Admin Types
 export interface UserListResponse {
   data: User[];
+  total: number;
+}
+
+export interface AuditLogResponse {
+  data: AuditLogEntry[];
   total: number;
 }
 
@@ -907,6 +931,14 @@ class ApiClient {
     await this.request(`/api/admin/users/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  /**
+   * GET /api/admin/audit-log
+   * Get the newest privileged admin actions (admin only).
+   */
+  async getAuditLog(): Promise<AuditLogResponse> {
+    return this.request<AuditLogResponse>('/api/admin/audit-log');
   }
 
   /**

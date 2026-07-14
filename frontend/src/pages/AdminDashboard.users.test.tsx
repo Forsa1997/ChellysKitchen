@@ -32,6 +32,7 @@ vi.mock('../hooks/useAdmin', () => ({
   useUpdateUserName: () => ({ isPending: false, mutateAsync: updateUserNameMock }),
   useCreateUser: () => ({ isPending: false, mutateAsync: createUserMock }),
   useDeleteUser: () => ({ isPending: false, mutateAsync: deleteUserMock }),
+  useAuditLog: () => ({ data: { data: [], total: 0 } }),
   useAdminRecipes: () => ({ data: { data: [], total: 0 } }),
 }));
 

@@ -10,6 +10,8 @@
 import { normalizeWeekPlan, WEEK_DAYS } from './weekplan.mts';
 import type { Prisma } from '@prisma/client';
 import type {
+  AuditAction,
+  AuditLogEntry,
   Category,
   Rating,
   Recipe,
@@ -75,6 +77,20 @@ export interface WeekPlanEntryRow {
   servings: number | null;
 }
 
+export interface AuditLogRow {
+  id: string;
+  action: string;
+  actorId: string;
+  actorName: string;
+  actorUsername: string;
+  targetType: string;
+  targetId: string | null;
+  targetLabel: string;
+  targetUsername: string | null;
+  details: Record<string, string | number>;
+  createdAt: string;
+}
+
 export interface StateRows {
   users: UserRow[];
   recipes: RecipeRow[];
@@ -83,6 +99,7 @@ export interface StateRows {
   favorites: FavoriteRow[];
   sessions: SessionRow[];
   weekPlanEntries: WeekPlanEntryRow[];
+  auditLogs: AuditLogRow[];
 }
 
 export function stateToRows(state: ServerState): StateRows {
@@ -140,7 +157,21 @@ export function stateToRows(state: ServerState): StateRows {
     }
   }
 
-  return { users, recipes, categories, ratings, favorites, sessions, weekPlanEntries };
+  const auditLogs = state.auditLogStore.map((entry): AuditLogRow => ({
+    id: entry.id,
+    action: entry.action,
+    actorId: entry.actor.id,
+    actorName: entry.actor.name,
+    actorUsername: entry.actor.username,
+    targetType: entry.target.type,
+    targetId: entry.target.id ?? null,
+    targetLabel: entry.target.label,
+    targetUsername: entry.target.username ?? null,
+    details: entry.details,
+    createdAt: entry.createdAt,
+  }));
+
+  return { users, recipes, categories, ratings, favorites, sessions, weekPlanEntries, auditLogs };
 }
 
 export function rowsToState(rows: Partial<StateRows>): ServerState {
@@ -190,6 +221,24 @@ export function rowsToState(rows: Partial<StateRows>): ServerState {
     (weekPlanRaw[row.day] ??= []).push({ recipeId: row.recipeId, servings: row.servings });
   }
 
+  const auditLogStore: AuditLogEntry[] = (rows.auditLogs ?? []).map((row) => ({
+    id: row.id,
+    action: row.action as AuditAction,
+    actor: {
+      id: row.actorId,
+      name: row.actorName,
+      username: row.actorUsername,
+    },
+    target: {
+      type: row.targetType as AuditLogEntry['target']['type'],
+      label: row.targetLabel,
+      ...(row.targetId ? { id: row.targetId } : {}),
+      ...(row.targetUsername ? { username: row.targetUsername } : {}),
+    },
+    details: row.details,
+    createdAt: row.createdAt,
+  }));
+
   return {
     users,
     sessions,
@@ -199,6 +248,7 @@ export function rowsToState(rows: Partial<StateRows>): ServerState {
     categoriesStore: (rows.categories ?? []).map((row) => row.data),
     favoritesStore,
     weekPlanStore: normalizeWeekPlan(weekPlanRaw),
+    auditLogStore,
   };
 }
 
@@ -223,7 +273,7 @@ export async function createPrismaStore(connectionString: string): Promise<Prism
   return {
     prisma,
     async load(): Promise<ServerState | null> {
-      const [users, recipes, categories, ratings, favorites, sessions, weekPlanEntries] = await Promise.all([
+      const [users, recipes, categories, ratings, favorites, sessions, weekPlanEntries, auditLogs] = await Promise.all([
         prisma.user.findMany(),
         prisma.recipe.findMany(),
         prisma.category.findMany(),
@@ -231,6 +281,7 @@ export async function createPrismaStore(connectionString: string): Promise<Prism
         prisma.favorite.findMany(),
         prisma.session.findMany(),
         prisma.weekPlanEntry.findMany(),
+        prisma.auditLog.findMany({ orderBy: { createdAt: 'asc' } }),
       ]);
 
       // An empty database means first boot: let the server seed its defaults.
@@ -248,6 +299,7 @@ export async function createPrismaStore(connectionString: string): Promise<Prism
         favorites,
         sessions,
         weekPlanEntries,
+        auditLogs: auditLogs as unknown as AuditLogRow[],
       });
     },
 
@@ -272,6 +324,12 @@ export async function createPrismaStore(connectionString: string): Promise<Prism
         prisma.favorite.createMany({ data: rows.favorites }),
         prisma.session.createMany({ data: rows.sessions }),
         prisma.weekPlanEntry.createMany({ data: rows.weekPlanEntries }),
+        // Audit rows are append-only: existing IDs are never updated or
+        // deleted by the full-state synchronization used for other tables.
+        prisma.auditLog.createMany({
+          data: rows.auditLogs as unknown as Prisma.AuditLogCreateManyInput[],
+          skipDuplicates: true,
+        }),
       ]);
     },
 

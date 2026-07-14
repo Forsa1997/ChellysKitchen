@@ -42,8 +42,16 @@ function sampleState(): ServerState {
     tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [],
     sunday: [{ recipeId: 'r1', servings: null }],
   };
+  const auditLogStore = [{
+    id: 'audit_1',
+    action: 'USER_ROLE_CHANGED' as const,
+    actor: { id: 'user_1', name: 'Christoph', username: 'chef' },
+    target: { type: 'USER' as const, id: 'user_2', label: 'Chelly', username: 'chelly' },
+    details: { previousRole: 'MEMBER', newRole: 'EDITOR' },
+    createdAt: '2026-07-14T10:00:00.000Z',
+  }];
 
-  return { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore, weekPlanStore };
+  return { users, sessions, refreshSessions, recipeStore, ratingsStore, categoriesStore, favoritesStore, weekPlanStore, auditLogStore };
 }
 
 test('stateToRows produces flat table rows', () => {
@@ -75,6 +83,19 @@ test('stateToRows produces flat table rows', () => {
     { day: 'monday', recipeId: 'r1', servings: 4 },
     { day: 'sunday', recipeId: 'r1', servings: null },
   ]);
+  assert.deepEqual(rows.auditLogs, [{
+    id: 'audit_1',
+    action: 'USER_ROLE_CHANGED',
+    actorId: 'user_1',
+    actorName: 'Christoph',
+    actorUsername: 'chef',
+    targetType: 'USER',
+    targetId: 'user_2',
+    targetLabel: 'Chelly',
+    targetUsername: 'chelly',
+    details: { previousRole: 'MEMBER', newRole: 'EDITOR' },
+    createdAt: '2026-07-14T10:00:00.000Z',
+  }]);
 });
 
 test('state survives a full rows roundtrip', () => {
@@ -94,6 +115,7 @@ test('state survives a full rows roundtrip', () => {
   assert.deepEqual(restored.weekPlanStore.monday, [{ recipeId: 'r1', servings: 4 }]);
   assert.deepEqual(restored.weekPlanStore.sunday, [{ recipeId: 'r1', servings: null }]);
   assert.deepEqual(restored.weekPlanStore.friday, []);
+  assert.deepEqual(restored.auditLogStore, original.auditLogStore);
 });
 
 test('rowsToState copes with missing optional user fields', () => {

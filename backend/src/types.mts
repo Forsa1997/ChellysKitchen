@@ -3,6 +3,7 @@
 
 export type Role = 'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN';
 export type RecipeStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type AuditAction = 'USER_CREATED' | 'USER_DELETED' | 'USER_ROLE_CHANGED' | 'BACKUP_IMPORTED';
 
 export type WeekDay =
   | 'monday'
@@ -116,6 +117,28 @@ export interface SessionEntry {
   expiresAt: number;
 }
 
+export interface AuditActor {
+  id: string;
+  name: string;
+  username: string;
+}
+
+export interface AuditTarget {
+  type: 'USER' | 'BACKUP';
+  label: string;
+  id?: string;
+  username?: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: AuditAction;
+  actor: AuditActor;
+  target: AuditTarget;
+  details: Record<string, string | number>;
+  createdAt: string;
+}
+
 export type SessionMap = Map<string, SessionEntry>;
 
 export interface WeekPlanEntry {
@@ -136,6 +159,7 @@ export interface ServerState {
   categoriesStore: Category[];
   favoritesStore: Map<string, Set<string>>;
   weekPlanStore: WeekPlan;
+  auditLogStore: AuditLogEntry[];
 }
 
 export interface UploadRecord {

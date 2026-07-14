@@ -17,6 +17,7 @@ export function useUpdateUserRole() {
       apiClient.updateUserRole(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-log'] });
     },
   });
 }
@@ -40,6 +41,7 @@ export function useCreateUser() {
     mutationFn: (data: CreateUserRequest) => apiClient.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-log'] });
     },
   });
 }
@@ -51,7 +53,15 @@ export function useDeleteUser() {
     mutationFn: (id: string) => apiClient.deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-log'] });
     },
+  });
+}
+
+export function useAuditLog() {
+  return useQuery({
+    queryKey: ['audit-log'],
+    queryFn: () => apiClient.getAuditLog(),
   });
 }
 

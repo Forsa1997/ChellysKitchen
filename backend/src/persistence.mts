@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path';
 import { normalizeWeekPlan } from './weekplan.mts';
 import type {
+  AuditLogEntry,
   Category,
   Rating,
   Recipe,
@@ -25,15 +26,17 @@ export interface SerializedState {
   categoriesStore: Category[];
   favoritesStore: Array<[string, string[]]>;
   weekPlanStore: Partial<WeekPlan>;
+  auditLogStore: AuditLogEntry[];
 }
 
 /**
  * What serializeState accepts: the live server state, or one where the newer
  * optional collections are missing (older callers/backups).
  */
-export type PersistableState = Omit<ServerState, 'favoritesStore' | 'weekPlanStore'> & {
+export type PersistableState = Omit<ServerState, 'favoritesStore' | 'weekPlanStore' | 'auditLogStore'> & {
   favoritesStore?: ServerState['favoritesStore'];
   weekPlanStore?: WeekPlan;
+  auditLogStore?: AuditLogEntry[];
 };
 
 /**
@@ -62,6 +65,9 @@ export function serializeState(state: PersistableState): SerializedState {
     // Plain object (day -> entries), JSON-serializable as-is. Optional so
     // older store files keep loading.
     weekPlanStore: state.weekPlanStore ?? {},
+    // Audit history is append-only through the application, but remains part
+    // of the durable server state. Missing in older store files by design.
+    auditLogStore: state.auditLogStore ?? [],
   };
 }
 
@@ -99,6 +105,7 @@ export function deserializeState(raw: Partial<SerializedState> | null | undefine
     ratingsStore,
     categoriesStore: Array.isArray(raw?.categoriesStore) ? raw.categoriesStore : [],
     weekPlanStore: normalizeWeekPlan(raw?.weekPlanStore),
+    auditLogStore: Array.isArray(raw?.auditLogStore) ? raw.auditLogStore : [],
   };
 }
 
