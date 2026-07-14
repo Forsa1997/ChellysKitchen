@@ -220,22 +220,10 @@ export function AppShell({ children }: PropsWithChildren) {
 
       <Box component="footer" sx={{ borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Container maxWidth="lg">
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={{ xs: 1, sm: 2 }}
-            sx={{ py: 2.5, alignItems: 'center', justifyContent: 'space-between' }}
-          >
+          <Stack sx={{ py: 2.5, alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary">
               © {new Date().getFullYear()} Chellys Kitchen · Rezepte mit Liebe
             </Typography>
-            <Stack direction="row" spacing={2}>
-              <Button component={RouterLink} to="/impressum" size="small" color="inherit" onClick={closeMenu}>
-                Impressum
-              </Button>
-              <Button component={RouterLink} to="/datenschutz" size="small" color="inherit" onClick={closeMenu}>
-                Datenschutz
-              </Button>
-            </Stack>
           </Stack>
         </Container>
       </Box>

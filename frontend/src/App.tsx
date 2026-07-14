@@ -15,8 +15,6 @@ import { SignInPage } from './pages/SignInPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { BatchImportPage } from './pages/BatchImportPage';
 import { WeekPlanPage } from './pages/WeekPlanPage';
-import { ImpressumPage } from './pages/ImpressumPage';
-import { DatenschutzPage } from './pages/DatenschutzPage';
 
 const RecipeWorldPage = lazy(() => import('./pages/RecipeWorldPage').then((module) => ({ default: module.RecipeWorldPage })));
 
@@ -97,8 +95,6 @@ function App() {
                   )}
                 />
                 <Route path="/signin" element={<SignInPage />} />
-                <Route path="/impressum" element={<ImpressumPage />} />
-                <Route path="/datenschutz" element={<DatenschutzPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </AppShell>
