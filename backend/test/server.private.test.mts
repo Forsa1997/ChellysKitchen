@@ -12,9 +12,9 @@ import { after, before, test } from 'node:test';
 const backendDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 5700 + Math.floor(Math.random() * 100);
 const BASE = `http://127.0.0.1:${PORT}`;
-const ADMIN_EMAIL = 'admin@test.local';
+const ADMIN_USERNAME = 'admin@test.local';
 const ADMIN_PASSWORD = 'admintest';
-const MEMBER_EMAIL = 'demo@chellys-kitchen.local';
+const MEMBER_USERNAME = 'demo';
 const MEMBER_PASSWORD = 'demo1234';
 
 let child: ReturnType<typeof spawn>;
@@ -25,14 +25,14 @@ async function raw(path: string, headers: Record<string, string> = {}): Promise<
   return fetch(`${BASE}${path}`, { headers });
 }
 
-async function login(email: string, password: string): Promise<string> {
+async function login(username: string, password: string): Promise<string> {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ username, password }),
   });
   const body = await res.json() as { accessToken: string };
-  assert.equal(res.status, 200, `login for ${email} failed`);
+  assert.equal(res.status, 200, `login for ${username} failed`);
   return body.accessToken;
 }
 
@@ -54,11 +54,11 @@ before(async () => {
   dataDir = mkdtempSync(join(tmpdir(), 'ck-private-'));
   child = spawn('node', ['server.mts'], {
     cwd: backendDir,
-    env: { ...process.env, PORT: String(PORT), DATA_DIR: dataDir, ADMIN_EMAIL, ADMIN_PASSWORD },
+    env: { ...process.env, PORT: String(PORT), DATA_DIR: dataDir, ADMIN_USERNAME, ADMIN_PASSWORD },
     stdio: 'ignore',
   });
   await waitForReady();
-  memberToken = await login(MEMBER_EMAIL, MEMBER_PASSWORD);
+  memberToken = await login(MEMBER_USERNAME, MEMBER_PASSWORD);
 });
 
 after(async () => {

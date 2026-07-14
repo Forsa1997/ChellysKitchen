@@ -97,7 +97,7 @@ async function readerToken(): Promise<string> {
   if (readerTokenCache) return readerTokenCache;
   const login = await api('/api/auth/login', {
     method: 'POST',
-    body: { email: 'demo@chellys-kitchen.local', password: 'demo1234' },
+    body: { username: 'demo', password: 'demo1234' },
   });
   assert.equal(login.status, 200, 'demo member login must work');
   readerTokenCache = login.body.accessToken as string;
