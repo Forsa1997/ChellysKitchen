@@ -138,7 +138,7 @@ before(async () => {
   // The non-production server seeds the demo member account.
   const memberLogin = await api('/api/auth/login', {
     method: 'POST',
-    body: { email: 'demo@chellys-kitchen.local', password: 'demo1234' },
+    body: { username: 'demo', password: 'demo1234' },
   });
   memberToken = memberLogin.body.accessToken;
   assert.ok(memberToken, 'member login must work');

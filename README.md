@@ -66,13 +66,14 @@ cd frontend && npm test   # Vitest + Testing Library
 | `DATA_DIR` | Ablage für JSON-Store und Bilder, Standard `./.data` |
 | `DATABASE_URL` | PostgreSQL-Verbindung — aktiviert die Prisma-Persistenz (Produktion) |
 | `CORS_ORIGIN` | Erlaubter Frontend-Origin |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht (`ADMIN_EMAIL` bleibt als Alias) |
 | `ADMIN_NAME` | Anzeigename des Admin-Kontos (Standard `Admin`) |
-| `SEED_USERS` | Optional: JSON-Array weiterer Konten, z. B. `[{"name":"Chelly","email":"c@example.com","password":"…","role":"EDITOR"}]` |
+| `SEED_USERS` | Optional: JSON-Array weiterer Konten, z. B. `[{"name":"Chelly","username":"chelly","password":"…","role":"EDITOR"}]` |
 | `GEMINI_API_KEY` | Aktiviert den Rezept-Import per Foto über Google Gemini |
 | `PHOTO_IMPORT_MODEL` | Optionales Gemini-Modell, Standard `gemini-3.5-flash` |
 
+Die Anmeldung erfolgt mit **Benutzername und Passwort** (keine E-Mail).
 Es gibt keine öffentliche Registrierung — Konten entstehen nur über das
-Admin-Dashboard oder die Umgebungsvariablen `ADMIN_EMAIL`/`SEED_USERS`.
+Admin-Dashboard oder die Umgebungsvariablen `ADMIN_USERNAME`/`SEED_USERS`.
 
 Details zum Deployment: siehe `DEPLOYMENT.md`. Offene Ideen: `BACKLOG.md`.

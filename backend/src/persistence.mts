@@ -73,8 +73,10 @@ export function serializeState(state: PersistableState): SerializedState {
 export function deserializeState(raw: Partial<SerializedState> | null | undefined): ServerState {
   const users = new Map<string, User>();
   for (const user of raw?.users ?? []) {
-    if (user && user.email) {
-      users.set(user.email, user);
+    // `email` is the legacy key for `username`; accept old store files too.
+    const username = user?.username ?? (user as { email?: string } | undefined)?.email;
+    if (user && username) {
+      users.set(username, { ...user, username });
     }
   }
 

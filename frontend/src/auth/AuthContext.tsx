@@ -9,7 +9,7 @@ interface AuthContextValue {
   token: string | null;
   loading: boolean;
   error: Error | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -53,10 +53,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       loading,
       error,
       isAuthenticated: !!user,
-      async login(email: string, password: string) {
+      async login(username: string, password: string) {
         try {
           setError(null);
-          const result = await loginMutation.mutateAsync({ email, password });
+          const result = await loginMutation.mutateAsync({ username, password });
           setToken(result.accessToken);
           // Invalidate and refetch me query
           meQuery.refetch();

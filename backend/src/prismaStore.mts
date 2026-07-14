@@ -27,7 +27,7 @@ import type {
 // generated Prisma client or a database.
 export interface UserRow {
   id: string;
-  email: string;
+  username: string;
   name: string;
   role: string;
   passwordHash: string;
@@ -88,7 +88,7 @@ export interface StateRows {
 export function stateToRows(state: ServerState): StateRows {
   const users = [...state.users.values()].map((user): UserRow => ({
     id: user.id,
-    email: user.email,
+    username: user.username,
     name: user.name,
     role: user.role,
     passwordHash: user.passwordHash,
@@ -151,7 +151,7 @@ export function rowsToState(rows: Partial<StateRows>): ServerState {
     const user = {
       id: row.id,
       name: row.name,
-      email: row.email,
+      username: row.username,
       role: row.role as Role,
       passwordHash: row.passwordHash,
       createdAt: row.createdAt,
@@ -159,7 +159,7 @@ export function rowsToState(rows: Partial<StateRows>): ServerState {
     } as User;
     if (row.salt !== null && row.salt !== undefined) user.salt = row.salt;
     if (row.algo !== null && row.algo !== undefined) user.algo = row.algo;
-    users.set(user.email, user);
+    users.set(user.username, user);
   }
 
   const sessions = new Map<string, SessionEntry>();

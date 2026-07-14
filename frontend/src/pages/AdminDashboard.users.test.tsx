@@ -11,7 +11,7 @@ let usersDataMock: {
   data: Array<{
     id: string;
     name: string;
-    email: string;
+    username: string;
     role: 'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN';
     createdAt: string;
     updatedAt: string;
@@ -69,16 +69,16 @@ describe('AdminDashboard user creation', () => {
     usersDataMock = { data: [], total: 0 };
   });
 
-  it('creates a user with name, email, password and role', async () => {
+  it('creates a user with name, username, password and role', async () => {
     useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
-    createUserMock.mockResolvedValue({ id: 'user-2', name: 'Chelly', email: 'chelly@example.com', role: 'MEMBER' });
+    createUserMock.mockResolvedValue({ id: 'user-2', name: 'Chelly', username: 'chelly', role: 'MEMBER' });
 
     renderDashboard();
 
     fireEvent.click(screen.getByRole('button', { name: 'Benutzer anlegen' }));
 
     fireEvent.change(await screen.findByLabelText(/Name/), { target: { value: 'Chelly' } });
-    fireEvent.change(screen.getByLabelText(/E-Mail/), { target: { value: 'chelly@example.com' } });
+    fireEvent.change(screen.getByLabelText(/Benutzername/), { target: { value: 'chelly' } });
     fireEvent.change(screen.getByLabelText(/Passwort/), { target: { value: 'geheim123' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
@@ -86,7 +86,7 @@ describe('AdminDashboard user creation', () => {
     await waitFor(() =>
       expect(createUserMock).toHaveBeenCalledWith({
         name: 'Chelly',
-        email: 'chelly@example.com',
+        username: 'chelly',
         password: 'geheim123',
         role: 'MEMBER',
       }),
@@ -111,7 +111,7 @@ describe('AdminDashboard user creation', () => {
     useAuthMock.mockReturnValue({ user: { id: 'admin-1', role: 'ADMIN' } });
     updateUserNameMock.mockResolvedValue({ id: 'user-2', name: 'Chelly Kocht' });
     usersDataMock = {
-      data: [{ id: 'user-2', name: 'Chelly', email: 'chelly@example.com', role: 'MEMBER', createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      data: [{ id: 'user-2', name: 'Chelly', username: 'chelly', role: 'MEMBER', createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
       total: 1,
     };
 
