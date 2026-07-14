@@ -165,7 +165,7 @@ test('admin-created user can log in (me returns the user)', async () => {
 
   const me = await api('/api/auth/me', { token });
   assert.equal(me.status, 200);
-  assert.equal(me.body.user.email, email);
+  assert.equal(me.body.user.username, email);
 });
 
 test('recipe create -> update -> publish flow and admin role update', async () => {

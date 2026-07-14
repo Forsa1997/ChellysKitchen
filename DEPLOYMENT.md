@@ -20,13 +20,15 @@ den JSON-Datei-Store unter `DATA_DIR` — es braucht dann keine Datenbank.
    Die Datenbank und beide Services entstehen laut `render.yaml`
    (API und DB in Frankfurt).
 2. Env-Variablen des API-Service setzen:
-   - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — Pflicht, sonst gibt es keinen Admin.
+   - `ADMIN_USERNAME` / `ADMIN_PASSWORD` — Pflicht, sonst gibt es keinen
+     Admin. Die Anmeldung erfolgt mit Benutzername (keine E-Mail);
+     `ADMIN_EMAIL` wird weiterhin als Alias akzeptiert.
    - `ADMIN_NAME` — optionaler Anzeigename des Admin-Kontos (Standard
      `Admin`); eine Änderung benennt das Konto beim nächsten Start um.
    - `SEED_USERS` — optional, legt weitere Konten an (JSON-Array mit
-     `name`, `email`, `password`, optional `role`). Eine öffentliche
-     Registrierung gibt es nicht; Konten entstehen nur hierüber oder im
-     Admin-Dashboard.
+     `name`, `username`, `password`, optional `role`; `email` bleibt als
+     Alias). Eine öffentliche Registrierung gibt es nicht; Konten entstehen
+     nur hierüber oder im Admin-Dashboard.
    - `GEMINI_API_KEY` — optional, aktiviert den Rezept-Import per Foto über
      Google Gemini. Ohne Key antwortet der Endpoint mit einem verständlichen
      Hinweis; der Rest der App funktioniert normal. Das Modell lässt sich mit

@@ -59,7 +59,7 @@ export function AdminDashboard() {
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'MEMBER' as UserRole });
+  const [newUser, setNewUser] = useState({ name: '', username: '', password: '', role: 'MEMBER' as UserRole });
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<unknown | null>(null);
@@ -121,19 +121,19 @@ export function AdminDashboard() {
   };
 
   const handleCreateUser = async () => {
-    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.password) {
+    if (!newUser.name.trim() || !newUser.username.trim() || !newUser.password) {
       return;
     }
 
     try {
       const created = await createUser.mutateAsync({
         name: newUser.name.trim(),
-        email: newUser.email.trim(),
+        username: newUser.username.trim(),
         password: newUser.password,
         role: newUser.role,
       });
       setCreateDialogOpen(false);
-      setNewUser({ name: '', email: '', password: '', role: 'MEMBER' });
+      setNewUser({ name: '', username: '', password: '', role: 'MEMBER' });
       setActionSuccess(`Benutzer ${created.name} wurde angelegt.`);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Benutzer konnte nicht angelegt werden.');
@@ -254,7 +254,7 @@ export function AdminDashboard() {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>E-Mail</TableCell>
+              <TableCell>Benutzername</TableCell>
               <TableCell>Rolle</TableCell>
               <TableCell>Erstellt am</TableCell>
               <TableCell>Rezepte</TableCell>
@@ -265,7 +265,7 @@ export function AdminDashboard() {
             {users.map((user: UserWithCounts) => (
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.username}</TableCell>
                 <TableCell>
                   <Chip label={user.role} color={getRoleColor(user.role)} size="small" />
                 </TableCell>
@@ -495,11 +495,11 @@ export function AdminDashboard() {
               autoComplete="off"
             />
             <TextField
-              label="E-Mail"
-              type="email"
+              label="Benutzername"
+              type="text"
               required
-              value={newUser.email}
-              onChange={(event) => setNewUser((prev) => ({ ...prev, email: event.target.value }))}
+              value={newUser.username}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, username: event.target.value }))}
               autoComplete="off"
             />
             <TextField

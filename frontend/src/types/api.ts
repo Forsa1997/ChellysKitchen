@@ -1,7 +1,7 @@
 // API Types
 export interface User {
   id: string;
-  email: string;
+  username: string;
   name: string;
   role: 'GUEST' | 'MEMBER' | 'EDITOR' | 'ADMIN';
   createdAt: string;
@@ -146,6 +146,6 @@ export interface CreateRatingInput {
 }
 
 export interface LoginInput {
-  email: string;
+  username: string;
   password: string;
 }

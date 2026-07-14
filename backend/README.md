@@ -45,7 +45,7 @@ Server-Standard: `http://localhost:4000`
 | `DATA_DIR` | Datenablage, Standard `./.data` (mit Postgres nur Bild-Cache) |
 | `DATABASE_URL` | PostgreSQL-Verbindung — aktiviert die Prisma-Persistenz |
 | `CORS_ORIGIN` | Erlaubter Frontend-Origin |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin-Konto — in Produktion Pflicht (`ADMIN_EMAIL` bleibt als Alias) |
 | `ADMIN_NAME` | Anzeigename des Admin-Kontos (Standard `Admin`; benennt auch ein bestehendes Konto um) |
-| `SEED_USERS` | Optional: JSON-Array weiterer Konten (`[{"name":…,"email":…,"password":…,"role":…}]`) |
+| `SEED_USERS` | Optional: JSON-Array weiterer Konten (`[{"name":…,"username":…,"password":…,"role":…}]`) |
 | `NODE_ENV` | `production` deaktiviert Demo-/Default-Zugänge |

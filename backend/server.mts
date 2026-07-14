@@ -341,7 +341,7 @@ function sanitizeUser(user: User) {
   return {
     id: user.id,
     name: user.name,
-    email: user.email,
+    username: user.username,
     role: user.role,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -475,17 +475,17 @@ function authenticateRequest(req: IncomingMessage): User | null {
   return userId ? findUserById(userId) : null;
 }
 
-function seedUser({ name, email, role, password }: { name: string; email: string; role: Role; password: string }): void {
-  const normalizedEmail = String(email).trim().toLowerCase();
-  if (users.has(normalizedEmail)) {
+function seedUser({ name, username, role, password }: { name: string; username: string; role: Role; password: string }): void {
+  const normalizedUsername = String(username).trim().toLowerCase();
+  if (users.has(normalizedUsername)) {
     return;
   }
   const credential = hashPassword(password);
   const now = new Date().toISOString();
-  users.set(normalizedEmail, {
+  users.set(normalizedUsername, {
     id: `user_${randomBytes(8).toString('hex')}`,
     name,
-    email: normalizedEmail,
+    username: normalizedUsername,
     role,
     passwordHash: credential.hash,
     salt: credential.salt,
@@ -501,7 +501,7 @@ function seedDefaultUsers() {
   if (!isProduction) {
     seedUser({
       name: 'Demo User',
-      email: 'demo@chellys-kitchen.local',
+      username: 'demo',
       role: 'MEMBER',
       password: 'demo1234',
     });
@@ -510,11 +510,14 @@ function seedDefaultUsers() {
   // An admin account is required to reach the admin dashboard. In production
   // it must be configured explicitly; the well-known local fallback would
   // otherwise be an open door.
-  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+  // ADMIN_USERNAME is the current name; ADMIN_EMAIL stays as a legacy alias so
+  // existing production deployments keep provisioning their admin unchanged.
+  const adminUsername = process.env.ADMIN_USERNAME ?? process.env.ADMIN_EMAIL;
+  if (adminUsername && process.env.ADMIN_PASSWORD) {
     const adminName = process.env.ADMIN_NAME?.trim() || 'Admin';
     seedUser({
       name: adminName,
-      email: process.env.ADMIN_EMAIL,
+      username: adminUsername,
       role: 'ADMIN',
       password: process.env.ADMIN_PASSWORD,
     });
@@ -522,7 +525,7 @@ function seedDefaultUsers() {
     // ADMIN_NAME also renames an already existing admin — otherwise the
     // change would only take effect after a data wipe.
     if (process.env.ADMIN_NAME) {
-      const existingAdmin = users.get(String(process.env.ADMIN_EMAIL).trim().toLowerCase());
+      const existingAdmin = users.get(String(adminUsername).trim().toLowerCase());
       if (existingAdmin && existingAdmin.name !== adminName) {
         existingAdmin.name = adminName;
         existingAdmin.updatedAt = new Date().toISOString();
@@ -531,18 +534,19 @@ function seedDefaultUsers() {
   } else if (!isProduction) {
     seedUser({
       name: 'Admin',
-      email: 'admin@chellys-kitchen.local',
+      username: 'admin',
       role: 'ADMIN',
       password: 'admin1234',
     });
   } else if (![...users.values()].some((user) => user.role === 'ADMIN')) {
-    console.warn('Kein Admin-Konto vorhanden: ADMIN_EMAIL und ADMIN_PASSWORD setzen.');
+    console.warn('Kein Admin-Konto vorhanden: ADMIN_USERNAME und ADMIN_PASSWORD setzen.');
   }
 
   // There is no public registration — besides the admin dashboard, SEED_USERS
   // is the only way to provision accounts: a JSON array of
-  // { name, email, password, role? } objects, e.g.
-  // SEED_USERS='[{"name":"Chelly","email":"c@example.com","password":"...","role":"EDITOR"}]'
+  // { name, username, password, role? } objects, e.g.
+  // SEED_USERS='[{"name":"Chelly","username":"chelly","password":"...","role":"EDITOR"}]'
+  // `email` is still accepted as a legacy alias for `username`.
   if (process.env.SEED_USERS) {
     let entries: any;
     try {
@@ -556,13 +560,14 @@ function seedDefaultUsers() {
       return;
     }
     for (const entry of entries) {
-      if (!entry || !entry.email || !entry.password) {
-        console.warn('SEED_USERS-Eintrag ohne email/password übersprungen.');
+      const entryUsername = entry?.username ?? entry?.email;
+      if (!entry || !entryUsername || !entry.password) {
+        console.warn('SEED_USERS-Eintrag ohne username/password übersprungen.');
         continue;
       }
       seedUser({
-        name: String(entry.name ?? entry.email).trim(),
-        email: entry.email,
+        name: String(entry.name ?? entryUsername).trim(),
+        username: entryUsername,
         role: VALID_ROLES.includes(entry.role) ? entry.role : 'MEMBER',
         password: entry.password,
       });
@@ -739,11 +744,12 @@ const server = createServer(async (req, res) => {
 
   if (req.method === 'POST' && req.url === '/api/auth/login') {
     try {
-      const { email, password } = await parseJsonBody(req);
-      const normalizedEmail = String(email ?? '').trim().toLowerCase();
+      const { username, email, password } = await parseJsonBody(req);
+      // `email` stays accepted as a legacy alias for `username`.
+      const normalizedUsername = String(username ?? email ?? '').trim().toLowerCase();
 
-      const ipKey = `${clientIp(req)}|${normalizedEmail}`;
-      const blocked = [loginLimiter.isBlocked(ipKey), accountLimiter.isBlocked(normalizedEmail)]
+      const ipKey = `${clientIp(req)}|${normalizedUsername}`;
+      const blocked = [loginLimiter.isBlocked(ipKey), accountLimiter.isBlocked(normalizedUsername)]
         .find((check) => check.blocked);
       if (blocked) {
         res.setHeader('Retry-After', String(blocked.retryAfterSeconds));
@@ -753,18 +759,18 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      const user = users.get(normalizedEmail);
+      const user = users.get(normalizedUsername);
       const result = user ? verifyPassword(user, String(password ?? '')) : { valid: false, needsRehash: false };
 
       if (!user || !result.valid) {
         loginLimiter.recordFailure(ipKey);
-        accountLimiter.recordFailure(normalizedEmail);
+        accountLimiter.recordFailure(normalizedUsername);
         jsonResponse(res, 401, { error: 'Ungültige Anmeldedaten.' });
         return;
       }
 
       loginLimiter.reset(ipKey);
-      accountLimiter.reset(normalizedEmail);
+      accountLimiter.reset(normalizedUsername);
 
       // Accounts from before the scrypt switch still carry SHA-256 hashes;
       // upgrade them transparently while the plaintext password is at hand.
@@ -1697,7 +1703,7 @@ const server = createServer(async (req, res) => {
 
   // POST /api/admin/users - Create a user (admin only). There is no public
   // registration; accounts exist only via this endpoint or the SEED_USERS /
-  // ADMIN_EMAIL environment variables.
+  // ADMIN_USERNAME environment variables.
   if (req.method === 'POST' && req.url === '/api/admin/users') {
     const actingUser = authenticateRequest(req);
     if (!hasMinRole(actingUser, 'ADMIN')) {
@@ -1706,10 +1712,12 @@ const server = createServer(async (req, res) => {
     }
 
     try {
-      const { name, email, password, role } = await parseJsonBody(req);
+      const { name, username, email, password, role } = await parseJsonBody(req);
+      // `email` stays accepted as a legacy alias for `username`.
+      const rawUsername = username ?? email;
 
-      if (!name || !email || !password) {
-        jsonResponse(res, 400, { error: 'Name, E-Mail und Passwort sind erforderlich.' });
+      if (!name || !rawUsername || !password) {
+        jsonResponse(res, 400, { error: 'Name, Benutzername und Passwort sind erforderlich.' });
         return;
       }
 
@@ -1719,9 +1727,9 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      const normalizedEmail = String(email).trim().toLowerCase();
-      if (users.has(normalizedEmail)) {
-        jsonResponse(res, 409, { error: 'E-Mail ist bereits vergeben.' });
+      const normalizedUsername = String(rawUsername).trim().toLowerCase();
+      if (users.has(normalizedUsername)) {
+        jsonResponse(res, 409, { error: 'Benutzername ist bereits vergeben.' });
         return;
       }
 
@@ -1730,7 +1738,7 @@ const server = createServer(async (req, res) => {
       const user: User = {
         id: `user_${randomBytes(8).toString('hex')}`,
         name: String(name).trim(),
-        email: normalizedEmail,
+        username: normalizedUsername,
         role: resolvedRole,
         passwordHash: credential.hash,
         salt: credential.salt,
@@ -1739,7 +1747,7 @@ const server = createServer(async (req, res) => {
         updatedAt: now,
       };
 
-      users.set(normalizedEmail, user);
+      users.set(normalizedUsername, user);
       persist();
       jsonResponse(res, 201, sanitizeUser(user));
       return;
@@ -1986,13 +1994,13 @@ const server = createServer(async (req, res) => {
       const imported = parseImportPayload(payload);
 
       users.clear();
-      for (const [email, user] of imported.users) {
-        users.set(email, user);
+      for (const [username, user] of imported.users) {
+        users.set(username, user);
       }
       // Keep the acting admin exactly as-is (id, role, password), even if the
-      // backup contains an older record for the same email — otherwise the
+      // backup contains an older record for the same username — otherwise the
       // admin could lock themselves out mid-import.
-      users.set(actingUser.email, actingUser);
+      users.set(actingUser.username, actingUser);
 
       recipeStore.splice(0, recipeStore.length, ...imported.recipeStore);
 

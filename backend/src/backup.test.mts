@@ -4,8 +4,8 @@ import { createExportPayload, parseImportPayload } from './backup.mts';
 
 function sampleState(): any {
   const users = new Map([
-    ['chef@test.local', {
-      id: 'user_1', name: 'Chef', email: 'chef@test.local', role: 'ADMIN',
+    ['chef', {
+      id: 'user_1', name: 'Chef', username: 'chef', role: 'ADMIN',
       passwordHash: 'hash', salt: 'salt', createdAt: 'x', updatedAt: 'x',
     }],
   ]);
@@ -31,7 +31,7 @@ test('export -> import round-trips users, recipes, ratings and categories', () =
   // Simulate the JSON round-trip of download + upload.
   const parsed = parseImportPayload(JSON.parse(JSON.stringify(payload)));
 
-  assert.equal(parsed.users.get('chef@test.local')!.id, 'user_1');
+  assert.equal(parsed.users.get('chef')!.id, 'user_1');
   assert.equal(parsed.recipeStore.length, 1);
   assert.equal(parsed.recipeStore[0].slug, 'pasta');
   assert.equal(parsed.ratingsStore.get('r1')!.get('user_1')!.stars, 5);

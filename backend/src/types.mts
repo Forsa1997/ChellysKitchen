@@ -91,7 +91,8 @@ export interface Category {
 export interface User {
   id: string;
   name: string;
-  email: string;
+  /** Login identifier. Historically an e-mail; now a free-form username. */
+  username: string;
   role: Role;
   passwordHash: string;
   salt: string;
