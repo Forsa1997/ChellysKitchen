@@ -5,8 +5,8 @@
 import { parseIngredientText, type ImportedRecipe } from './recipeImport.mts';
 import type { Ingredient, RecipeStep } from './types.mts';
 
-const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash';
-const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash';
+export const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 const REQUEST_TIMEOUT_MS = 120_000;
 
 export interface PhotoInput {
@@ -175,10 +175,10 @@ export interface GeminiInteraction {
 }
 
 /**
- * Parse the final text output of a Gemini Interactions API response.
- * Returns null only for a valid response which contains no usable recipe.
+ * The final text output of a completed Gemini Interactions API response.
+ * Throws when the interaction failed or contains no text output.
  */
-export function parseGeminiRecipeResponse(interaction: GeminiInteraction | null | undefined): ImportedRecipe | null {
+export function extractGeminiOutputText(interaction: GeminiInteraction | null | undefined): string {
   if (!interaction || interaction.status !== 'completed') {
     throw new Error('Gemini hat die Anfrage nicht abgeschlossen.');
   }
@@ -193,8 +193,15 @@ export function parseGeminiRecipeResponse(interaction: GeminiInteraction | null 
   if (!text) {
     throw new Error('Gemini hat keine verwertbare Antwort geliefert.');
   }
+  return text;
+}
 
-  const parsed: unknown = JSON.parse(text);
+/**
+ * Parse the final text output of a Gemini Interactions API response.
+ * Returns null only for a valid response which contains no usable recipe.
+ */
+export function parseGeminiRecipeResponse(interaction: GeminiInteraction | null | undefined): ImportedRecipe | null {
+  const parsed: unknown = JSON.parse(extractGeminiOutputText(interaction));
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error('Gemini hat kein Rezeptobjekt geliefert.');
   }

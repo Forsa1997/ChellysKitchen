@@ -75,6 +75,31 @@ describe('CreateRecipePage import', () => {
     expect(screen.getByText(/1 Zutat/)).toBeInTheDocument();
   });
 
+  it('mentions the automatic translation when the server translated the recipe', async () => {
+    importRecipeMock.mockResolvedValue({
+      recipe: {
+        title: 'Cremige Tomatensuppe',
+        shortDescription: 'Eine schnelle Suppe.',
+        servings: 4,
+        preparationTime: 10,
+        cookingTime: 25,
+        ingredients: [{ name: 'Dosentomaten', amount: 800, unit: 'g' }],
+        steps: [{ stepNumber: 1, instruction: 'Alles köcheln lassen.' }],
+      },
+      source: 'https://example.com/tomato-soup',
+      translated: true,
+    });
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('Rezept-URL'), {
+      target: { value: 'https://example.com/tomato-soup' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Importieren' }));
+
+    expect(await screen.findByText(/ins Deutsche übersetzt/)).toBeInTheDocument();
+  });
+
   it('restores the previous form state via Rückgängig', async () => {
     importRecipeMock.mockResolvedValue({
       recipe: {

@@ -282,6 +282,8 @@ export interface ImportedRecipe {
 export interface ImportRecipeResponse {
   recipe: ImportedRecipe;
   source: string;
+  /** true when the server translated a foreign-language recipe to German. */
+  translated?: boolean;
 }
 
 // Batch Photo Import Types (admin only)

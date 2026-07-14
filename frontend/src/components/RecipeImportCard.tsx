@@ -26,6 +26,7 @@ interface ImportSummary {
   title: string;
   ingredientCount: number;
   stepCount: number;
+  translated: boolean;
 }
 
 interface RecipeImportCardProps {
@@ -90,7 +91,7 @@ export function RecipeImportCard({ onApply, onUndo }: RecipeImportCardProps) {
     stepTimerRef.current = setTimeout(() => setActiveStep(1), 900);
 
     try {
-      const { recipe } =
+      const { recipe, translated } =
         action.kind === 'photo'
           ? await apiClient.importRecipeFromPhoto(action.file)
           : await apiClient.importRecipe(action.url);
@@ -114,6 +115,7 @@ export function RecipeImportCard({ onApply, onUndo }: RecipeImportCardProps) {
         title: values.title ?? '',
         ingredientCount: values.ingredients?.length ?? 0,
         stepCount: values.steps?.length ?? 0,
+        translated: translated === true,
       });
       setPhase('done');
     } catch (importError) {
@@ -269,8 +271,9 @@ export function RecipeImportCard({ onApply, onUndo }: RecipeImportCardProps) {
           >
             Rezept erkannt: <b>{summary.title || 'Ohne Titel'}</b> —{' '}
             {pluralize(summary.ingredientCount, 'Zutat', 'Zutaten')},{' '}
-            {pluralize(summary.stepCount, 'Schritt', 'Schritte')} übernommen. Bitte prüfe die
-            markierten Felder.
+            {pluralize(summary.stepCount, 'Schritt', 'Schritte')} übernommen.
+            {summary.translated && ' Das Rezept wurde automatisch ins Deutsche übersetzt.'}
+            {' '}Bitte prüfe die markierten Felder.
           </Typography>
           <Button size="small" color="success" onClick={handleUndo} sx={{ fontWeight: 700, flexShrink: 0 }}>
             Rückgängig

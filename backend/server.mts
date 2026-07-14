@@ -30,6 +30,7 @@ import {
   isAllowedImportUrl,
   mapJsonLdToRecipe,
 } from './src/recipeImport.mts';
+import { translateImportedRecipe } from './src/translateImport.mts';
 import { createRateLimiter } from './src/rateLimit.mts';
 import { resolveCorsOrigin } from './src/cors.mts';
 import {
@@ -1627,13 +1628,17 @@ const server = createServer(async (req, res) => {
       // Prefer structured JSON-LD; fall back to plain HTML parsing
       // (microdata or Zutaten/Zubereitung headings) for pages without it.
       const jsonLd = extractRecipeJsonLd(html);
-      const recipe = jsonLd ? mapJsonLdToRecipe(jsonLd) : extractRecipeFromHtml(html);
-      if (!recipe) {
+      const extracted = jsonLd ? mapJsonLdToRecipe(jsonLd) : extractRecipeFromHtml(html);
+      if (!extracted) {
         jsonResponse(res, 422, { error: 'Auf dieser Seite wurde kein Rezept gefunden.' });
         return;
       }
 
-      jsonResponse(res, 200, { recipe, source: url });
+      // Foreign-language recipes are translated to German via Gemini
+      // (best-effort: without GEMINI_API_KEY or on failure the recipe
+      // stays in its original language).
+      const { recipe, translated } = await translateImportedRecipe(extracted);
+      jsonResponse(res, 200, { recipe, source: url, translated });
       return;
     } catch (error) {
       jsonResponse(res, 400, { error: errorMessage(error) });
