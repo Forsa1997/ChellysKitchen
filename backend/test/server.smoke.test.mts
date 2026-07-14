@@ -205,6 +205,25 @@ test('recipe create -> update -> publish flow and admin role update', async () =
   assert.equal(updated.status, 200);
   assert.equal(updated.body.title, 'Smoke Test Rezept (bearbeitet)');
 
+  // Removing an existing image assigns one of the built-in illustrations.
+  const imageRemoved = await api(`/api/recipes/${recipeId}`, {
+    method: 'PATCH',
+    token,
+    body: { img: '' },
+  });
+  assert.equal(imageRemoved.status, 200);
+  assert.match(imageRemoved.body.img, /^\/recipe-images\/[a-z0-9-]+\.svg$/);
+
+  // A subsequently uploaded or external image replaces the temporary default.
+  const replacementImage = 'https://example.com/new-recipe-image.jpg';
+  const imageReplaced = await api(`/api/recipes/${recipeId}`, {
+    method: 'PATCH',
+    token,
+    body: { img: replacementImage },
+  });
+  assert.equal(imageReplaced.status, 200);
+  assert.equal(imageReplaced.body.img, replacementImage);
+
   // Admin logs in and lists users
   const adminLogin = await api('/api/auth/login', {
     method: 'POST',

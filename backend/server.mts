@@ -6,6 +6,7 @@ import { basename, join, resolve } from 'node:path';
 import { recipes } from './data/recipes.mts';
 import { queryRecipes } from './src/queryRecipes.mts';
 import { pickRandomRecipe } from './src/randomRecipe.mts';
+import { pickDefaultRecipeImage } from './src/recipeImages.mts';
 import { createExportPayload, parseImportPayload } from './src/backup.mts';
 import { renderBringHtml } from './src/bringExport.mts';
 import {
@@ -1365,7 +1366,10 @@ const server = createServer(async (req, res) => {
       if (payload.servings !== undefined) recipe.servings = payload.servings;
       if (payload.preparationTime !== undefined) recipe.preparationTime = payload.preparationTime;
       if (payload.cookingTime !== undefined) recipe.cookingTime = payload.cookingTime;
-      if (payload.img !== undefined) recipe.img = String(payload.img);
+      if (payload.img !== undefined) {
+        const nextImage = String(payload.img).trim();
+        recipe.img = nextImage || pickDefaultRecipeImage();
+      }
       if (payload.ingredients !== undefined) recipe.ingredients = Array.isArray(payload.ingredients) ? payload.ingredients : [];
       if (payload.steps !== undefined) recipe.steps = Array.isArray(payload.steps) ? payload.steps : [];
       if (payload.nutritionalValues !== undefined) recipe.nutritionalValues = payload.nutritionalValues ?? undefined;
